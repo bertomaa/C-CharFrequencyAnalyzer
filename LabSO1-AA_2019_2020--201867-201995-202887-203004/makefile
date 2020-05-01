@@ -1,11 +1,16 @@
+SHELL=/bin/bash
+
 CC=gcc
 CCFLAGS="-I. -std=gnu90"
-DEPS=
+DEPS="./src/analyzer.c ./src/main.c ./src/report.c"
 
 #TODO: update make
 
-%.o: %.c $(DEPS)
+
+build: $$(DEPS)
 	$(CC) -c -o  $@ $< $(CCFLAGS)
 
-%: %.o
-	&(CC) -o $@ $< $(CCFLAGS)
+clean:
+	rm -f ./bin/
+
+.PHONY: build clean
