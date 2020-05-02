@@ -1,15 +1,17 @@
 /*
-    Questo file deve contenere l'analyzer: il processo principale crea n sottoprocessi, ognuno di questi crea m sottoprocessi che analizzano i file.
+    This fils is the analyzer: the main process creates n subprocesses, that create m subsubprocesses that analyze the files.
 */
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <string.h>
 
+#include "stats.h"
 
-int checkArguments(int argc, const char* argv[])
+int checkArguments(int argc, const char *argv[])
 {
-    if(argc < 4)
+    if (argc < 4)
     {
         printf("Wrong arguments, usage is: analyzer <n> <m> <file1> <file2> ... \n");
         return 1;
@@ -17,62 +19,148 @@ int checkArguments(int argc, const char* argv[])
     return 0;
 }
 
-//processo q, legge la parte dei files a lui assegnata
-int q(int parte, int m, const char* files[])
-{
-    //TODO: scrivi
+int * createPipe(int size){
+    //TODO: checks and free
+    int* pipes = (int *) calloc(size * 2, sizeof(int));
+    int i;
+    for(i = 0; i < size; i++){
+        pipe(pipes + (i * 2));
+    }
+    return pipes;
 }
 
-//processo p, genera m processi figli q e assegna loro le parti di file da analizzare
-int p(int m, int filesCount, const char* files[])
+int getPipeIndex(int index, int type)
 {
-    //TODO: scrivi
-    printf("I must analize files:\n");
-    int i;
-    for(i = 0; i < filesCount; i++)
+    return index*2 + type;
+}
+
+int writePipe(int * pipes, int index, const char* toWrite){
+    //TODO: checks and free
+    write(pipes[getPipeIndex(index, WRITE)], toWrite, strlen(toWrite));
+    return 0;//error code
+}
+
+int readPipe(int * pipes, int index, char * buf){
+    read(pipes[getPipeIndex(index, READ)], buf, MAX_CHARACTERS);
+    return 0;//error code
+}
+
+
+char** analyzeText()
+{
+    int fd;
+	int i;
+    char* ret = (char*) calloc(MAX_CHARACTERS, sizeof(char));
+
+
+	//open file "texto.txt"
+	fd = open("testo.txt","r");
+
+	int characters[ASCII_CHARACTERS];
+    for(i=0; i < ASCII_CHARACTERS; i++)
     {
+        characters[i] = 0;
+    }
+
+	char a=0;
+	while ( (a=(char)getc(fd)) != EOF)
+    {
+		characters[a]++;
+	}
+	for (i=0;i<256;i++)
+    {
+        
+		//printf("Sono presenti %d simboli %c\n", characters[i], (char)i);
+        //547\n89
+    }
+    
+
+    return ret;
+}
+
+//process q, reads his part (index) of file
+int q(int index, int m, const char *files[], int writePipe)
+{
+    //TODO: write
+
+	
+
+}
+
+
+//process p, generates m children processes q and assigns them the sections of file to analyze
+int p(int m, int filesCount, const char *files[])
+{   
+    int * pipes;
+    printf("I must analize files:\n");
+    int i, pid;
+    pid_t *pids = (int *)malloc(m * sizeof(int));
+    for (i = 0; i < filesCount; i++)
+    {
+        int j;
+        for (j = 0; j < m; j++)
+        {
+            pid = fork();
+            if (pid < 0)
+            {
+                printf("Error in fork in m, exit");
+                exit(2);
+            }
+            else if (pid == 0) //children
+            {
+                q(j, m, files, );
+            }
+            else //father
+                pids[i] = pid;            
+        }
         printf("%s\n", files[i]);
     }
+
+    //true code
+
     return 0;
 }
 
-//dati passati in input: n, m, nomefile1, nomefile2,...
-int main(int argc, const char* argv[])
+
+
+//data sent as input: n,m, namefile, namefile2...
+
+int main(int argc, const char *argv[])
 {
-    if(checkArguments(argc, argv) != 0)
+    if (checkArguments(argc, argv) != 0)
         exit(1);
 
     int n = atoi(argv[1]);
     int m = atoi(argv[2]);
 
-    //TODO: se un nomefile è una cartella allora trova 
+    //TODO: if a filename is a folder then find
 
-    //TODO: dividi i file tra i processi p
-
-    pid_t* pids = (int*) malloc(n * sizeof(int));
+    //TODO: divide files among proceses P
+    int pipesToP = createPipe(n);
+    pid_t *pids = (int *) calloc(n, sizeof(int));
     int pid;
 
-    //crea i sottoprocessi p
+    //creates subprocess p
     int i;
-    for(i = 0; i < n; i++)
+    for (i = 0; i < n; i++)
     {
         pid = fork();
-        if(pid < 0)
+        if (pid < 0)
         {
             printf("Error in fork, exit");
-            exit(2);
+            return(2);
         }
-        else if(pid == 0)    //figlio
+        else if (pid == 0) //children
         {
             int ret = p(m, argc - 3, argv + 3);
             return ret;
         }
-        else                //padre
+        else //father
             pids[i] = pid;
     }
 
-    //padre
-    for(i = 0; i < n; i++)
+    //father
+    for (i = 0; i < n; i++)
     {
         wait(pids[i]);
     }
