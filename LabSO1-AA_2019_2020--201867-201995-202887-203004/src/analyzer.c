@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "stats.h"
 
@@ -49,49 +52,40 @@ int readPipe(int *pipes, int index, char *buf)
     return 0; //error code
 }
 
-stats * analyzeText(int fd, int offset, int bytesToRead)
+stats analyzeText(int fd, int offset, int bytesToRead)
 {
     int i;
-    char *ret = (char *)calloc(MAX_CHARACTERS, sizeof(char));
+    stats ret;
+    char buffer[MAX_CHARACTERS];
 
-    int characters[ASCII_CHARACTERS];
-    for (i = 0; i < ASCII_CHARACTERS; i++)
+    lseek(fd, offset, SEEK_SET);
+    read(fd, buffer, bytesToRead);
+
+    for(i = 0; buffer[i] != '\0'; i++)
     {
-        characters[i] = 0;
+        ret.frequencies[buffer[i]]++;
     }
 
-    char a = 0;
-    while ((a = (char)getc(fd)) != EOF)
-    {
-        characters[a]++;
-    }
-    for (i = 0; i < 256; i++)
-    {
-
-        //printf("Sono presenti %d simboli %c\n", characters[i], (char)i);
-        //547\n89
-    }
-
-    return ret;//Deve ritornare una stats
+    return ret;
 }
 
 //process q, reads his part (index) of file
 int q(int mIndex, int filesCount, int m, const char *files[], int writePipe)
 {
-    int fd, fileInex, fileLength;
+    int fd, fileIndex, fileLength, i;
     stats stat, res;
-    res = stats();
     for (i = 0; i < filesCount; i++)
     {
-        fd = fileopen(files[i]); //TODO: gestire se il file non esiste o bla bla
+        fd = open(files[i], O_RDONLY); //TODO: gestire se il file non esiste o bla bla
         fileLength = lseek(fd, 0, SEEK_END);
         fileIndex = fileLength / m;//TODO: gestire resto divisione, insomma che lo steso carattere non venga letto 2 volte o 0
         stat = analyzeText(fd, fileIndex, fileLength);
-        res.sumStat(&stat, 1);
+        res = sumStats(res, stat);
         close(fd);//TODO: come sempre controllare che si sia chiusa munnezz 
     }
-    char * encode = res.encode();
-    write(writePipe, encode, strlen(encode)+1);//controlla sta cacata
+    char * encoded = encode(res);
+    write(writePipe, encoded, strlen(encoded)+1);//controlla sta cacata
+    return 0;
 }
 
 //process p, generates m children processes q and assigns them the sections of file to analyze
@@ -111,24 +105,28 @@ int p(int m, int filesCount, const char *files[], int writePipe)
         }
         else if (pid == 0) //children
         {
-            q(i, m, files, pipes[getPipeIndex(i, WRITE)], filesCount);
+            q(i, filesCount, m, files, pipes[getPipeIndex(i, WRITE)]);
         }
         else //father
             pids[i] = pid;
         printf("%s\n", files[i]);
     }
     if(pid > 0){
-        while (wait != -1)
+        while (wait(NULL) != -1)
             ; //father waits all children
         char * stat;
-        stats statsRes = stats();
+        stats statsRes, tmpStats;
+        int res;
         for (i = 0; i < m; i++)
         {
             readPipe(pipes, i, stat);//TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
-            statsRes.sumStats(stat);
+            res = decode(stat, &tmpStats);
+            if(res != 0)
+                return 1;//TODO: esegui free ecc..
+            statsRes = sumStats(statsRes, tmpStats);
         }
-        stat = statsRes.encode();
-        write(writePipe, stat, strlen(stat)+1)// stessa munnezz
+        stat = encode(statsRes);
+        write(writePipe, stat, strlen(stat)+1);// stessa munnezz
     }
     return 0;//manco lo scrivo più
 }
@@ -143,12 +141,10 @@ int main(int argc, const char *argv[])
     int n = atoi(argv[1]);
     int m = atoi(argv[2]);
 
-    //TODO: if a filename is a folder then find
+    //TODO: if a filename is a folder then find the files
 
     //TODO: divide files among proceses P
     int *pipesToP = createPipes(n);
-    //TODO: divide files among proceses P
-    int * pipesToP = createPipes(n);
     pid_t *pids = (pid_t *)calloc(n, sizeof(int));
     int pid;
 
@@ -173,17 +169,15 @@ int main(int argc, const char *argv[])
 
     //father
     if(pid > 0){
-        while (wait != -1)
+        while (wait(NULL) != -1)
             ; //father waits all children
         char * stat;
-        stats statsRes = stats();
+        stats statsRes;
         for (i = 0; i < m; i++)
         {
             readPipe(pipesToP, i, stat);//TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
-            statsRes.sumStats(stat);
+            // statsRes = sumStats(statsRes, decode(stat));
         }
-        stat = statsRes.encode();
-        write(writePipe, stat, strlen(stat)+1)// stessa munnezz
         return 0;
     }
 

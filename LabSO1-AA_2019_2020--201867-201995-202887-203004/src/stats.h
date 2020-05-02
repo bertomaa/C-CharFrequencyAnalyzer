@@ -15,24 +15,24 @@ typedef struct stats{
 } stats;
 
 //returns 0 if decode has success
-int decode(const char* str)
+int decode(const char* str, stats *res)
 {
     char c;
     int currentCharacter, index, numberStartingIndex;
     char buffer[20];
     int stringLength = strlen(str);
-    for(index = 0; index < stringLength, index++)
+    for(index = 0; index < stringLength; index++)
     {
         if(currentCharacter >= ASCII_CHARACTERS)
         {
             fprintf(stderr, "String decode error, too many entries.\n");
             return 1;
         }
-        if(str[index] == '.')
+        if(str[index] == '.' || str[index] == '\0')
         {
-            char* currentNumber = memcpy( buffer, &str[numberStartingIndex], index - NumberStartingIndex);
-            buffer[index - NumberStartingIndex] = '\0';
-            frequencies[currentCharacter] = atoi(buffer);
+            char* currentNumber = memcpy( buffer, &str[numberStartingIndex], index - numberStartingIndex);
+            buffer[index - numberStartingIndex] = '\0';
+            res->frequencies[currentCharacter] = atoi(buffer);
             numberStartingIndex = index + 1;
             currentCharacter++;
         }
@@ -45,21 +45,29 @@ int decode(const char* str)
     return 0;
 }
 
-char* encode()
+char* encode(const stats stat)
 {
-    char* buffer[MAX_CHARACTERS];
+    //TODO: fai la free da qualche parte
+    char* buffer = (char*) calloc(MAX_CHARACTERS, sizeof(char));
     int i;
     for(i = 0; i < ASCII_CHARACTERS; i++)
     {
-        sprintf(buffer, "%d", frequencies[i]);
+        sprintf(buffer, "%d", stat.frequencies[i]);
         if(i < ASCII_CHARACTERS - 1)
             sprintf(buffer, ".");  
     }
-    sprintf(buffer,'\0');
+    sprintf(buffer, "");
     return buffer;
 }
 
-void sumStats(stats *other, int count)
+//sums the content of first and second modifying first
+stats sumStats(const stats first, const stats second)
 {
-
+    stats res;
+    int i;
+    for(i = 0; i < ASCII_CHARACTERS; i++)
+    {
+        res.frequencies[i] = first.frequencies[i] + second.frequencies[i];
+    }
+    return res;
 }
