@@ -49,14 +49,10 @@ int readPipe(int *pipes, int index, char *buf)
     return 0; //error code
 }
 
-char **analyzeText()
+stats * analyzeText(int fd, int offset, int bytesToRead)
 {
-    int fd;
     int i;
     char *ret = (char *)calloc(MAX_CHARACTERS, sizeof(char));
-
-    //open file "texto.txt"
-    fd = open("testo.txt", "r");
 
     int characters[ASCII_CHARACTERS];
     for (i = 0; i < ASCII_CHARACTERS; i++)
@@ -76,13 +72,26 @@ char **analyzeText()
         //547\n89
     }
 
-    return ret;
+    return ret;//Deve ritornare una stats
 }
 
 //process q, reads his part (index) of file
-int q(int index, int m, const char *files[], int writePipe)
+int q(int mIndex, int filesCount, int m, const char *files[], int writePipe)
 {
-    //TODO: write
+    int fd, fileInex, fileLength;
+    stats stat, res;
+    res = stats();
+    for (i = 0; i < filesCount; i++)
+    {
+        fd = fileopen(files[i]); //TODO: gestire se il file non esiste o bla bla
+        fileLength = lseek(fd, 0, SEEK_END);
+        fileIndex = fileLength / m;//TODO: gestire resto divisione, insomma che lo steso carattere non venga letto 2 volte o 0
+        stat = analyzeText(fd, fileIndex, fileLength);
+        res.sumStat(&stat, 1);
+        close(fd);//TODO: come sempre controllare che si sia chiusa munnezz 
+    }
+    char * encode = res.encode();
+    write(writePipe, encode, strlen(encode)+1);//controlla sta cacata
 }
 
 //process p, generates m children processes q and assigns them the sections of file to analyze
@@ -102,20 +111,26 @@ int p(int m, int filesCount, const char *files[], int writePipe)
         }
         else if (pid == 0) //children
         {
-            q(i, m, files, pipes[getPipeIndex(i, WRITE)]);
+            q(i, m, files, pipes[getPipeIndex(i, WRITE)], filesCount);
         }
         else //father
             pids[i] = pid;
         printf("%s\n", files[i]);
     }
-
-    while (wait != -1)
-        ; //father waits all children
-    for (i = 0; i < m; i++){
-        //sumResults();//TODO: function to sum up all result got by children
+    if(pid > 0){
+        while (wait != -1)
+            ; //father waits all children
+        char * stat;
+        stats statsRes = stats();
+        for (i = 0; i < m; i++)
+        {
+            readPipe(pipes, i, stat);//TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
+            statsRes.sumStats(stat);
+        }
+        stat = statsRes.encode();
+        write(writePipe, stat, strlen(stat)+1)// stessa munnezz
     }
-
-        return 0;
+    return 0;//manco lo scrivo più
 }
 
 //data sent as input: n,m, namefile, namefile2...
@@ -131,8 +146,10 @@ int main(int argc, const char *argv[])
     //TODO: if a filename is a folder then find
 
     //TODO: divide files among proceses P
+    int *pipesToP = createPipes(n);
+    //TODO: divide files among proceses P
     int * pipesToP = createPipes(n);
-    pid_t *pids = (int *)calloc(n, sizeof(int));
+    pid_t *pids = (pid_t *)calloc(n, sizeof(int));
     int pid;
 
     //creates subprocess p
@@ -155,10 +172,21 @@ int main(int argc, const char *argv[])
     }
 
     //father
-    for (i = 0; i < n; i++)
-    {
-        wait(pids[i]);
+    if(pid > 0){
+        while (wait != -1)
+            ; //father waits all children
+        char * stat;
+        stats statsRes = stats();
+        for (i = 0; i < m; i++)
+        {
+            readPipe(pipesToP, i, stat);//TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
+            statsRes.sumStats(stat);
+        }
+        stat = statsRes.encode();
+        write(writePipe, stat, strlen(stat)+1)// stessa munnezz
+        return 0;
     }
+
 
     return 0;
 }

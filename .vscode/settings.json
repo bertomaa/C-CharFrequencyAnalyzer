@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "characterstatistics.h": "c"
+        "*.js": "javascriptreact",
+        "characterstatistics.h": "c",
+        "sstream": "cpp"
     }
 }
