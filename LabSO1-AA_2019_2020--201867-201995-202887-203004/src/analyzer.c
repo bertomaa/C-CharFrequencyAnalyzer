@@ -19,11 +19,13 @@ int checkArguments(int argc, const char *argv[])
     return 0;
 }
 
-int * createPipe(int size){
+int *createPipes(int size)
+{
     //TODO: checks and free
-    int* pipes = (int *) calloc(size * 2, sizeof(int));
+    int *pipes = (int *)calloc(size * 2, sizeof(int));
     int i;
-    for(i = 0; i < size; i++){
+    for (i = 0; i < size; i++)
+    {
         pipe(pipes + (i * 2));
     }
     return pipes;
@@ -31,49 +33,48 @@ int * createPipe(int size){
 
 int getPipeIndex(int index, int type)
 {
-    return index*2 + type;
+    return index * 2 + type;
 }
 
-int writePipe(int * pipes, int index, const char* toWrite){
+int writePipe(int *pipes, int index, const char *toWrite)
+{
     //TODO: checks and free
     write(pipes[getPipeIndex(index, WRITE)], toWrite, strlen(toWrite));
-    return 0;//error code
+    return 0; //error code
 }
 
-int readPipe(int * pipes, int index, char * buf){
+int readPipe(int *pipes, int index, char *buf)
+{
     read(pipes[getPipeIndex(index, READ)], buf, MAX_CHARACTERS);
-    return 0;//error code
+    return 0; //error code
 }
 
-
-char** analyzeText()
+char **analyzeText()
 {
     int fd;
-	int i;
-    char* ret = (char*) calloc(MAX_CHARACTERS, sizeof(char));
+    int i;
+    char *ret = (char *)calloc(MAX_CHARACTERS, sizeof(char));
 
+    //open file "texto.txt"
+    fd = open("testo.txt", "r");
 
-	//open file "texto.txt"
-	fd = open("testo.txt","r");
-
-	int characters[ASCII_CHARACTERS];
-    for(i=0; i < ASCII_CHARACTERS; i++)
+    int characters[ASCII_CHARACTERS];
+    for (i = 0; i < ASCII_CHARACTERS; i++)
     {
         characters[i] = 0;
     }
 
-	char a=0;
-	while ( (a=(char)getc(fd)) != EOF)
+    char a = 0;
+    while ((a = (char)getc(fd)) != EOF)
     {
-		characters[a]++;
-	}
-	for (i=0;i<256;i++)
+        characters[a]++;
+    }
+    for (i = 0; i < 256; i++)
     {
-        
-		//printf("Sono presenti %d simboli %c\n", characters[i], (char)i);
+
+        //printf("Sono presenti %d simboli %c\n", characters[i], (char)i);
         //547\n89
     }
-    
 
     return ret;
 }
@@ -82,46 +83,40 @@ char** analyzeText()
 int q(int index, int m, const char *files[], int writePipe)
 {
     //TODO: write
-
-	
-
 }
 
-
 //process p, generates m children processes q and assigns them the sections of file to analyze
-int p(int m, int filesCount, const char *files[])
-{   
-    int * pipes;
+int p(int m, int filesCount, const char *files[], int writePipe)
+{
+    int *pipes = createPipes(m);
     printf("I must analize files:\n");
     int i, pid;
     pid_t *pids = (int *)malloc(m * sizeof(int));
-    for (i = 0; i < filesCount; i++)
+    for (i = 0; i < m; i++)
     {
-        int j;
-        for (j = 0; j < m; j++)
+        pid = fork();
+        if (pid < 0)
         {
-            pid = fork();
-            if (pid < 0)
-            {
-                printf("Error in fork in m, exit");
-                exit(2);
-            }
-            else if (pid == 0) //children
-            {
-                q(j, m, files, );
-            }
-            else //father
-                pids[i] = pid;            
+            printf("Error in fork in p, exit");
+            exit(2);
         }
+        else if (pid == 0) //children
+        {
+            q(i, m, files, pipes[getPipeIndex(i, WRITE)]);
+        }
+        else //father
+            pids[i] = pid;
         printf("%s\n", files[i]);
     }
 
-    //true code
+    while (wait != -1)
+        ; //father waits all children
+    for (i = 0; i < m; i++){
+        //sumResults();//TODO: function to sum up all result got by children
+    }
 
-    return 0;
+        return 0;
 }
-
-
 
 //data sent as input: n,m, namefile, namefile2...
 
@@ -136,8 +131,8 @@ int main(int argc, const char *argv[])
     //TODO: if a filename is a folder then find
 
     //TODO: divide files among proceses P
-    int pipesToP = createPipe(n);
-    pid_t *pids = (int *) calloc(n, sizeof(int));
+    int * pipesToP = createPipes(n);
+    pid_t *pids = (int *)calloc(n, sizeof(int));
     int pid;
 
     //creates subprocess p
@@ -148,11 +143,11 @@ int main(int argc, const char *argv[])
         if (pid < 0)
         {
             printf("Error in fork, exit");
-            return(2);
+            return (2);
         }
         else if (pid == 0) //children
         {
-            int ret = p(m, argc - 3, argv + 3);
+            int ret = p(m, argc - 3, argv + 3, pipesToP[getPipeIndex(i, WRITE)]);
             return ret;
         }
         else //father

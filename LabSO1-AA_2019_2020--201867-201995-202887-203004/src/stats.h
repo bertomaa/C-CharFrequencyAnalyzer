@@ -14,20 +14,20 @@ typedef struct {
     int frequencies[ASCII_CHARACTERS];
     
     //returns 0 if decode has success
-    bool decode(const char* str)
-    {
+    // int decode(const char* str)
+    // {
 
-    }
+    // }
 
-    char* encode()
-    {
-        char* buffer[MAX_CHARACTERS];
-        int i;
-        for(i = 0; i < ASCII_CHARACTERS; i++)
-        {
+    // char* encode()
+    // {
+    //     char* buffer[MAX_CHARACTERS];
+    //     int i;
+    //     for(i = 0; i < ASCII_CHARACTERS; i++)
+    //     {
             
-        }
-    }
+    //     }
+    // }
 
 
 
