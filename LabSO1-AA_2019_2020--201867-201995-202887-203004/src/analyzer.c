@@ -6,11 +6,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 #include "stats.h"
+#include "wrapper.h"
+
+//TODO: ifndef nei .h
 
 int checkArguments(int argc, const char *argv[])
 {
@@ -61,8 +62,9 @@ stats analyzeText(int fd, int offset, int bytesToRead)
     lseek(fd, offset, SEEK_SET);
     read(fd, buffer, bytesToRead);
 
-    for(i = 0; buffer[i] != '\0'; i++)
+    for (i = 0; buffer[i] != '\0'; i++)
     {
+        //fin qua ce sta
         ret.frequencies[buffer[i]]++;
     }
 
@@ -72,19 +74,28 @@ stats analyzeText(int fd, int offset, int bytesToRead)
 //process q, reads his part (index) of file
 int q(int mIndex, int filesCount, int m, const char *files[], int writePipe)
 {
-    int fd, fileIndex, fileLength, i;
+    int fd, fileOffset, fileLength, i, error;
     stats stat, res;
+    initStats(stat);
+    initStats(res);
     for (i = 0; i < filesCount; i++)
     {
-        fd = open(files[i], O_RDONLY); //TODO: gestire se il file non esiste o bla bla
+        error = openWrapper(files[i], &fd); 
+        if(error){
+            continue;
+        }
         fileLength = lseek(fd, 0, SEEK_END);
-        fileIndex = fileLength / m;//TODO: gestire resto divisione, insomma che lo steso carattere non venga letto 2 volte o 0
-        stat = analyzeText(fd, fileIndex, fileLength);
+        fileOffset = (fileLength / m) * mIndex; //TODO: gestire resto divisione, insomma che lo steso carattere non venga letto 2 volte o 0
+        stat = analyzeText(fd, fileOffset, fileLength);
         res = sumStats(res, stat);
-        close(fd);//TODO: come sempre controllare che si sia chiusa munnezz 
+        close(fd); //TODO: come sempre controllare che si sia chiusa munnezz
     }
     char * encoded = encode(res);
-    write(writePipe, encoded, strlen(encoded)+1);//controlla sta cacata
+    //char * encoded = "bella ragaaaaa";
+    write(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
+    printf("figlio q ha scritto in pipe\n");
+    //TODO free varie e close
+    exit(0);
     return 0;
 }
 
@@ -92,7 +103,6 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe)
 int p(int m, int filesCount, const char *files[], int writePipe)
 {
     int *pipes = createPipes(m);
-    printf("I must analize files:\n");
     int i, pid;
     pid_t *pids = (int *)malloc(m * sizeof(int));
     for (i = 0; i < m; i++)
@@ -109,30 +119,30 @@ int p(int m, int filesCount, const char *files[], int writePipe)
         }
         else //father
             pids[i] = pid;
-        printf("%s\n", files[i]);
     }
-    if(pid > 0){
+    if (pid > 0)
+    {
         while (wait(NULL) != -1)
             ; //father waits all children
-        char * stat;
+        char stat[MAX_CHARACTERS];
         stats statsRes, tmpStats;
         int res;
         for (i = 0; i < m; i++)
         {
-            readPipe(pipes, i, stat);//TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
-            res = decode(stat, &tmpStats);
-            if(res != 0)
-                return 1;//TODO: esegui free ecc..
+            readPipe(pipes, i, stat); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
+            printf("i have ricevuto: %s\n", stat);
+            //res = decode(stat, &tmpStats);
+            if (res != 0)
+                return 1; //TODO: esegui free ecc..
             statsRes = sumStats(statsRes, tmpStats);
         }
-        stat = encode(statsRes);
-        write(writePipe, stat, strlen(stat)+1);// stessa munnezz
+        char *encoded = "bella raga2";            //encode(statsRes);
+        write(writePipe, stat, strlen(stat) + 1); // stessa munnezz
     }
-    return 0;//manco lo scrivo più
+    return 0; //manco lo scrivo più
 }
 
 //data sent as input: n,m, namefile, namefile2...
-
 int main(int argc, const char *argv[])
 {
     if (checkArguments(argc, argv) != 0)
@@ -149,6 +159,7 @@ int main(int argc, const char *argv[])
     int pid;
 
     //creates subprocess p
+    printf("starting with n: %d, m: %d\n", n, m);
     int i;
     for (i = 0; i < n; i++)
     {
@@ -163,24 +174,33 @@ int main(int argc, const char *argv[])
             int ret = p(m, argc - 3, argv + 3, pipesToP[getPipeIndex(i, WRITE)]);
             return ret;
         }
-        else //father
+        else
+        { //father
             pids[i] = pid;
+        }
     }
 
     //father
-    if(pid > 0){
+    if (pid > 0)
+    {
+        printf("\n\nmain: waiting for all children\n\n");
         while (wait(NULL) != -1)
             ; //father waits all children
-        char * stat;
+        printf("\n\nmain: waited for all children\n\n");
+        char stat[MAX_CHARACTERS];
         stats statsRes;
-        for (i = 0; i < m; i++)
+        for (i = 0; i < n; i++)
         {
-            readPipe(pipesToP, i, stat);//TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
+            readPipe(pipesToP, i, stat); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
             // statsRes = sumStats(statsRes, decode(stat));
+            printf("dal main analizer ricevo: %s\n", stat);
+            stats s;
+            initStats(s);
+            decode(stat, &s);
+            printStats(s);
         }
         return 0;
     }
-
 
     return 0;
 }
