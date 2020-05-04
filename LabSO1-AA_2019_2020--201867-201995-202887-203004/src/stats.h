@@ -13,14 +13,14 @@
 
 typedef struct stats
 {
-    int frequencies[MAX_CHARACTERS];
+    int frequencies[MAX_CHARACTERS];//@THOMAS, MA QUA NON DOVREBBE ESSERE ASCII_CHAR..?
 } stats;
 
 
-void initStats(stats stat){
+void initStats(stats* stat){
     int i;
     for(i = 0; i < MAX_CHARACTERS; i++){
-        stat.frequencies[i] = 0;
+        stat->frequencies[i] = 0;
     }
 }
 
@@ -109,4 +109,25 @@ void printStats(const stats s)
             printf("'%c' : %d, ", i, s.frequencies[i]);
     }
     printf("\n\n");
+}
+
+void writeStatsToFile(const stats s){/*
+    FILE* fd;
+    int i;
+    remove("stats.txt");
+    fd = fopen("stats.txt", "w");
+    for(i = 0; i < MAX_CHARACTERS; i++)
+    {
+        if(s.frequencies[i] != 0 && i != 13 && i != 10 && i != 34 && i != 39)
+            fprintf(fd, "\"%c\" : %d, ", i, s.frequencies[i]);
+    }
+    fseek(fd, -2, SEEK_END);
+    fprintf(fd, "}");
+    fclose(fd);*/
+    int i, fd;
+    fd = open("stats.txt", O_RDONLY);
+    char* str = encode(s);
+    sprintf(fd, str);
+    close(fd);
+    free(str);
 }

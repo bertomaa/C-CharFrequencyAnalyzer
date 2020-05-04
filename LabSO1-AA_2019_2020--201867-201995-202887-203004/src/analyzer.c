@@ -57,6 +57,7 @@ stats analyzeText(int fd, int offset, int bytesToRead)
 {
     int i;
     stats ret;
+    initStats(&ret);
     char buffer[MAX_CHARACTERS];
 
     lseek(fd, offset, SEEK_SET);
@@ -76,8 +77,8 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe)
 {
     int fd, fileOffset, fileLength, i, error;
     stats stat, res;
-    initStats(stat);
-    initStats(res);
+    initStats(&stat);
+    initStats(&res);
     for (i = 0; i < filesCount; i++)
     {
         error = openWrapper(files[i], &fd); 
@@ -126,13 +127,16 @@ int p(int m, int filesCount, const char *files[], int writePipe)
             ; //father waits all children
         char stat[MAX_CHARACTERS];
         stats statsRes, tmpStats;
+        initStats(&statsRes);
+        initStats(&tmpStats);
         int res;
         for (i = 0; i < m; i++)
         {
             readPipe(pipes, i, stat); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
             printf("i have ricevuto: %s\n", stat);
-            //res = decode(stat, &tmpStats);
+            res = decode(stat, &tmpStats);
             if (res != 0)
+                printf("errore decode p");
                 return 1; //TODO: esegui free ecc..
             statsRes = sumStats(statsRes, tmpStats);
         }
@@ -188,16 +192,20 @@ int main(int argc, const char *argv[])
             ; //father waits all children
         printf("\n\nmain: waited for all children\n\n");
         char stat[MAX_CHARACTERS];
-        stats statsRes;
+        stats statsRes, decoded;
+        initStats(&statsRes);
+        initStats(&decoded);
         for (i = 0; i < n; i++)
         {
             readPipe(pipesToP, i, stat); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
-            // statsRes = sumStats(statsRes, decode(stat));
-            printf("dal main analizer ricevo: %s\n", stat);
+            decode(stat, &decoded);//TODO:check error
+            statsRes = sumStats(statsRes, decoded);
+            //printf("dal main analizer ricevo: %s\n", stat);
             stats s;
-            initStats(s);
+            initStats(&s);
             decode(stat, &s);
             printStats(s);
+            writeStatsToFile(s);
         }
         return 0;
     }
