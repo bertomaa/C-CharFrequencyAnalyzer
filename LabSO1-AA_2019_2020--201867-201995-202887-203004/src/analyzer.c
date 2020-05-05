@@ -46,7 +46,13 @@ int *distributeQuantity(int quantity, int toDistribute)
 int *createPipes(int size)
 {
     //TODO: checks and free
-    int *pipes = (int *)calloc(size * 2, sizeof(int));
+    int *pipes;
+
+    int error = allocWrapper(size*2, sizeof(int), (void**) &pipes);
+    if(error){
+        exit(2);
+    }
+
     int i;
     for (i = 0; i < size; i++)
     {
@@ -60,18 +66,50 @@ int getPipeIndex(int index, int type)
     return index * 2 + type;
 }
 
-int writePipe(int *pipes, int index, const char *toWrite)
+int readPipe(int *pipes, int index, char *buf, int toRead)
 {
-    //TODO: checks and free
-    printf("writing to pipe %d chars\n", (int)strlen(toWrite));
-    write(pipes[getPipeIndex(index, WRITE)], toWrite, (int)strlen(toWrite) + 1);
+    int error = readWrapper(read(pipes[getPipeIndex(index, READ)], buf, MAX_CHARACTERS * toRead));
+    if(error)
+    {
+        exit(2);
+    }
+    printf("Read from pipe %d chars\n", (int)strlen(buf));
     return 0; //error code
 }
 
-int readPipe(int *pipes, int index, char *buf, int toRead)
+//controlla se write() eseguita correttamente
+int myWrite(int toWrite, const char *buf, int nbytes)
 {
-    read(pipes[getPipeIndex(index, READ)], buf, MAX_CHARACTERS * toRead);
-    printf("Read from pipe %d chars\n", (int)strlen(buf));
+    printf("writing %d chars in myWrite\n", (int)strlen(nbytes));
+    int error = writeWrapper(write(toWrite, buf, nbytes));
+    if(error)
+    {
+        exit(2);
+    }
+    return 0; //error code
+}
+
+//controlla se read() eseguita correttamente
+int myRead(int toRead, const char *buf, int nbytes)
+{
+    printf("reading %d chars in myRead\n", (int)strlen(nbytes));
+    int error = readWrapper(read(toRead, buf, nbytes));
+    if(error)
+    {
+        exit(2);
+    }
+    return 0; //error code
+}
+
+//controlla se close() eseguita correttamente
+int myClose(int fd)
+{
+    printf("closing file in myClose\n");
+    int error = closeWrapper(close(fd));
+    if(error)
+    {
+        exit(2);
+    }
     return 0; //error code
 }
 
@@ -93,7 +131,7 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
     //TODO:check error
 
     lseek(fd, offset, SEEK_SET);
-    read(fd, buffer, bytesToRead);
+    myRead(fd, buffer, bytesToRead);
     printf("analyzing file: %d with offset %d reading %d\n", id, offset, bytesToRead);
 
     for (i = 0; buffer[i] != '\0'; i++)
@@ -113,7 +151,10 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
     int fd, fileOffset, fileLength, i, error;
     stats *statsToSend, tmp;
     error = allocWrapper(filesCount, sizeof(stats), (void **)&statsToSend);
-    //TODO: check error
+    if(error)
+    {
+        exit(2);
+    }
     for (i = 0; i < filesCount; i++)
     {
         initStats(&statsToSend[i], i + fileIndex);
@@ -132,13 +173,13 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
         else
             tmp = analyzeText(fd, fileOffset, fileLength / m, fileIndex + i);
         sumStats(&statsToSend[i], &tmp);
-        close(fd);
+        myClose(fd);
     }
     char *encoded = encodeMultiple(statsToSend, filesCount);
     printf("sending from q%d: %s\n", mIndex, encoded);
     //char *encoded = encodeMultiple(statsToSend, filesCount);                   //TODO: come sempre controllare che si sia chiusa munnezz
-    write(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
-    close(writePipe);
+    myWrite(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
+    myClose(writePipe);
     //TODO: free varie e close
     return 0;
 }
@@ -174,14 +215,12 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
         int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&str);
         if (error)
         {
-            fprintf(stderr, "Error, impossible to allocate buffer memory.");
             exit(2);
         }
         stats *resultStats;
         error = allocWrapper(filesCount, sizeof(stats), (void **)&resultStats);
         if (error)
         {
-            fprintf(stderr, "Error, impossible to allocate stats memory.");
             exit(2);
         }
         for (i = 0; i < filesCount; i++)
@@ -217,8 +256,8 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
         }
         char *resultString = encodeMultiple(resultStats, filesCount);
         printf("mandato al main:%s\n", resultString);
-        write(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
-        close(writePipe);
+        myWrite(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
+        myClose(writePipe);
     }
     return 0; //manco lo scrivo più
 }
@@ -277,6 +316,10 @@ int main(int argc, const char *argv[])
         printf("\n\nmain: waited for all children\n\n");
         char *stat;
         int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&stat); //TODO:trova una stima migliore
+        if(error)
+        {
+            exit(2);
+        }
         stats *resultStats;
         for (i = 0; i < filesCount; i++)
         {
