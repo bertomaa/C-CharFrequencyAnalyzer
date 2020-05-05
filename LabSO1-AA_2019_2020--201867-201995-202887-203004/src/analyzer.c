@@ -43,25 +43,28 @@ int getPipeIndex(int index, int type)
 int writePipe(int *pipes, int index, const char *toWrite)
 {
     //TODO: checks and free
-    write(pipes[getPipeIndex(index, WRITE)], toWrite, strlen(toWrite));
+    printf("writing to pipe %d chars\n", (int)strlen(toWrite));
+    write(pipes[getPipeIndex(index, WRITE)], toWrite, (int)strlen(toWrite) + 1);
     return 0; //error code
 }
 
-int readPipe(int *pipes, int index, char *buf)
+int readPipe(int *pipes, int index, char *buf, int toRead)
 {
-    read(pipes[getPipeIndex(index, READ)], buf, MAX_CHARACTERS);
+    read(pipes[getPipeIndex(index, READ)], buf, MAX_CHARACTERS * toRead);
+    printf("Read from pipe %d chars\n", (int)strlen(buf));
     return 0; //error code
 }
 
 stats analyzeText(int fd, int offset, int bytesToRead, int id)
 {
     int i;
-    stats ret;
+    stats ret; //TODO: dovrebbe essere allocato dinamicamente se viene ritornato?
     initStats(&ret, id);
     char buffer[MAX_CHARACTERS];
 
     lseek(fd, offset, SEEK_SET);
     read(fd, buffer, bytesToRead);
+    printf("\nanalyzing file: %d with offset %d reading %d\n", id, offset, bytesToRead);
 
     for (i = 0; buffer[i] != '\0'; i++)
     {
@@ -76,7 +79,13 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
 int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int fileIndex)
 {
     int fd, fileOffset, fileLength, i, error;
-    stats stat;
+    stats *statsToSend, tmp;
+    error = allocWrapper(filesCount, sizeof(stats), (void **)&statsToSend);
+    //TODO: check error
+    for (i = 0; i < filesCount; i++)
+    {
+        initStats(&statsToSend[i], i + fileIndex);
+    }
     for (i = 0; i < filesCount; i++)
     {
         error = openWrapper(files[i], &fd);
@@ -86,15 +95,16 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
         }
         fileLength = lseek(fd, 0, SEEK_END);
         fileOffset = (fileLength / m) * mIndex; //TODO: gestire resto divisione, insomma che lo steso carattere non venga letto 2 volte o 0
-        stat = analyzeText(fd, fileOffset, fileLength, fileIndex + i);
+        tmp = analyzeText(fd, fileOffset, fileLength / m, fileIndex + i);
+        sumStats(&statsToSend[i], &tmp);
         close(fd);
-        char *encoded = encode(stat);                   //TODO: come sempre controllare che si sia chiusa munnezz
-        write(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
-        //TODO: SE VOUI IN FUTURO METTI SIGNAL AL PADRE E IMPLEMENTA VISUALIZZAZIONE IN TEMPO REALE
-        printf("figlio q ha scritto in pipe per file %s\n", files[i]);
     }
+    char *encoded = encodeMultiple(statsToSend, filesCount);
+    printf("sending from q%d: %s\n", mIndex, encoded);
+    //char *encoded = encodeMultiple(statsToSend, filesCount);                   //TODO: come sempre controllare che si sia chiusa munnezz
+    write(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
+    close(writePipe);
     //TODO free varie e close
-    exit(0);
     return 0;
 }
 
@@ -102,19 +112,20 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
 int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
 {
     int *pipes = createPipes(m);
-    int i, pid;
+    int i, pid, j;
     pid_t *pids = (int *)malloc(m * sizeof(int));
     for (i = 0; i < m; i++)
     {
         pid = fork();
         if (pid < 0)
         {
-            printf("Error in fork in p, exit");
+            fprintf(stderr, "Error in fork in p, exit");
             exit(2);
         }
         else if (pid == 0) //children
         {
             q(i, filesCount, m, files, pipes[getPipeIndex(i, WRITE)], fileIndex);
+            return 0;
         }
         else //father
             pids[i] = pid;
@@ -123,15 +134,15 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
     {
         while (wait(NULL) != -1)
             ; //father waits all children
-        char* stat;
-        int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void**) &stat);
+        char *str;
+        int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&str);
         if (error)
         {
             fprintf(stderr, "Error, impossible to allocate buffer memory.");
             exit(2);
         }
         stats *resultStats;
-        error = allocWrapper(filesCount, sizeof(stats), (void**) &resultStats);
+        error = allocWrapper(filesCount, sizeof(stats), (void **)&resultStats);
         if (error)
         {
             fprintf(stderr, "Error, impossible to allocate stats memory.");
@@ -144,8 +155,8 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
         int res;
         for (i = 0; i < m; i++)
         {
-            readPipe(pipes, i, stat); //TODO: indovina? controlla  che la munnezz abbia ritornato e non sia andata al lago
-            printf("p ha ricevuto: %s\n", stat);
+            readPipe(pipes, i, str, filesCount); //TODO: indovina? controlla  che la munnezz abbia ritornato e non sia andata al lago
+            //printf("p ha ricevuto: %s\n", stat);
             /*
             //testing
             stats tmp;
@@ -153,17 +164,25 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
             decode(stat, &tmp, (3));
             //testing
             */
-            int decodeError = decodeMultiple(stat, resultStats); //TODO: check
-            if (decodeError != 0)
+            int decodeError = decodeMultiple(str, resultStats); //TODO: check
+            // for (j = 0; j < filesCount; j++)
+            // {
+            //     printf("(p)In totale è stato letto nel file %d da q %d:\n", j, i);
+            //     printStats(resultStats[j]);
+            // }
+            int *p = malloc(sizeof(int));
+            *p = 3;
+            //int decodeError = decode(str, resultStats, p); //TODO: check
+            if (decodeError)
             {
-                printf("errore decode p");
+                printf("errore decode p\n");
                 return 1; //TODO: esegui free ecc..
             }
-            printf("fine ciclo %d\n", i);
         }
-        printStats(resultStats[0]);
-        char* resultString = encode(resultStats[0]);
+        char *resultString = encodeMultiple(resultStats, filesCount);
+        printf("mandato al main:%s\n", resultString);
         write(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
+        close(writePipe);
     }
     return 0; //manco lo scrivo più
 }
@@ -206,7 +225,6 @@ int main(int argc, const char *argv[])
             pids[i] = pid;
         }
     }
-
     //father
     if (pid > 0)
     {
@@ -214,8 +232,8 @@ int main(int argc, const char *argv[])
         while (wait(NULL) != -1)
             ; //father waits all children
         printf("\n\nmain: waited for all children\n\n");
-        char* stat;
-        int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void**) &stat);//TODO:trova una stima migliore
+        char *stat;
+        int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&stat); //TODO:trova una stima migliore
         stats *resultStats;
         for (i = 0; i < filesCount; i++)
         {
@@ -223,12 +241,20 @@ int main(int argc, const char *argv[])
         }
         for (i = 0; i < n; i++)
         {
-            readPipe(pipesToP, i, stat); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
+            readPipe(pipesToP, i, stat, filesCount); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
             printf("dal main analizer ricevo: %s\n", stat);
-            decodeMultiple(stat, resultStats);      //TODO:check error
+            decodeMultiple(stat, resultStats); //TODO:check error
         }
-        printf("In totale è stato letto:");
-        printStats(resultStats[0]);
+        for (i = 0; i < filesCount; i++)
+        {
+            printf("In totale è stato letto nel file %d:\n", i);
+            printStats(resultStats[i]);
+        }
+        printf("FINE!");
+        for (i = 0; i < 50; i++)
+        {
+            printf("\n");
+        }
         return 0;
     }
 

@@ -1,3 +1,6 @@
+#ifndef __WRAPPER_H__
+#define __WRAPPER_H__
+
 /*
     This file contains the functions that handle various type of errors, that are
     - opening of a file
@@ -62,3 +65,4 @@ int writeWrapped(int write)
 
 
 
+#endif

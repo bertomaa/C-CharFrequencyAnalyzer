@@ -1,3 +1,6 @@
+#ifndef __STATS_H__
+#define __STATS_H__
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -27,34 +30,8 @@ void initStats(stats *stat, int _fileID)
     }
 }
 
-int decodeMultiple(const char *str, stats *array)
-{
-    char buffer[20];
-    int statCounter, i,idStartingIndex = 0;
-    int stringLen = strlen(str);
-    for(i = 0; i < stringLen; i++)
-    {
-        if(str[i] == '-')
-        {
-            idStartingIndex = i + 1;
-        }
-        if(str[i] == '_')
-        {
-            memcpy(buffer, &str[idStartingIndex], i - idStartingIndex);
-            buffer[i - idStartingIndex] = '\0';
-            array[statCounter].fileID = atoi(buffer);
-            i++;
-            int decodeError = decode(str, array + statCounter, &i);
-            if(decodeError)
-                return 1;
-            statCounter++;
-        }
-    }
-    return 0;
-}
-
 //returns 0 if decode has success
-int decode(const char *str, stats *res, int* i)
+int decode(const char *str, stats *res, int *i)
 {
     char c;
     int currentCharacter = 0, numberStartingIndex = *i;
@@ -85,6 +62,35 @@ int decode(const char *str, stats *res, int* i)
     return 0;
 }
 
+int decodeMultiple(const char *str, stats *array)
+{
+    char buffer[20];
+    int statCounter = 0, i, idStartingIndex = 0;
+    int stringLen = strlen(str);
+    for (i = 0; i < stringLen; i++)
+    {
+        if (str[i] == '-')
+        {
+            idStartingIndex = i + 1;
+        }
+        if (str[i] == '_')
+        {
+            memcpy(buffer, &str[idStartingIndex], i - idStartingIndex);
+            buffer[i - idStartingIndex] = '\0';
+            array[statCounter].fileID = atoi(buffer);
+            i++;
+            int decodeError = decode(str, array + statCounter, &i);
+            idStartingIndex = i+1;
+            if (decodeError)
+            {
+                return 1;
+            }
+            statCounter++;
+        }
+    }
+    return 0;
+}
+
 int getDigits(int n)
 {
     if (n == 0)
@@ -104,6 +110,7 @@ char *encode(const stats stat)
     char *buffer = (char *)calloc(MAX_CHARACTERS, sizeof(char));
     int i, pointer;
     sprintf(buffer, "-%d_", stat.fileID);
+    printf("\nwrinting id: -%d_\n", stat.fileID);
     pointer = getDigits(stat.fileID) + 2;
     for (i = 0; i < ASCII_CHARACTERS; i++)
     {
@@ -117,6 +124,27 @@ char *encode(const stats stat)
     }
     buffer[pointer + 1] = '\0';
     return buffer;
+}
+
+char *encodeMultiple(stats *statsArray, int len)
+{
+    char *res;
+    int offset = 0, i;
+    //TODO: check error
+    int error = allocWrapper(MAX_CHARACTERS * len, sizeof(char), (void **)&res);
+    if (error)
+    {
+        printf("Errore allocazione encode multiple");
+        exit(1);
+    }
+    for (i = 0; i < len; i++)
+    {
+        char *str = encode(statsArray[i]);
+        int strLen = strlen(str);
+        memcpy(res + offset, str, strLen);
+        offset += strLen;
+    }
+    return res;
 }
 
 //sums the content of first and second modifying first
@@ -136,7 +164,7 @@ void printStats(const stats s)
     for (i = 0; i < ASCII_CHARACTERS; i++)
     {
         if (s.frequencies[i] != 0)
-            printf("'%c' : %d,\n", i, s.frequencies[i]);
+            printf("'%c' : %d,", i, s.frequencies[i]);
     }
     printf("\n\n");
 }
@@ -162,3 +190,5 @@ void writeStatsToFile(const stats s)
     close(fd);
     free(str);
 }*/
+
+#endif
