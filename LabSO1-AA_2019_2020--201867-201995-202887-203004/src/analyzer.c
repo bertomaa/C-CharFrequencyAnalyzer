@@ -11,8 +11,6 @@
 #include "stats.h"
 #include "wrapper.h"
 
-//TODO: ifndef nei .h
-
 int checkArguments(int argc, const char *argv[])
 {
     if (argc < 4)
@@ -21,6 +19,28 @@ int checkArguments(int argc, const char *argv[])
         return 1;
     }
     return 0;
+}
+
+int *distributeQuantity(int quantity, int toDistribute)
+{
+    int *ret;
+    int error = allocWrapper(toDistribute, sizeof(int), (void **)&ret);
+    //TODO: check error
+    int perProcess = quantity / toDistribute;
+    int i;
+    int tot = perProcess * toDistribute;
+    for (i = 0; i < toDistribute; i++)
+    {
+        ret[i] = perProcess;
+    }
+    for (i = 0; i < toDistribute; i++)
+    {
+        if (tot != quantity)
+            ret[i]++;
+        else
+            break;
+    }
+    return ret;
 }
 
 int *createPipes(int size)
@@ -55,16 +75,26 @@ int readPipe(int *pipes, int index, char *buf, int toRead)
     return 0; //error code
 }
 
+int readPipeAndAppend(int *pipes, int index, char *buf, int toRead)
+{
+    int len = strlen(buf);
+    read(pipes[getPipeIndex(index, READ)], buf + len, MAX_CHARACTERS * toRead);
+    printf("Read from pipe nad appended %d chars\n", (int)strlen(buf) - len);
+    return 0; //error code
+}
+
 stats analyzeText(int fd, int offset, int bytesToRead, int id)
 {
     int i;
     stats ret; //TODO: dovrebbe essere allocato dinamicamente se viene ritornato?
     initStats(&ret, id);
-    char buffer[MAX_CHARACTERS];
+    char* buffer;
+    int error = allocWrapper(bytesToRead + 1, sizeof(char), (void**) &buffer);
+    //TODO:check error
 
     lseek(fd, offset, SEEK_SET);
     read(fd, buffer, bytesToRead);
-    printf("\nanalyzing file: %d with offset %d reading %d\n", id, offset, bytesToRead);
+    printf("analyzing file: %d with offset %d reading %d\n", id, offset, bytesToRead);
 
     for (i = 0; buffer[i] != '\0'; i++)
     {
@@ -72,12 +102,14 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
         ret.frequencies[buffer[i]]++;
     }
 
+    //free(buffer);
     return ret;
 }
 
 //process q, reads his part (index) of file
 int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int fileIndex)
 {
+    printf("q: %d, con filescount: %d, fileindex: %d\n", mIndex, filesCount, fileIndex);
     int fd, fileOffset, fileLength, i, error;
     stats *statsToSend, tmp;
     error = allocWrapper(filesCount, sizeof(stats), (void **)&statsToSend);
@@ -95,7 +127,10 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
         }
         fileLength = lseek(fd, 0, SEEK_END);
         fileOffset = (fileLength / m) * mIndex; //TODO: gestire resto divisione, insomma che lo steso carattere non venga letto 2 volte o 0
-        tmp = analyzeText(fd, fileOffset, fileLength / m, fileIndex + i);
+        if (mIndex == m - 1)
+            tmp = analyzeText(fd, fileOffset, fileLength - fileOffset, fileIndex + i);
+        else
+            tmp = analyzeText(fd, fileOffset, fileLength / m, fileIndex + i);
         sumStats(&statsToSend[i], &tmp);
         close(fd);
     }
@@ -104,13 +139,14 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
     //char *encoded = encodeMultiple(statsToSend, filesCount);                   //TODO: come sempre controllare che si sia chiusa munnezz
     write(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
     close(writePipe);
-    //TODO free varie e close
+    //TODO: free varie e close
     return 0;
 }
 
 //process p, generates m children processes q and assigns them the sections of file to analyze
 int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
 {
+    printf("p: %d, con filescount: %d, fileindex: %d\n", m, filesCount, fileIndex);
     int *pipes = createPipes(m);
     int i, pid, j;
     pid_t *pids = (int *)malloc(m * sizeof(int));
@@ -119,7 +155,7 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
         pid = fork();
         if (pid < 0)
         {
-            fprintf(stderr, "Error in fork in p, exit");
+            fprintf(stderr, "Error in fork in p, exit\n");
             exit(2);
         }
         else if (pid == 0) //children
@@ -170,8 +206,8 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
             //     printf("(p)In totale è stato letto nel file %d da q %d:\n", j, i);
             //     printStats(resultStats[j]);
             // }
-            int *p = malloc(sizeof(int));
-            *p = 3;
+            //int *p = malloc(sizeof(int));
+            //*p = 3;
             //int decodeError = decode(str, resultStats, p); //TODO: check
             if (decodeError)
             {
@@ -190,6 +226,11 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
 //data sent as input: n,m, namefile, namefile2...
 int main(int argc, const char *argv[])
 {
+    int i;
+    for (i = 0; i < 50; i++)
+    {
+        printf("\n");
+    }
     if (checkArguments(argc, argv) != 0)
         exit(1);
 
@@ -199,14 +240,15 @@ int main(int argc, const char *argv[])
 
     //TODO: if a filename is a folder then find the files
 
-    //TODO: divide files among proceses P
+    int *assignedFiles = distributeQuantity(filesCount, n);
+
     int *pipesToP = createPipes(n);
     pid_t *pids = (pid_t *)calloc(n, sizeof(int));
     int pid;
 
     //creates subprocess p
     printf("starting with n: %d, m: %d\n", n, m);
-    int i;
+    int offset = 0;
     for (i = 0; i < n; i++)
     {
         pid = fork();
@@ -217,13 +259,14 @@ int main(int argc, const char *argv[])
         }
         else if (pid == 0) //children
         {
-            int ret = p(m, filesCount, argv + 3, pipesToP[getPipeIndex(i, WRITE)], 0);
+            int ret = p(m, assignedFiles[i], argv + offset + 3, pipesToP[getPipeIndex(i, WRITE)], offset);
             return ret;
         }
         else
         { //father
             pids[i] = pid;
         }
+        offset += assignedFiles[i];
     }
     //father
     if (pid > 0)
@@ -241,20 +284,17 @@ int main(int argc, const char *argv[])
         }
         for (i = 0; i < n; i++)
         {
-            readPipe(pipesToP, i, stat, filesCount); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
+            readPipeAndAppend(pipesToP, i, stat, filesCount); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
             printf("dal main analizer ricevo: %s\n", stat);
-            decodeMultiple(stat, resultStats); //TODO:check error
+            //
         }
+        decodeMultiple(stat, resultStats); //TODO:check error
         for (i = 0; i < filesCount; i++)
         {
             printf("In totale è stato letto nel file %d:\n", i);
             printStats(resultStats[i]);
         }
         printf("FINE!");
-        for (i = 0; i < 50; i++)
-        {
-            printf("\n");
-        }
         return 0;
     }
 

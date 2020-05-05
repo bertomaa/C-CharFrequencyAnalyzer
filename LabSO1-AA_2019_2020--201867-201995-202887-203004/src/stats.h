@@ -80,7 +80,7 @@ int decodeMultiple(const char *str, stats *array)
             array[statCounter].fileID = atoi(buffer);
             i++;
             int decodeError = decode(str, array + statCounter, &i);
-            idStartingIndex = i+1;
+            idStartingIndex = i + 1;
             if (decodeError)
             {
                 return 1;
@@ -164,7 +164,7 @@ void printStats(const stats s)
     for (i = 0; i < ASCII_CHARACTERS; i++)
     {
         if (s.frequencies[i] != 0)
-            printf("'%c' : %d,", i, s.frequencies[i]);
+            printf("%c : %d\n", i, s.frequencies[i]);
     }
     printf("\n\n");
 }
