@@ -11,6 +11,8 @@
 #include "stats.h"
 #include "wrapper.h"
 
+#define MAX_PATH_CHARACTERS 1024
+
 int checkArguments(int argc, const char *argv[])
 {
     if (argc < 4)
@@ -19,6 +21,90 @@ int checkArguments(int argc, const char *argv[])
         return 1;
     }
     return 0;
+}
+
+char* getCommandOutput(const char* cmd)
+{
+    //TODO:dite che ce lo lascia usare?
+    char buffer[MAX_PIPE_CHARACTERS];
+    char* ret;
+    int size = 0;
+    int error = allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void**) &ret);
+    if(error)
+    {
+        //TODO: gestisci errore
+        exit(1);
+    }
+    FILE *fp = popen(cmd, "r");
+    if(fp == NULL)
+    {
+        //TODO: gestisci errore
+        exit(1);
+    }
+    while(fgets(buffer, MAX_PIPE_CHARACTERS, fp) != NULL){
+        size += strlen(buffer) + 1;
+        if(size >= MAX_PIPE_CHARACTERS)  //TODO: gestisci errore, stringa più lunga del massimo
+            exit(1);
+        strcat(ret, buffer);
+    };
+    return ret;
+}
+
+//returns boolean values 0/1
+int isPathDirectory(const char* path)
+{
+    int pathLen = strlen(path);
+    char command[MAX_PIPE_CHARACTERS];
+    strcat(command, "file ");
+    strcat(command, path);
+    char* output = getCommandOutput(command);
+    int res = strcmp(output + pathLen + 2, "directory\n");
+    free((void*) output);
+    if(res == 0)
+        return 1;
+    return 0;
+}
+
+char** getElementsInDirectory(const char* path, int recursive)
+{
+    int count;
+    char buffer[MAX_PIPE_CHARACTERS];
+    char** ret;
+
+    buffer[0] = '\0';
+    strcat(buffer, "ls ");
+    strcat(buffer, path);
+    char* output = getCommandOutput(buffer);
+    //printf("ls output = %s.\n\n", output);
+    
+    //retrieve all entries
+    char *newPath = strtok(output, "\n");
+    //loop through the string to extract all other tokens
+    while(newPath != NULL) {
+        
+        printf("%s\n", newPath ); //printing each token
+        newPath = strtok(NULL, "\n");
+    }
+
+    free((void*) output);
+    return ret;
+}
+
+char* checkDirectories(const char* paths[], int pathsCount, int recursive)
+{
+    int i = 0;
+    for(i = 0; i < pathsCount; i++)
+    {
+        if(isPathDirectory(paths[i]))
+        {
+            //TODO: ask if the user wants to scan down this directory recursively and change recursive
+            printf("opening directory %s\n", paths[i]);
+            //get all the files in the directory
+            getElementsInDirectory(paths[i], recursive);
+            
+        }
+    }
+    exit(1);
 }
 
 int *distributeQuantity(int quantity, int toDistribute)
@@ -70,7 +156,7 @@ int writePipe(int *pipes, int index, const char *toWrite)
 
 int readPipe(int *pipes, int index, char *buf, int toRead)
 {
-    read(pipes[getPipeIndex(index, READ)], buf, MAX_CHARACTERS * toRead);
+    read(pipes[getPipeIndex(index, READ)], buf, MAX_PIPE_CHARACTERS * toRead);
     printf("Read from pipe %d chars\n", (int)strlen(buf));
     return 0; //error code
 }
@@ -78,7 +164,7 @@ int readPipe(int *pipes, int index, char *buf, int toRead)
 int readPipeAndAppend(int *pipes, int index, char *buf, int toRead)
 {
     int len = strlen(buf);
-    read(pipes[getPipeIndex(index, READ)], buf + len, MAX_CHARACTERS * toRead);
+    read(pipes[getPipeIndex(index, READ)], buf + len, MAX_PIPE_CHARACTERS * toRead);
     printf("Read from pipe nad appended %d chars\n", (int)strlen(buf) - len);
     return 0; //error code
 }
@@ -171,7 +257,7 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
         while (wait(NULL) != -1)
             ; //father waits all children
         char *str;
-        int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&str);
+        int error = allocWrapper(MAX_PIPE_CHARACTERS * filesCount, sizeof(stats), (void **)&str);
         if (error)
         {
             fprintf(stderr, "Error, impossible to allocate buffer memory.");
@@ -234,11 +320,13 @@ int main(int argc, const char *argv[])
     if (checkArguments(argc, argv) != 0)
         exit(1);
 
+
     int n = atoi(argv[1]);
     int m = atoi(argv[2]);
     int filesCount = argc - 3;
 
     //TODO: if a filename is a folder then find the files
+    checkDirectories(argv + 3, filesCount, 0);
 
     int *assignedFiles = distributeQuantity(filesCount, n);
 
@@ -276,7 +364,7 @@ int main(int argc, const char *argv[])
             ; //father waits all children
         printf("\n\nmain: waited for all children\n\n");
         char *stat;
-        int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&stat); //TODO:trova una stima migliore
+        int error = allocWrapper(MAX_PIPE_CHARACTERS * filesCount, sizeof(stats), (void **)&stat); //TODO:trova una stima migliore
         stats *resultStats;
         for (i = 0; i < filesCount; i++)
         {
