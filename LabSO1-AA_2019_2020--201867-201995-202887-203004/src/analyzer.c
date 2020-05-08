@@ -5,11 +5,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "stats.h"
 #include "wrapper.h"
+#include "stats.h"
 
 #define MAX_PATH_CHARACTERS 1024
 
@@ -296,6 +297,7 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
             //*p = 3;
             //int decodeError = decode(str, resultStats, p); //TODO: check
             if (decodeError)
+            
             {
                 printf("errore decode p\n");
                 return 1; //TODO: esegui free ecc..
@@ -326,7 +328,7 @@ int main(int argc, const char *argv[])
     int filesCount = argc - 3;
 
     //TODO: if a filename is a folder then find the files
-    checkDirectories(argv + 3, filesCount, 0);
+    //checkDirectories(argv + 3, filesCount, 0);
 
     int *assignedFiles = distributeQuantity(filesCount, n);
 
