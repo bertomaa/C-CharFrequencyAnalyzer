@@ -19,6 +19,9 @@ int checkArguments(int argc, const char *argv[])
     if (argc < 4)
     {
         printf("Wrong arguments, usage is: analyzer <n> <m> <file1> <file2> ... \n");
+        int i;
+        for(i = 0; i < argc; i++)
+           printf("argv[%d]=%s.\n", i, argv[i]);
         return 1;
     }
     return 0;
