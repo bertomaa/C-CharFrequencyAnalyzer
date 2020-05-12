@@ -2,6 +2,7 @@
     "files.associations": {
         "*.js": "javascriptreact",
         "characterstatistics.h": "c",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "random": "c"
     }
 }

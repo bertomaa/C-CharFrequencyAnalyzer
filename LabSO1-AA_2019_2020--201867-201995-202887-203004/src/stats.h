@@ -106,11 +106,11 @@ int getDigits(int n)
 
 char *encode(const stats stat)
 {
-    //TODO: fai la free da qualche parte
+    //TODO: fai la free da qualche parte, allocare col wrapper
     char *buffer = (char *)calloc(MAX_PIPE_CHARACTERS, sizeof(char));
     int i, pointer;
     sprintf(buffer, "-%d_", stat.fileID);
-    printf("\nwrinting id: -%d_\n", stat.fileID);
+    //printf("\nwrinting id: -%d_\n", stat.fileID);
     pointer = getDigits(stat.fileID) + 2;
     for (i = 0; i < ASCII_CHARACTERS; i++)
     {

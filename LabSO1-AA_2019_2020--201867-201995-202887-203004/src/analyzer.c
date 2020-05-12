@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include "wrapper.h"
 #include "stats.h"
+#include "config.h"
 
 #define MAX_PATH_CHARACTERS 1024
 
@@ -20,96 +21,14 @@ int checkArguments(int argc, const char *argv[])
     {
         printf("Wrong arguments, usage is: analyzer <n> <m> <file1> <file2> ... \n");
         int i;
-        for(i = 0; i < argc; i++)
-           printf("argv[%d]=%s.\n", i, argv[i]);
+        for (i = 0; i < argc; i++)
+            printf("argv[%d]=%s.\n", i, argv[i]);
         return 1;
     }
     return 0;
 }
 
-char* getCommandOutput(const char* cmd)
-{
-    //TODO:dite che ce lo lascia usare?
-    char buffer[MAX_PIPE_CHARACTERS];
-    char* ret;
-    int size = 0;
-    int error = allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void**) &ret);
-    if(error)
-    {
-        //TODO: gestisci errore
-        exit(1);
-    }
-    FILE *fp = popen(cmd, "r");
-    if(fp == NULL)
-    {
-        //TODO: gestisci errore
-        exit(1);
-    }
-    while(fgets(buffer, MAX_PIPE_CHARACTERS, fp) != NULL){
-        size += strlen(buffer) + 1;
-        if(size >= MAX_PIPE_CHARACTERS)  //TODO: gestisci errore, stringa più lunga del massimo
-            exit(1);
-        strcat(ret, buffer);
-    };
-    return ret;
-}
 
-//returns boolean values 0/1
-int isPathDirectory(const char* path)
-{
-    int pathLen = strlen(path);
-    char command[MAX_PIPE_CHARACTERS];
-    strcat(command, "file ");
-    strcat(command, path);
-    char* output = getCommandOutput(command);
-    int res = strcmp(output + pathLen + 2, "directory\n");
-    free((void*) output);
-    if(res == 0)
-        return 1;
-    return 0;
-}
-
-char** getElementsInDirectory(const char* path, int recursive)
-{
-    int count;
-    char buffer[MAX_PIPE_CHARACTERS];
-    char** ret;
-
-    buffer[0] = '\0';
-    strcat(buffer, "ls ");
-    strcat(buffer, path);
-    char* output = getCommandOutput(buffer);
-    //printf("ls output = %s.\n\n", output);
-    
-    //retrieve all entries
-    char *newPath = strtok(output, "\n");
-    //loop through the string to extract all other tokens
-    while(newPath != NULL) {
-        
-        printf("%s\n", newPath ); //printing each token
-        newPath = strtok(NULL, "\n");
-    }
-
-    free((void*) output);
-    return ret;
-}
-
-char* checkDirectories(const char* paths[], int pathsCount, int recursive)
-{
-    int i = 0;
-    for(i = 0; i < pathsCount; i++)
-    {
-        if(isPathDirectory(paths[i]))
-        {
-            //TODO: ask if the user wants to scan down this directory recursively and change recursive
-            printf("opening directory %s\n", paths[i]);
-            //get all the files in the directory
-            getElementsInDirectory(paths[i], recursive);
-            
-        }
-    }
-    exit(1);
-}
 
 int *distributeQuantity(int quantity, int toDistribute)
 {
@@ -119,6 +38,18 @@ int *distributeQuantity(int quantity, int toDistribute)
     int perProcess = quantity / toDistribute;
     int i;
     int tot = perProcess * toDistribute;
+    if (toDistribute > quantity)
+    {
+        for (i = 0; i < quantity; i++)
+        {
+            ret[i] = 1;
+        }
+        for (i = quantity; i < toDistribute; i++)
+        {
+            ret[i] = 0;
+        }
+        return ret;
+    }
     for (i = 0; i < toDistribute; i++)
     {
         ret[i] = perProcess;
@@ -153,7 +84,7 @@ int getPipeIndex(int index, int type)
 int writePipe(int *pipes, int index, const char *toWrite)
 {
     //TODO: checks and free
-    printf("writing to pipe %d chars\n", (int)strlen(toWrite));
+    //printf("writing to pipe %d chars\n", (int)strlen(toWrite));
     write(pipes[getPipeIndex(index, WRITE)], toWrite, (int)strlen(toWrite) + 1);
     return 0; //error code
 }
@@ -169,7 +100,7 @@ int readPipeAndAppend(int *pipes, int index, char *buf, int toRead)
 {
     int len = strlen(buf);
     read(pipes[getPipeIndex(index, READ)], buf + len, MAX_PIPE_CHARACTERS * toRead);
-    printf("Read from pipe nad appended %d chars\n", (int)strlen(buf) - len);
+    printf("Read from pipe and appended %d chars\n", (int)strlen(buf) - len);
     return 0; //error code
 }
 
@@ -178,8 +109,8 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
     int i;
     stats ret; //TODO: dovrebbe essere allocato dinamicamente se viene ritornato?
     initStats(&ret, id);
-    char* buffer;
-    int error = allocWrapper(bytesToRead + 1, sizeof(char), (void**) &buffer);
+    char *buffer;
+    int error = allocWrapper(bytesToRead + 1, sizeof(char), (void **)&buffer);
     //TODO:check error
 
     lseek(fd, offset, SEEK_SET);
@@ -225,7 +156,7 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
         close(fd);
     }
     char *encoded = encodeMultiple(statsToSend, filesCount);
-    printf("sending from q%d: %s\n", mIndex, encoded);
+    //printf("sending from q%d: %s\n", mIndex, encoded);
     //char *encoded = encodeMultiple(statsToSend, filesCount);                   //TODO: come sempre controllare che si sia chiusa munnezz
     write(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
     close(writePipe);
@@ -237,6 +168,13 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
 int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
 {
     printf("p: %d, con filescount: %d, fileindex: %d\n", m, filesCount, fileIndex);
+
+    if(filesCount == 0)
+    {
+        close(writePipe);
+        return 0;
+    }
+
     int *pipes = createPipes(m);
     int i, pid, j;
     pid_t *pids = (int *)malloc(m * sizeof(int));
@@ -300,14 +238,14 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
             //*p = 3;
             //int decodeError = decode(str, resultStats, p); //TODO: check
             if (decodeError)
-            
+
             {
                 printf("errore decode p\n");
                 return 1; //TODO: esegui free ecc..
             }
         }
         char *resultString = encodeMultiple(resultStats, filesCount);
-        printf("mandato al main:%s\n", resultString);
+        //printf("mandato al main:%s\n", resultString);
         write(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
         close(writePipe);
     }
@@ -318,16 +256,21 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
 int main(int argc, const char *argv[])
 {
     int i;
-    for (i = 0; i < 50; i++)
+    char **endptr;
+    // for (i = 0; i < 50; i++)
+    // {
+    //     printf("\n");
+    // }
+    for (i = 0; i < argc; i++)
     {
-        printf("\n");
+        printf("%s.\n", argv[i]);
     }
+    printf("\n\n\n\n\n\n\n\n\n\n\n");
     if (checkArguments(argc, argv) != 0)
         exit(1);
 
-
-    int n = atoi(argv[1]);
-    int m = atoi(argv[2]);
+    int n = strtol(argv[1], , &endptr, 2);
+    int m = strtol(argv[2], &endptr, 2);
     int filesCount = argc - 3;
 
     //TODO: if a filename is a folder then find the files
@@ -375,10 +318,10 @@ int main(int argc, const char *argv[])
         {
             initStats(&resultStats[i], i);
         }
-        for (i = 0; i < n; i++)
+        for (i = 0; i < n && i < filesCount; i++)
         {
             readPipeAndAppend(pipesToP, i, stat, filesCount); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
-            printf("dal main analizer ricevo: %s\n", stat);
+            //printf("dal main analizer ricevo: %s\n", stat);
             //
         }
         decodeMultiple(stat, resultStats); //TODO:check error
@@ -387,7 +330,7 @@ int main(int argc, const char *argv[])
             printf("In totale è stato letto nel file %d:\n", i);
             printStats(resultStats[i]);
         }
-        printf("FINE!");
+        printf("FINE!\n");
         return 0;
     }
 
