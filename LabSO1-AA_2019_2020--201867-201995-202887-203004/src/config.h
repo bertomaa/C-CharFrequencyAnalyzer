@@ -8,15 +8,14 @@
 #include <string.h>
 #include <math.h>
 #include <tgmath.h>
+#include "commons.h"
 
-#define MAX_PATH_LEN 1024
-#define INITIAL_CONFIG_SIZE 128
 
 typedef struct config
 {
     int dim;
-    long n;
-    long m;
+    int n;
+    int m;
     int filesCount;
     char **files;
 } config;
@@ -54,6 +53,8 @@ void removeFileFromConfig(config *c, int i)
     c->filesCount--;
 }
 
+void printFiles(const config *c);
+
 void joinConfigs(config *c1, config *c2)
 {
     int totalFiles = c1->filesCount + c2->filesCount, i;
@@ -72,6 +73,7 @@ void joinConfigs(config *c1, config *c2)
             c1->filesCount++;
         }
     }
+    //printf("filesCount:%d\n", c1->filesCount);
     deallocConfig(c2);
 }
 
@@ -115,8 +117,8 @@ char **exportAsArguments(const config *c)
     error = allocWrapper(40, sizeof(char), (void **)&(res[0]));
     error = allocWrapper(40, sizeof(char), (void **)&(res[1]));
     error = allocWrapper(40, sizeof(char), (void **)&(res[2]));
-    sprintf(res[1], "%ld", c->n);
-    sprintf(res[2], "%ld", c->m);
+    sprintf(res[1], "%d", c->n);
+    sprintf(res[2], "%d", c->m);
     printf("\n\n\n\n\n\n\n0: %s, 1: %s", res[0], res[1]);
     int i;
     for (i = 3; i < c->filesCount + 3; i++)
@@ -128,6 +130,7 @@ char **exportAsArguments(const config *c)
 
 char *getCommandOutput(const char *cmd)
 {
+    //printf("cmd: %s\n", cmd);
     //TODO:dite che ce lo lascia usare?
     char buffer[MAX_PIPE_CHARACTERS];
     char *ret;
@@ -159,9 +162,12 @@ int isPathDirectory(const char *path)
 {
     int pathLen = strlen(path);
     char command[MAX_PIPE_CHARACTERS];
-    strcat(command, "ls -la ");
+    command[0]='\0';
+    strcat(command, "ls -la \"");
     strcat(command, path);
+    strcat(command, "\"");
     char *output = getCommandOutput(command);
+    //printf("output:%s\n", output);
     int ret = 0;
     switch (output[0])
     {
@@ -188,8 +194,9 @@ config getElementsInDirectory(char *path, int recursive)
     initConfig(&conf);
 
     buffer[0] = '\0';
-    strcat(buffer, "ls ");
+    strcat(buffer, "ls \"");
     strcat(buffer, path);
+    strcat(buffer, "\"");
     char *output = getCommandOutput(buffer);
     //printf("ls output = %s.\n\n", output);
 
@@ -200,6 +207,7 @@ config getElementsInDirectory(char *path, int recursive)
 
     while (newPath != NULL)
     {
+        newFullPath[0]='\0';
         strcat(newFullPath, path);
         strcat(newFullPath, "/");
         strcat(newFullPath, newPath);
@@ -223,6 +231,8 @@ config checkDirectories(config conf, int recursive)
 {
     config res;
     initConfig(&res);
+    res.n = conf.n;
+    res.m = conf.m;
     int i = 0;
     int count = conf.filesCount;
     for (i = 0; i < count; i++)

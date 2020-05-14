@@ -4,9 +4,9 @@
 #include "wrapper.h"
 #include "stats.h"
 #include "config.h"
+#include "commons.h"
 
-#define MAX_COMMAND_LEN 1024
-#define PRE_FILES_ARGS 3
+
 
 char *getLine()
 {

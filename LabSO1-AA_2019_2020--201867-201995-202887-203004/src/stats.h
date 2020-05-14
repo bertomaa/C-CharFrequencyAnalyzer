@@ -8,11 +8,8 @@
 #include <string.h>
 #include <math.h>
 #include <tgmath.h>
+#include "commons.h"
 
-#define READ 0
-#define WRITE 1
-#define ASCII_CHARACTERS 256
-#define MAX_PIPE_CHARACTERS 8128
 
 typedef struct stats
 {

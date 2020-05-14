@@ -42,6 +42,9 @@
 *.idb
 *.pdb
 
+#tests
+LabSO1-AA_2019_2020--201867-201995-202887-203004/tests/
+
 #install gcc
 *.sh
 

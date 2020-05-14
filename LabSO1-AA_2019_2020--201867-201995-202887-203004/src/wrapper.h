@@ -2,10 +2,10 @@
 #define __WRAPPER_H__
 
 /*
-    This file contains the functions that handle various type of errors, that are
-    - opening of a file
-    - memory allocation
-    - read & write (pipe)
+    This file contains the functions that handle various type of errors:
+    - if a file has been opened correctly
+    - if memory has been allocated correctly
+    - if read/write of a pipe has been executed correctly
 */
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,6 +14,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "commons.h"
 
 //opening of a file
 int openWrapper(const char *path, int *fd)
@@ -53,7 +54,7 @@ int readWrapper(int read)
 
 //write (pipe)
 //If successful, return the number of bytes actually written, on failure -1
-int writeWrapped(int write)
+int writeWrapper(int write)
 {
     if(write == -1)
     {
@@ -63,6 +64,17 @@ int writeWrapped(int write)
     return 0;
 }
 
+//close
+//If successful, return the number of bytes actually written, on failure -1
+int closeWrapper(int close)
+{
+    if(close == -1)
+    {
+        fprintf(stderr, "Cannot close the specified file \n");
+        return 1;
+    }
+    return 0;
+}
 
 
 #endif
