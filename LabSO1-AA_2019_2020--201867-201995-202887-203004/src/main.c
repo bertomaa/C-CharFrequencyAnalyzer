@@ -157,6 +157,7 @@ int getAction(char *command, config *conf)
     else if (strcmp(token, "set") == 0)
     {
         set(command + 4, conf);
+        printf("getAction: n = %d, m = %d\n", conf->n, conf->m);
     }
     else if (strcmp(token, "report") == 0)
     {
@@ -172,13 +173,13 @@ int getAction(char *command, config *conf)
     }
     else if (strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "q") == 0)
     {
-        exit(0);
+        return(0);
     }
     else
     {
         showCommandNotFoundError(token);
     }
-    return 0;
+    return 1;
 }
 
 int checkArguments(int argc, const char *argv[])
@@ -213,8 +214,6 @@ int main(int argc, const char *argv[])
         }
     }
 
-    printFiles(&conf);
-
     int action;
     do
     {
@@ -222,5 +221,5 @@ int main(int argc, const char *argv[])
         char *command = getLine();
         action = getAction(command, &conf);
         printf("n = %d, m = %d\n", conf.n, conf.m);
-    } while (1);
+    } while (action);
 }
