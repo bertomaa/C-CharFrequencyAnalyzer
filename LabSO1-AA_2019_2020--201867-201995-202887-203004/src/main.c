@@ -101,18 +101,17 @@ void showCommandNotFoundError(const char *arguments)
 
 void set(char *arguments, config *conf)
 {
-    char **endptr;
+    char *endptr;
     char *pn = strtok(arguments, " ");
     char *pm = strtok(NULL, " ");
     if (pn != NULL && pm != NULL)
     {
-        int n1 = strtol(pn, endptr, 10);
-        int m1 = strtol(pm, endptr, 10);
+        int n1 = strtol(pn, &endptr, 10);
+        int m1 = strtol(pm, &endptr, 10);
         if (n1 > 0 && m1 > 0)
         {
             conf->n = n1;
             conf->m = m1;
-            printf("p=%p, n = %ld, m = %ld\n", conf, conf->n, conf->m);
         }
         else
         {
@@ -142,8 +141,6 @@ void showConfig(config *conf)
 
 int getAction(char *command, config *conf)
 {
-    printf("getAction1: p=%p n = %ld, m = %ld\n", conf, conf->n, conf->m);
-
     char *token = strtok(command, " ");
 
     if (strcmp(token, "run") == 0)
@@ -166,7 +163,7 @@ int getAction(char *command, config *conf)
     {
         showHelp();
     }
-    else if (strcmp(token, "config") == 0)
+    else if (strcmp(token, "config") == 0 || strcmp(token, "c") == 0)
     {
         showConfig(conf); //works
     }
@@ -178,8 +175,6 @@ int getAction(char *command, config *conf)
     {
         showCommandNotFoundError(token);
     }
-    
-    printf("getAction2: p=%p n = %ld, m = %ld\n", conf, conf->n, conf->m);
     return 1;
 }
 
@@ -195,23 +190,10 @@ int checkArguments(int argc, const char *argv[])
 
 int main(int argc, const char *argv[])
 {
+    char *endptr;
+    config conf;
 
-    printf("sizeof(char) => %ld\n", sizeof(char));
-    printf("sizeof(short) => %ld\n", sizeof(short));
-    printf("sizeof(short int) => %ld\n", sizeof(short int));
-    printf("sizeof(int) => %ld\n", sizeof(int));
-    printf("sizeof(long) => %ld\n", sizeof(long));
-    printf("sizeof(long int) => %ld\n", sizeof(long int));
-    printf("sizeof(long long) => %ld\n", sizeof(long long));
-    printf("sizeof(long long int) => %ld\n", sizeof(long long int));
-
-    char **endptr;
-    config* conf;
-    int error = allocWrapper(1, sizeof(config), (void**) &conf);
-    //TODO: check error
-    
-    initConfig(conf);
-
+    initConfig(&conf);
 
     if (argc > 1)
         if (checkArguments(argc, argv) != 0)
@@ -219,23 +201,21 @@ int main(int argc, const char *argv[])
     int i;
     //TODO: check error
     int filesCount = argc - PRE_FILES_ARGS;
-    /*
-    if (argc > 3)
+    if (argc >= 3)
     {
-        conf.n = strtol(argv[1], endptr, 2);
-        conf.m = strtol(argv[2], endptr, 2);
+        conf.n = strtol(argv[1], &endptr, 2);
+        conf.m = strtol(argv[2], &endptr, 2);
         for (i = 0; i < filesCount; i++)
         {
             addFileToConfig(&conf, argv[i + PRE_FILES_ARGS]);
         }
-    }*/
+    }
 
     int action;
     do
     {
         printf("-> ");
         char *command = getLine();
-        action = getAction(command, conf);
-        printf("main: p=%p n = %ld, m = %ld\n", conf, conf->n, conf->m);
+        action = getAction(command, &conf);
     } while (action);
 }

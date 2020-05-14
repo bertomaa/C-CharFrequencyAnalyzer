@@ -94,6 +94,7 @@ void printFiles(const config *c)
     if (c->filesCount == 0)
     {
         printf("there are no files loaded\n");
+        return;
     }
     printf("files ready to be analyzed are: ");
     int i;
@@ -111,6 +112,7 @@ char **exportAsArguments(const config *c)
     //TODO: definire meglio quanto allocare
     char **res;
     int error = allocWrapper(c->dim + 5, sizeof(char), (void **)&(res)); //TODO: esatto, per tutti
+    if(e)
     error = allocWrapper(40, sizeof(char), (void **)&(res[0]));
     error = allocWrapper(40, sizeof(char), (void **)&(res[1]));
     error = allocWrapper(40, sizeof(char), (void **)&(res[2]));

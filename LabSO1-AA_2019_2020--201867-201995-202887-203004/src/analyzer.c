@@ -256,7 +256,7 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
 int main(int argc, const char *argv[])
 {
     int i;
-    char **endptr;
+    char *endptr;
     // for (i = 0; i < 50; i++)
     // {
     //     printf("\n");
@@ -269,7 +269,7 @@ int main(int argc, const char *argv[])
     if (checkArguments(argc, argv) != 0)
         exit(1);
 
-    int n = strtol(argv[1], , &endptr, 2);
+    int n = strtol(argv[1], &endptr, 2);
     int m = strtol(argv[2], &endptr, 2);
     int filesCount = argc - 3;
 
