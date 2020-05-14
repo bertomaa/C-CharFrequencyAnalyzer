@@ -28,13 +28,12 @@ int checkArguments(int argc, const char *argv[])
     return 0;
 }
 
-
-
 int *distributeQuantity(int quantity, int toDistribute)
 {
     int *ret;
     int error = allocWrapper(toDistribute, sizeof(int), (void **)&ret);
     //TODO: check error
+    printf("toDistr:%d\n", toDistribute);
     int perProcess = quantity / toDistribute;
     int i;
     int tot = perProcess * toDistribute;
@@ -265,12 +264,11 @@ int main(int argc, const char *argv[])
     {
         printf("%s.\n", argv[i]);
     }
-    printf("\n\n\n\n\n\n\n\n\n\n\n");
     if (checkArguments(argc, argv) != 0)
         exit(1);
 
-    int n = strtol(argv[1], &endptr, 2);
-    int m = strtol(argv[2], &endptr, 2);
+    int n = strtol(argv[1], &endptr, 10);
+    int m = strtol(argv[2], &endptr, 10);
     int filesCount = argc - 3;
 
     //TODO: if a filename is a folder then find the files
