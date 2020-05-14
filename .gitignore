@@ -42,9 +42,6 @@
 *.idb
 *.pdb
 
-#install gcc
-*.sh
-
 # Kernel Module Compile Results
 *.mod*
 *.cmd
