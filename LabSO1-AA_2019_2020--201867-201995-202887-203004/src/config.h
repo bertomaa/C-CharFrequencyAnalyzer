@@ -15,8 +15,8 @@
 typedef struct config
 {
     int dim;
-    int n;
-    int m;
+    long n;
+    long m;
     int filesCount;
     char **files;
 } config;
@@ -111,11 +111,11 @@ char **exportAsArguments(const config *c)
     //TODO: definire meglio quanto allocare
     char **res;
     int error = allocWrapper(c->dim + 5, sizeof(char), (void **)&(res)); //TODO: esatto, per tutti
-    error = allocWrapper(20, sizeof(char), (void **)&(res[0]));
-    error = allocWrapper(20, sizeof(char), (void **)&(res[1]));
-    error = allocWrapper(20, sizeof(char), (void **)&(res[2]));
-    sprintf(res[1], "%d", c->n);
-    sprintf(res[2], "%d", c->m);
+    error = allocWrapper(40, sizeof(char), (void **)&(res[0]));
+    error = allocWrapper(40, sizeof(char), (void **)&(res[1]));
+    error = allocWrapper(40, sizeof(char), (void **)&(res[2]));
+    sprintf(res[1], "%ld", c->n);
+    sprintf(res[2], "%ld", c->m);
     printf("\n\n\n\n\n\n\n0: %s, 1: %s", res[0], res[1]);
     int i;
     for (i = 3; i < c->filesCount + 3; i++)

@@ -47,8 +47,8 @@ char *getLine()
 void runAnalyzer(config *conf)
 {
     printf("Run analyzer\n");
-    // sprintf(conf->files[0], "%d", conf->n);
-    // sprintf(conf->files[1], "%d", conf->m);
+    // sprintf(conf->files[0], "%ld", conf->n);
+    // sprintf(conf->files[1], "%ld", conf->m);
     int p = fork();
     if (p < 0)
     {
@@ -86,11 +86,11 @@ void runReport(config *conf)
 
 void showHelp()
 {
-    printf("Allowed action(s): ");
-    printf("- Set values of n and m \n");
-    printf("- Add files (or directories) to analyze: usage is <file1> <file2> ... <filen>\n");
-    printf("- Show the current configuration, with the added files \n");
-    printf("- Run report that sums up the informations \n");
+    printf("Allowed actions:\n");
+    printf("set <n> <m>             - Set values of n and m.\n");
+    printf("add <file1> <file2> ... - Add files (or directories) to analyze.\n");
+    printf("config                  - Show the current configuration, with the added files \n");
+    printf("report                  - Run report that sums up the informations \n");
 }
 
 void showCommandNotFoundError(const char *arguments)
@@ -110,11 +110,9 @@ void set(char *arguments, config *conf)
         int m1 = strtol(pm, endptr, 10);
         if (n1 > 0 && m1 > 0)
         {
-
-            printf("n = %d, m = %d\n", n1, m1);
             conf->n = n1;
             conf->m = m1;
-    printf("n = %d, m = %d\n", conf->n, conf->m);
+            printf("p=%p, n = %ld, m = %ld\n", conf, conf->n, conf->m);
         }
         else
         {
@@ -129,20 +127,22 @@ void set(char *arguments, config *conf)
 
 void showConfig(config *conf)
 {
-    printf("n = %d, m = %d\n", conf->n, conf->m);
+    printf("n = %ld, m = %ld\n", conf->n, conf->m);
     if (conf->n > 0 && conf->m > 0)
     {
-        printf("Ready to run with n = %d, m = %d\n", conf->n, conf->m);
+        printf("Ready to run with n = %ld, m = %ld\n", conf->n, conf->m);
         printFiles(conf);
     }
     else
     {
         printf("Set n and m with set <n> <m>\n");
+        printFiles(conf);
     }
 }
 
 int getAction(char *command, config *conf)
 {
+    printf("getAction1: p=%p n = %ld, m = %ld\n", conf, conf->n, conf->m);
 
     char *token = strtok(command, " ");
 
@@ -157,7 +157,6 @@ int getAction(char *command, config *conf)
     else if (strcmp(token, "set") == 0)
     {
         set(command + 4, conf);
-        printf("getAction: n = %d, m = %d\n", conf->n, conf->m);
     }
     else if (strcmp(token, "report") == 0)
     {
@@ -173,12 +172,14 @@ int getAction(char *command, config *conf)
     }
     else if (strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "q") == 0)
     {
-        return(0);
+        return 0;
     }
     else
     {
         showCommandNotFoundError(token);
     }
+    
+    printf("getAction2: p=%p n = %ld, m = %ld\n", conf, conf->n, conf->m);
     return 1;
 }
 
@@ -194,16 +195,31 @@ int checkArguments(int argc, const char *argv[])
 
 int main(int argc, const char *argv[])
 {
+
+    printf("sizeof(char) => %ld\n", sizeof(char));
+    printf("sizeof(short) => %ld\n", sizeof(short));
+    printf("sizeof(short int) => %ld\n", sizeof(short int));
+    printf("sizeof(int) => %ld\n", sizeof(int));
+    printf("sizeof(long) => %ld\n", sizeof(long));
+    printf("sizeof(long int) => %ld\n", sizeof(long int));
+    printf("sizeof(long long) => %ld\n", sizeof(long long));
+    printf("sizeof(long long int) => %ld\n", sizeof(long long int));
+
     char **endptr;
-    config conf;
-    initConfig(&conf);
+    config* conf;
+    int error = allocWrapper(1, sizeof(config), (void**) &conf);
+    //TODO: check error
+    
+    initConfig(conf);
+
+
     if (argc > 1)
         if (checkArguments(argc, argv) != 0)
             exit(1);
     int i;
     //TODO: check error
     int filesCount = argc - PRE_FILES_ARGS;
-
+    /*
     if (argc > 3)
     {
         conf.n = strtol(argv[1], endptr, 2);
@@ -212,14 +228,14 @@ int main(int argc, const char *argv[])
         {
             addFileToConfig(&conf, argv[i + PRE_FILES_ARGS]);
         }
-    }
+    }*/
 
     int action;
     do
     {
-        printf("Ready: ");
+        printf("-> ");
         char *command = getLine();
-        action = getAction(command, &conf);
-        printf("n = %d, m = %d\n", conf.n, conf.m);
+        action = getAction(command, conf);
+        printf("main: p=%p n = %ld, m = %ld\n", conf, conf->n, conf->m);
     } while (action);
 }
