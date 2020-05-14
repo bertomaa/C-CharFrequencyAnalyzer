@@ -14,66 +14,150 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "commons.h"
 
 //opening of a file
-int openWrapper(const char *path, int *fd)
+void openWrapperPipe(const char *path, int *fd)
 {
     *fd = open(path, O_RDONLY);
+    int attempt = 0;
     if(*fd < 0)
     {
-        fprintf(stderr, "Cannot open file %s.\n", path);
-        return 1;
+        while(*fd < 0 && attempt < 5)
+        {
+            attempt++;
+            fprintf(stderr, "Cannot open file %s. Attempt number %d\n", path, attempt);
+            wait(1);
+            *fd = open(path, O_RDONLY);
+        }
+
+        if(attempt == 5)
+        {
+            fprintf(stderr, "Cannot open file %s. I tried %d times. \n", attempt);
+            exit(2);
+        }
     }
+
     return 0;
 }
 
 //memory allocation
-int allocWrapper(int num, int size, void** p)
+void allocWrapperPipe(int num, int size, void** p)
 {
     *p = calloc(num, size);
+    int attempt = 0;
     if(*p == NULL)
     {
-        fprintf(stderr, "Cannot allocate %d * %d byte in memory", num, size);
-        return 1;
+        while(*fd < 0 && attempt < 5)
+        {
+            attempt++;
+            fprintf(stderr, "Cannot allocate %d * %d byte in memory. Attempt number %d \n", num, size, attempt);
+            wait(1);
+            *p = calloc(num, size);
+        }
+
+        if(attempt == 5)
+        {
+            fprintf(stderr, "Cannot allocate %d * %d byte in memory. I tried %d times \n", num, size, attempt);
+            exit(2);
+        }   
     }
-    return 0;
 }
 
 //read (pipe)
 //If successful, return the non-negative number of bytes actually read, on failure -1
-int readWrapper(int read)
+int readWrapperPipe(int *pipes, int index, char *buf, int toRead)
 {
+    int attempt = 0;
+    int read = read(pipes[getPipeIndex(index, READ)], buf, MAX_PIPE_CHARACTERS * toRead);
     if(read == -1)
     {
-        fprintf(stderr, "Cannot read the specified file \n");
-        return 1;
+        while(read == -1 && attempt < 5)
+        {
+            attempt++;
+            fprintf(stderr, "Cannot read the specified file. Attempt number %d \n", attempt);
+            wait(1);
+            read = read(pipes[getPipeIndex(index, READ)], buf, MAX_PIPE_CHARACTERS * toRead);
+        }
+
+        if(attempt == 5)
+        {
+            fprintf(stderr, "Cannot read the specified file. I tried %d times \n", attempt);
+            exit(2);
+        }   
     }
-    return 0;
+}
+
+int readMyWrapper(int toWrite, const char *buf, int nbytes)
+{
+    int read = read(toRead, buf, nbytes);
+    int attempt = 0;
+    if(write == -1)
+    {
+         while(read == -1 && attempt < 5)
+        {
+            attempt++;
+            fprintf(stderr, "Cannot read. Attempt number %d \n", attempt);
+            wait(1);
+            read = read(toRead, buf, nbytes);
+        }
+
+        if(attempt == 5)
+        {
+            fprintf(stderr, "Cannot read. I tried %d times \n", attempt);
+            exit(2);
+        } 
+    }
 }
 
 //write (pipe)
 //If successful, return the number of bytes actually written, on failure -1
-int writeWrapper(int write)
+int writeMyWrapper(int toWrite, const char *buf, int nbytes)
 {
+    int write = write(toWrite, buf, nbytes);
+    int attempt = 0;
     if(write == -1)
     {
-        fprintf(stderr, "Cannot write the specified file \n");
-        return 1;
+         while(write == -1 && attempt < 5)
+        {
+            attempt++;
+            fprintf(stderr, "Cannot write. Attempt number %d \n", attempt);
+            wait(1);
+            write = write(toWrite, buf, nbytes);
+        }
+
+        if(attempt == 5)
+        {
+            fprintf(stderr, "Cannot write. I tried %d times \n", attempt);
+            exit(2);
+        } 
     }
-    return 0;
 }
 
 //close
 //If successful, return the number of bytes actually written, on failure -1
-int closeWrapper(int close)
+int closeMyWrapper(int fd)
 {
+    int close = close(fd);
+    int attempt = 0;
     if(close == -1)
     {
-        fprintf(stderr, "Cannot close the specified file \n");
-        return 1;
+         while(close == -1 && attempt < 5)
+        {
+            attempt++;
+            fprintf(stderr, "Cannot close the specified file. Attempt number %d \n", attempt);
+            wait(1);
+            close = close(fd);
+        }
+
+        if(attempt == 5)
+        {
+            fprintf(stderr, "Cannot close the specified file. I tried %d times \n", attempt);
+            exit(2);
+        } 
     }
-    return 0;
 }
+
 
 
 #endif

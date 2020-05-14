@@ -24,8 +24,7 @@ int checkArguments(int argc, const char *argv[])
 int *distributeQuantity(int quantity, int toDistribute)
 {
     int *ret;
-    int error = allocWrapper(toDistribute, sizeof(int), (void **)&ret);
-    //TODO: check error
+    allocWrapperPipe(toDistribute, sizeof(int), (void **)&ret);
     int perProcess = quantity / toDistribute;
     int i;
     int tot = perProcess * toDistribute;
@@ -45,14 +44,7 @@ int *distributeQuantity(int quantity, int toDistribute)
 
 int *createPipes(int size)
 {
-    //TODO: checks and free
-    int *pipes;
-
-    int error = allocWrapper(size*2, sizeof(int), (void**) &pipes);
-    if(error){
-        exit(2);
-    }
-
+    int *pipes = allocWrapperPipe(size*2, sizeof(int), (void**) &pipes);
     int i;
     for (i = 0; i < size; i++)
     {
@@ -68,36 +60,24 @@ int getPipeIndex(int index, int type)
 
 int readPipe(int *pipes, int index, char *buf, int toRead)
 {
-    int error = readWrapper(read(pipes[getPipeIndex(index, READ)], buf, MAX_CHARACTERS * toRead));
-    if(error)
-    {
-        exit(2);
-    }
+    readWrapperPipe(pipes, index, buf, toRead);
     printf("Read from pipe %d chars\n", (int)strlen(buf));
-    return 0; //error code
+    return 0;
 }
 
 //controlla se write() eseguita correttamente
 int myWrite(int toWrite, const char *buf, int nbytes)
 {
-    printf("writing %d chars in myWrite\n", (int)strlen(nbytes));
-    int error = writeWrapper(write(toWrite, buf, nbytes));
-    if(error)
-    {
-        exit(2);
-    }
-    return 0; //error code
+    printf("Writing %d chars in myWrite\n", (int)strlen(nbytes));
+    writeMyWrapper(toWrite, buf, nbytes);
+    return 0;
 }
 
 //controlla se read() eseguita correttamente
 int myRead(int toRead, const char *buf, int nbytes)
 {
     printf("reading %d chars in myRead\n", (int)strlen(nbytes));
-    int error = readWrapper(read(toRead, buf, nbytes));
-    if(error)
-    {
-        exit(2);
-    }
+    readMyWrapper(toRead, buf, nbytes);
     return 0; //error code
 }
 
@@ -105,12 +85,8 @@ int myRead(int toRead, const char *buf, int nbytes)
 int myClose(int fd)
 {
     printf("closing file in myClose\n");
-    int error = closeWrapper(close(fd));
-    if(error)
-    {
-        exit(2);
-    }
-    return 0; //error code
+    closeMyWrapper(fd);
+    return 0;
 }
 
 int readPipeAndAppend(int *pipes, int index, char *buf, int toRead)
@@ -127,8 +103,7 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
     stats ret; //TODO: dovrebbe essere allocato dinamicamente se viene ritornato?
     initStats(&ret, id);
     char* buffer;
-    int error = allocWrapper(bytesToRead + 1, sizeof(char), (void**) &buffer);
-    //TODO:check error
+    allocWrapperPipe(bytesToRead + 1, sizeof(char), (void**) &buffer);
 
     lseek(fd, offset, SEEK_SET);
     myRead(fd, buffer, bytesToRead);
@@ -150,11 +125,7 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
     printf("q: %d, con filescount: %d, fileindex: %d\n", mIndex, filesCount, fileIndex);
     int fd, fileOffset, fileLength, i, error;
     stats *statsToSend, tmp;
-    error = allocWrapper(filesCount, sizeof(stats), (void **)&statsToSend);
-    if(error)
-    {
-        exit(2);
-    }
+    allocWrapperPipe(filesCount, sizeof(stats), (void **)&statsToSend);
     for (i = 0; i < filesCount; i++)
     {
         initStats(&statsToSend[i], i + fileIndex);
@@ -212,17 +183,9 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
         while (wait(NULL) != -1)
             ; //father waits all children
         char *str;
-        int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&str);
-        if (error)
-        {
-            exit(2);
-        }
+        allocWrapperPipe(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&str);
         stats *resultStats;
-        error = allocWrapper(filesCount, sizeof(stats), (void **)&resultStats);
-        if (error)
-        {
-            exit(2);
-        }
+        allocWrapperPipe(filesCount, sizeof(stats), (void **)&resultStats);
         for (i = 0; i < filesCount; i++)
         {
             initStats(&resultStats[i], i + fileIndex);
@@ -315,11 +278,7 @@ int main(int argc, const char *argv[])
             ; //father waits all children
         printf("\n\nmain: waited for all children\n\n");
         char *stat;
-        int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&stat); //TODO:trova una stima migliore
-        if(error)
-        {
-            exit(2);
-        }
+        allocWrapperPipe(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&stat); //TODO:trova una stima migliore
         stats *resultStats;
         for (i = 0; i < filesCount; i++)
         {
