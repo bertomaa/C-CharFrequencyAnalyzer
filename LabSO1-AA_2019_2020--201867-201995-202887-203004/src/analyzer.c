@@ -5,21 +5,30 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "stats.h"
 #include "wrapper.h"
+#include "stats.h"
+#include "config.h"
+
+#define MAX_PATH_CHARACTERS 1024
 
 int checkArguments(int argc, const char *argv[])
 {
     if (argc < 4)
     {
         printf("Wrong arguments, usage is: analyzer <n> <m> <file1> <file2> ... \n");
+        int i;
+        for (i = 0; i < argc; i++)
+            printf("argv[%d]=%s.\n", i, argv[i]);
         return 1;
     }
     return 0;
 }
+
+
 
 int *distributeQuantity(int quantity, int toDistribute)
 {
@@ -29,6 +38,18 @@ int *distributeQuantity(int quantity, int toDistribute)
     int perProcess = quantity / toDistribute;
     int i;
     int tot = perProcess * toDistribute;
+    if (toDistribute > quantity)
+    {
+        for (i = 0; i < quantity; i++)
+        {
+            ret[i] = 1;
+        }
+        for (i = quantity; i < toDistribute; i++)
+        {
+            ret[i] = 0;
+        }
+        return ret;
+    }
     for (i = 0; i < toDistribute; i++)
     {
         ret[i] = perProcess;
@@ -116,8 +137,8 @@ int myClose(int fd)
 int readPipeAndAppend(int *pipes, int index, char *buf, int toRead)
 {
     int len = strlen(buf);
-    read(pipes[getPipeIndex(index, READ)], buf + len, MAX_CHARACTERS * toRead);
-    printf("Read from pipe nad appended %d chars\n", (int)strlen(buf) - len);
+    read(pipes[getPipeIndex(index, READ)], buf + len, MAX_PIPE_CHARACTERS * toRead);
+    printf("Read from pipe and appended %d chars\n", (int)strlen(buf) - len);
     return 0; //error code
 }
 
@@ -126,8 +147,8 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
     int i;
     stats ret; //TODO: dovrebbe essere allocato dinamicamente se viene ritornato?
     initStats(&ret, id);
-    char* buffer;
-    int error = allocWrapper(bytesToRead + 1, sizeof(char), (void**) &buffer);
+    char *buffer;
+    int error = allocWrapper(bytesToRead + 1, sizeof(char), (void **)&buffer);
     //TODO:check error
 
     lseek(fd, offset, SEEK_SET);
@@ -176,7 +197,7 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
         myClose(fd);
     }
     char *encoded = encodeMultiple(statsToSend, filesCount);
-    printf("sending from q%d: %s\n", mIndex, encoded);
+    //printf("sending from q%d: %s\n", mIndex, encoded);
     //char *encoded = encodeMultiple(statsToSend, filesCount);                   //TODO: come sempre controllare che si sia chiusa munnezz
     myWrite(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
     myClose(writePipe);
@@ -188,6 +209,13 @@ int q(int mIndex, int filesCount, int m, const char *files[], int writePipe, int
 int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
 {
     printf("p: %d, con filescount: %d, fileindex: %d\n", m, filesCount, fileIndex);
+
+    if(filesCount == 0)
+    {
+        close(writePipe);
+        return 0;
+    }
+
     int *pipes = createPipes(m);
     int i, pid, j;
     pid_t *pids = (int *)malloc(m * sizeof(int));
@@ -212,7 +240,7 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
         while (wait(NULL) != -1)
             ; //father waits all children
         char *str;
-        int error = allocWrapper(MAX_CHARACTERS * filesCount, sizeof(stats), (void **)&str);
+        int error = allocWrapper(MAX_PIPE_CHARACTERS * filesCount, sizeof(stats), (void **)&str);
         if (error)
         {
             exit(2);
@@ -249,13 +277,14 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
             //*p = 3;
             //int decodeError = decode(str, resultStats, p); //TODO: check
             if (decodeError)
+
             {
                 printf("errore decode p\n");
                 return 1; //TODO: esegui free ecc..
             }
         }
         char *resultString = encodeMultiple(resultStats, filesCount);
-        printf("mandato al main:%s\n", resultString);
+        //printf("mandato al main:%s\n", resultString);
         myWrite(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
         myClose(writePipe);
     }
@@ -266,18 +295,25 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
 int main(int argc, const char *argv[])
 {
     int i;
-    for (i = 0; i < 50; i++)
+    char *endptr;
+    // for (i = 0; i < 50; i++)
+    // {
+    //     printf("\n");
+    // }
+    for (i = 0; i < argc; i++)
     {
-        printf("\n");
+        printf("%s.\n", argv[i]);
     }
+    printf("\n\n\n\n\n\n\n\n\n\n\n");
     if (checkArguments(argc, argv) != 0)
         exit(1);
 
-    int n = atoi(argv[1]);
-    int m = atoi(argv[2]);
+    int n = strtol(argv[1], &endptr, 2);
+    int m = strtol(argv[2], &endptr, 2);
     int filesCount = argc - 3;
 
     //TODO: if a filename is a folder then find the files
+    //checkDirectories(argv + 3, filesCount, 0);
 
     int *assignedFiles = distributeQuantity(filesCount, n);
 
@@ -325,10 +361,10 @@ int main(int argc, const char *argv[])
         {
             initStats(&resultStats[i], i);
         }
-        for (i = 0; i < n; i++)
+        for (i = 0; i < n && i < filesCount; i++)
         {
             readPipeAndAppend(pipesToP, i, stat, filesCount); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
-            printf("dal main analizer ricevo: %s\n", stat);
+            //printf("dal main analizer ricevo: %s\n", stat);
             //
         }
         decodeMultiple(stat, resultStats); //TODO:check error
@@ -337,7 +373,7 @@ int main(int argc, const char *argv[])
             printf("In totale è stato letto nel file %d:\n", i);
             printStats(resultStats[i]);
         }
-        printf("FINE!");
+        printf("FINE!\n");
         return 0;
     }
 

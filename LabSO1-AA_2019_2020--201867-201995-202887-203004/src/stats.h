@@ -12,7 +12,7 @@
 #define READ 0
 #define WRITE 1
 #define ASCII_CHARACTERS 256
-#define MAX_CHARACTERS 8128
+#define MAX_PIPE_CHARACTERS 8128
 
 typedef struct stats
 {
@@ -106,11 +106,11 @@ int getDigits(int n)
 
 char *encode(const stats stat)
 {
-    //TODO: fai la free da qualche parte
-    char *buffer = (char *)calloc(MAX_CHARACTERS, sizeof(char));
+    //TODO: fai la free da qualche parte, allocare col wrapper
+    char *buffer = (char *)calloc(MAX_PIPE_CHARACTERS, sizeof(char));
     int i, pointer;
     sprintf(buffer, "-%d_", stat.fileID);
-    printf("\nwrinting id: -%d_\n", stat.fileID);
+    //printf("\nwrinting id: -%d_\n", stat.fileID);
     pointer = getDigits(stat.fileID) + 2;
     for (i = 0; i < ASCII_CHARACTERS; i++)
     {
@@ -131,7 +131,7 @@ char *encodeMultiple(stats *statsArray, int len)
     char *res;
     int offset = 0, i;
     //TODO: check error
-    int error = allocWrapper(MAX_CHARACTERS * len, sizeof(char), (void **)&res);
+    int error = allocWrapper(MAX_PIPE_CHARACTERS * len, sizeof(char), (void **)&res);
     if (error)
     {
         printf("Errore allocazione encode multiple");
