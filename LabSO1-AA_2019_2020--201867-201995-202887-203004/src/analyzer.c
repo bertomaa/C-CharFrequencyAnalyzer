@@ -52,11 +52,15 @@ int *distributeQuantity(int quantity, int toDistribute)
     for (i = 0; i < toDistribute; i++)
     {
         ret[i] = perProcess;
+
     }
     for (i = 0; i < toDistribute; i++)
     {
         if (tot != quantity)
+        {
             ret[i]++;
+            tot++;
+        }
         else
             break;
     }
@@ -136,7 +140,7 @@ int q(int mIndex, int filesCount, int m, char* const *files, int writePipe, int 
     }
     for (i = fileIndex; i < fileIndex + filesCount; i++)
     {
-        //printf("trying to read file: %s\n", files[i]);
+        // printf("fileindex:%d trying to read file #%d: %s\n",fileIndex, i, files[i]);
         error = openWrapper(files[i], &fd);
         if (error)
         {
@@ -277,7 +281,7 @@ int main(int argc, const char *argv[])
     conf.filesCount = argc - 3;
 
     //TODO: if a filename is a folder then find the files
-    conf = checkDirectories(conf, 0);
+    conf = checkDirectories(conf, 1);
     //printf("filesCount:%d\n", conf.filesCount);
     //printFiles(&conf);
 
@@ -328,7 +332,7 @@ int main(int argc, const char *argv[])
         for (i = 0; i < conf.n && i < conf.filesCount; i++)
         {
             readPipeAndAppend(pipesToP, i, stat, conf.filesCount); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
-        }
+        } 
         //printf("dal main analizer ricevo: \n%s\n", stat);
         decodeMultiple(stat, resultStats); //TODO:check error
         for (i = 0; i < conf.filesCount; i++)
