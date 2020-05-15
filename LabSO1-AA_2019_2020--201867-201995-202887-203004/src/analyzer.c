@@ -202,7 +202,7 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
             decode(stat, &tmp, (3));
             //testing
             */
-            int decodeError = decodeMultiple(str, resultStats); //TODO: check
+            decodeErrorWrapper(str, resultStats);
             // for (j = 0; j < filesCount; j++)
             // {
             //     printf("(p)In totale è stato letto nel file %d da q %d:\n", j, i);
@@ -211,11 +211,6 @@ int p(int m, int filesCount, const char *files[], int writePipe, int fileIndex)
             //int *p = malloc(sizeof(int));
             //*p = 3;
             //int decodeError = decode(str, resultStats, p); //TODO: check
-            if (decodeError)
-            {
-                printf("errore decode p\n");
-                return 1; //TODO: esegui free ecc..
-            }
         }
         char *resultString = encodeMultiple(resultStats, filesCount);
         printf("mandato al main:%s\n", resultString);
@@ -290,7 +285,7 @@ int main(int argc, const char *argv[])
             printf("dal main analizer ricevo: %s\n", stat);
             //
         }
-        decodeMultiple(stat, resultStats); //TODO:check error
+        decodeErrorWrapper(stat, resultStats);
         for (i = 0; i < filesCount; i++)
         {
             printf("In totale è stato letto nel file %d:\n", i);

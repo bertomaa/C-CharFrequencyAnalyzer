@@ -158,6 +158,18 @@ int closeMyWrapper(int fd)
     }
 }
 
+//decodeError
+//If successful continue, else error
+int decodeErrorWrapper(const char *str, stats *array)
+{
+    int code = decodeMultiple(str, array);
+    if(code)
+    {
+        fprintf(stderr, "Cannot decode. \n");
+        exit(2);
+    }
+}
+
 
 
 #endif
