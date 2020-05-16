@@ -1,30 +1,43 @@
 #include <stdio.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <time.h>
+#include <stdlib.h>
 int arrayFrequencies[256]; //could be 126
 void printTable(int, int, char *, int *);
-int main()
+int main(int argc, char **argv)
 {
+    srand(time(0));
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+    printf("lines %d\n", w.ws_row);
+    printf("columns %d\n", w.ws_col);
     int j;
     for (j = 0; j < 256; j++)
     {
-        arrayFrequencies[j] = j;
+        // arrayFrequencies[j] = j;
+        arrayFrequencies[j] = 1 + rand() % 1000;
     }
-    printTable(32, 48, "\n\nPunctuation:", arrayFrequencies);
-    printTable(48, 58, "\n\nNumbers:", arrayFrequencies);
-    printTable(58, 65, "\n\nOperators:", arrayFrequencies);
-    printTable(65, 78, "\n\nUppercase letters:", arrayFrequencies);
+
+    printTable(32, 48, "\nPunctuation:", arrayFrequencies);
+    printTable(48, 58, "\nNumbers:", arrayFrequencies);
+    printTable(58, 65, "\nOperators:", arrayFrequencies);
+    printTable(65, 78, "\nUppercase letters:", arrayFrequencies);
     printTable(78, 91, "", arrayFrequencies); //letters are divided in two rows for style's sake
-    printTable(91, 97, "\n\nSymbols:", arrayFrequencies);
-    printTable(97, 110, "\n\nLowercase letters:", arrayFrequencies);
+    printTable(91, 97, "\nSymbols:", arrayFrequencies);
+    printTable(97, 110, "\nLowercase letters:", arrayFrequencies);
     printTable(110, 123, "", arrayFrequencies);
-    printTable(123, 128, "\n\nLast characters:", arrayFrequencies); //letters are divided in two rows for style's sake
+    printTable(123, 128, "\nLast characters:", arrayFrequencies); //letters are divided in two rows for style's sake
 
     return 0;
 }
 
 void printTable(int start, int finish, char *name, int arrayFrequencies[256])
 {
+    int cont = 0; //counts all the characters written to have  adotted line of the same leght
 
-    printf("%s\n", name);
+    /*printf("%s\n", name); //prints the name of the section
     int i = start;
     do
     {
@@ -38,26 +51,63 @@ void printTable(int start, int finish, char *name, int arrayFrequencies[256])
     {
         printf("%d\t", arrayFrequencies[i]); //prints its frequency
     }
-    printf("\n");
-    /*for (int j = 0; j < 130; j++)
-    {
-        printf("_");
-    }
-    printf("%s\n", name);
-    int i = start;
+    printf("\n");*****/
+
+    printf("%s\n", name); //prints the name of the section
+    int k = start; //k = counter for the ascii characters
     do
     {
-        printf("%c     |    ", i);
-        i++;
-    } while (i < finish);
+        printf("  "); //2 spaces before the letter/symbol
+        cont = cont + 2;
+
+        printf("%c", k); //prints the ascii character
+        cont++;
+
+        printf("  "); //2 spaces after the letter/symbol
+        cont = cont + 2;
+
+        printf("|");
+        cont++;
+
+        k++;
+    } while (k < finish);
 
     printf("\n");
 
     for (int i = start; i < finish; i++)
     {
-        printf("%d    |    ", i);
+        if (arrayFrequencies[i] < 10)
+        {
+            printf("  ");
+        }
+        if (arrayFrequencies[i] < 100 && arrayFrequencies[i] >= 10)
+        {
+            printf("  ");
+        }
+        if (arrayFrequencies[i] < 1000 && arrayFrequencies[i] >= 100)
+        {
+            printf(" ");
+        }
+        printf("%d", arrayFrequencies[i]); //prints its frequency
+        if (arrayFrequencies[i] < 10)
+        {
+            printf("  ");
+        }
+        if (arrayFrequencies[i] < 100 && arrayFrequencies[i] >= 10)
+        {
+            printf(" ");
+        }
+        if (arrayFrequencies[i] < 1000 && arrayFrequencies[i] >= 100)
+        {
+            printf(" ");
+        }
+        printf("|");
     }
-    printf("\n");*/
+    printf("\n");
+    for (int j = 0; j < cont; j++)
+    {
+        printf("-"); // Prints a line of -
+    }
 }
 
 /* printf("\n\nPunteggiatura:\n");
