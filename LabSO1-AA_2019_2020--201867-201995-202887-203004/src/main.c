@@ -6,53 +6,40 @@
 #include "config.h"
 #include "commons.h"
 
-
-
 char *getLine()
 {
-    char *line = malloc(MAX_COMMAND_LEN);
-    char *linep = line;
-    size_t lenmax = MAX_COMMAND_LEN, len = lenmax;
-    int c;
-
-    if (line == NULL)
-        return NULL;
-
-    for (;;)
+    int size = MAX_COMMAND_LEN;
+    int i = 0;
+    char *line;
+    int error = allocWrapper(size, sizeof(char), (void **)&line);
+    //TODO: error
+    char c;
+    while (c != '\n')
     {
-        c = fgetc(stdin);
-        if (c == EOF)
-            break;
-        if (--len == 0)
+        scanf("%c", &c);
+        if (i + 1 >= size)
         {
-            len = lenmax;
-            char *linen = realloc(linep, lenmax *= 2);
-
-            if (linen == NULL)
-            {
-                free(linep);
-                return NULL;
-            }
-            line = linen + (line - linep);
-            linep = linen;
+            size += MAX_COMMAND_LEN;
+            error = reallocWrapper((void **)&line, size);
+            //TODO: error
         }
-        if ((*line++ = c) == '\n')
-            break;
+        line[i] = c;
+        i++;
     }
-    if (strlen(linep) > 1)
-        *(line - 1) = '\0';
-    return linep;
+    line[i - 1] = 0;
+    return line;
 }
 
 void runAnalyzer(config *conf)
 {
     printf("Run analyzer\n");
-    // sprintf(conf->files[0], "%ld", conf->n);
-    // sprintf(conf->files[1], "%ld", conf->m);
+    // sprintf(conf->files[0], "%d", conf->n);
+    // sprintf(conf->files[1], "%d", conf->m);
     int p = fork();
     if (p < 0)
     {
         fprintf(stderr, "Impossible to fork, quit.\n");
+        exit(1);
     }
     else if (p == 0)
     { //figlio
@@ -61,7 +48,7 @@ void runAnalyzer(config *conf)
     }
     else
     { //padre
-        wait();
+        //wait();
     }
 }
 
@@ -82,6 +69,21 @@ void add(const char *arguments, config *conf)
 void runReport(config *conf)
 {
     printf("Run runReport\n");
+    int p = fork();
+    if (p < 0)
+    {
+        fprintf(stderr, "Impossible to fork, quit.\n");
+        exit(1);
+    }
+    else if (p == 0)
+    { //figlio
+        char **args = exportAsArguments(conf);
+        execvp("./report", args);
+    }
+    else
+    { //padre
+        //wait();
+    }
 }
 
 void showHelp()
@@ -126,10 +128,10 @@ void set(char *arguments, config *conf)
 
 void showConfig(config *conf)
 {
-    printf("n = %ld, m = %ld\n", conf->n, conf->m);
+    printf("n = %d, m = %d\n", conf->n, conf->m);
     if (conf->n > 0 && conf->m > 0)
     {
-        printf("Ready to run with n = %ld, m = %ld\n", conf->n, conf->m);
+        printf("Ready to run with n = %d, m = %d\n", conf->n, conf->m);
         printFiles(conf);
     }
     else
@@ -142,6 +144,8 @@ void showConfig(config *conf)
 int getAction(char *command, config *conf)
 {
     char *token = strtok(command, " ");
+    if(token == NULL)
+        return 1;
 
     if (strcmp(token, "run") == 0)
     {
@@ -190,6 +194,7 @@ int checkArguments(int argc, const char *argv[])
 
 int main(int argc, const char *argv[])
 {
+    initGC();
     char *endptr;
     config conf;
 
@@ -203,8 +208,8 @@ int main(int argc, const char *argv[])
     int filesCount = argc - PRE_FILES_ARGS;
     if (argc >= 3)
     {
-        conf.n = strtol(argv[1], &endptr, 2);
-        conf.m = strtol(argv[2], &endptr, 2);
+        conf.n = strtol(argv[1], &endptr, 10);
+        conf.m = strtol(argv[2], &endptr, 10);
         for (i = 0; i < filesCount; i++)
         {
             addFileToConfig(&conf, argv[i + PRE_FILES_ARGS]);
@@ -218,4 +223,6 @@ int main(int argc, const char *argv[])
         char *command = getLine();
         action = getAction(command, &conf);
     } while (action);
+    collectGarbage();
+    return 0;
 }

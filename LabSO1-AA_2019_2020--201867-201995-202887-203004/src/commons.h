@@ -1,7 +1,7 @@
 #ifndef __COMMONS_H__
 #define __COMMONS_H__
 
-#define MAX_COMMAND_LEN 1024
+#define MAX_COMMAND_LEN 2048
 #define PRE_FILES_ARGS 3
 #define MAX_PATH_LEN 1024
 #define INITIAL_CONFIG_SIZE 128
@@ -9,6 +9,73 @@
 #define WRITE 1
 #define ASCII_CHARACTERS 256
 #define MAX_PIPE_CHARACTERS 8128
+
+typedef struct garbageCollector
+{
+    int dim;
+    int garbageCount;
+    void **garbage;
+} garbageCollector;
+
+garbageCollector gc;
+
+int initGC()
+{
+    gc.dim = 100;
+    gc.garbageCount = 0;
+    gc.garbage = (void **)calloc(gc.dim, sizeof(void *));
+    if (gc.garbage == NULL)
+    {
+        fprintf(stderr, "Cannot allocate garbage collector in memory\n");
+        return 1;
+    }
+    return 0;
+}
+
+void addToGC(void *garbage)
+{
+    int i = 0;
+    for (i = 0; i < gc.garbageCount; i++)
+    {
+        if(gc.garbage[i] == garbage)
+        {
+            printf("Sto aggiungento di nuovo lo stesso!");
+            return;
+        }
+    }
+    if (gc.garbageCount == gc.dim - 10)
+    {
+        gc.dim += 100;
+        gc.garbage = realloc(gc.garbage, gc.dim);
+    }
+    gc.garbage[gc.garbageCount] = garbage;
+    gc.garbageCount++;
+}
+
+void removeFromGC(void*p){
+    int i;
+    for (i = 0; i < gc.garbageCount; i++)
+    {
+        if(gc.garbage[i] == p)
+        {
+            gc.garbage[i] = gc.garbage[gc.garbageCount-1];
+            gc.garbageCount--;
+            return;
+        }
+    }
+}
+
+void collectGarbage()
+{
+    int i;
+    for (i = gc.garbageCount - 1; i > 0; i--)
+    {
+        // printf("%d: deleting %p\n", i, gc.garbage[i]);
+        free(gc.garbage[i]);
+    }
+    free(gc.garbage);
+    printf("freed %d elements in memory\n", gc.garbageCount);
+}
 
 char *addDoubleQuotes(char *buffer, char *path)
 {
@@ -34,7 +101,7 @@ char *getCommandOutput(const char *cmd)
 {
     //printf("cmd: %s\n", cmd);
     //TODO:dite che ce lo lascia usare?
-    char cmdBuffer[MAX_PIPE_CHARACTERS];
+    char cmdBuffer[MAX_COMMAND_LEN];
     char *ret;
     int size = 0;
     int error = allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&ret);
@@ -64,9 +131,9 @@ int getPipeIndex(int index, int type)
     return index * 2 + type;
 }
 
-char *splitString(char *buffer, char **str, char delimiter)
+char* splitString(char *buffer, char **str, char delimiter)
 {
-    printf("buffer: %s, str: %s, delimiter: %c", buffer, *str, delimiter);
+    //printf("buffer: %s, str: %s, delimiter: %c", buffer, *str, delimiter);
     int i;
     for (i = 0; i < strlen(*str) && (*str)[i] != delimiter; i++)
     {

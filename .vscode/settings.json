@@ -3,6 +3,8 @@
         "*.js": "javascriptreact",
         "characterstatistics.h": "c",
         "sstream": "cpp",
-        "random": "c"
+        "random": "c",
+        "queue": "cpp",
+        "stack": "cpp"
     }
 }

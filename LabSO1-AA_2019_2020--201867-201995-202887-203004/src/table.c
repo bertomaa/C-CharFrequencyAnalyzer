@@ -1,8 +1,20 @@
 #include <stdio.h>
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <stdio.h>
+#include <unistd.h>
+
 int arrayFrequencies[256]; //could be 126
 void printTable(int, int, char *, int *);
-int main()
+
+int main(int argc, char **argv)
 {
+
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+    printf("lines %d\n", w.ws_row);
+    printf("columns %d\n", w.ws_col);
     int j;
     for (j = 0; j < 256; j++)
     {

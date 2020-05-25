@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "stats.h"
+
 int array[256];
 int main()
 {
