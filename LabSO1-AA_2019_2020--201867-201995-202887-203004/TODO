@@ -1,7 +1,9 @@
 - PASSA DATI DA ANALYZER A REPORT
-- SCRIVERE REMOVE FILE/CARTELLA
-- GESTIONE ERRORI
-
--dopo che si connettte a report(prima report poi analyzer, non tramite main), fa seg fault a volte(agg: ora che va report on lo fa da un  po)
--aggiungere ad ogni return diverso da 0 con una free, meglio se con una funzione wrapper
--exit wrapper con un collect munnezz
+- GESTIONE ERRORI -> nei wrapper così da non avere tutti i int error = ...
+- remove file  (fatto in main)
+- aggiungere ad ogni return diverso da 0 con una free, meglio se con una funzione wrapper
+- exit wrapper con un collect munnezz
+- main ha 2 config: una per i file già analizzati e una per quelli da analizzare, quando aggiungo file nuovi vengono analizzati solo quelli e messi nell'altra config
+- report ha 2 config: una con tutti i file e una con solo quelli da visualizzare.
+- pipe da main a report che manda comandi a report, redirect stdin sulla pipe per avere stesso comportamento senza main (dup2()).
+- sposta implementazioni da .h a .c

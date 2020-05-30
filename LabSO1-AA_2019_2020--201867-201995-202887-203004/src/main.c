@@ -52,7 +52,7 @@ void runAnalyzer(config *conf)
     }
 }
 
-void add(const char *arguments, config *conf)
+void addFiles(const char *arguments, config *conf)
 {
     char *pch;
     char *input; //TODO: definire meglio size da allocare
@@ -141,10 +141,24 @@ void showConfig(config *conf)
     }
 }
 
+void removeFiles(char *arguments, config *conf)
+{
+    char *pch;
+    char *input; //TODO: definire meglio size da allocare
+    int error = allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
+    strcpy(input, arguments);
+    pch = strtok(input, " ");
+    while (pch != NULL)
+    {
+        removePathFromConfig(conf, pch);
+        pch = strtok(NULL, " ");
+    }
+}
+
 int getAction(char *command, config *conf)
 {
     char *token = strtok(command, " ");
-    if(token == NULL)
+    if (token == NULL)
         return 1;
 
     if (strcmp(token, "run") == 0)
@@ -153,7 +167,7 @@ int getAction(char *command, config *conf)
     }
     else if (strcmp(token, "add") == 0)
     {
-        add(command + 4, conf);
+        addFiles(command + 4, conf);
     }
     else if (strcmp(token, "set") == 0)
     {
@@ -170,6 +184,10 @@ int getAction(char *command, config *conf)
     else if (strcmp(token, "config") == 0 || strcmp(token, "c") == 0)
     {
         showConfig(conf); //works
+    }
+    else if (strcmp(token, "remove") == 0)
+    {
+        removeFiles(command + 7, conf);
     }
     else if (strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "q") == 0)
     {
@@ -196,9 +214,9 @@ int main(int argc, const char *argv[])
 {
     initGC();
     char *endptr;
-    config conf;
+    config initConf;
 
-    initConfig(&conf);
+    initConfig(&initConf);
 
     if (argc > 1)
         if (checkArguments(argc, argv) != 0)
@@ -208,20 +226,23 @@ int main(int argc, const char *argv[])
     int filesCount = argc - PRE_FILES_ARGS;
     if (argc >= 3)
     {
-        conf.n = strtol(argv[1], &endptr, 10);
-        conf.m = strtol(argv[2], &endptr, 10);
+        initConf.n = strtol(argv[1], &endptr, 10);
+        initConf.m = strtol(argv[2], &endptr, 10);
         for (i = 0; i < filesCount; i++)
         {
-            addFileToConfig(&conf, argv[i + PRE_FILES_ARGS]);
+            addFileToConfig(&initConf, argv[i + PRE_FILES_ARGS]);
         }
     }
+
+    config *conf;
+    conf = checkDirectories(&initConf);
 
     int action;
     do
     {
         printf("-> ");
         char *command = getLine();
-        action = getAction(command, &conf);
+        action = getAction(command, conf);
     } while (action);
     collectGarbage();
     return 0;

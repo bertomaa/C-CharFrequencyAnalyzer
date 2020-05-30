@@ -296,8 +296,10 @@ int main(int argc, const char *argv[])
     initGC();
     int i;
     char *endptr;
-    config conf;
-    initConfig(&conf);
+    config *conf;
+    int error = allocWrapper(1, sizeof(config), (void**)&conf);
+    //TODO:error
+    initConfig(conf);
     // for (i = 0; i < 50; i++)
     // {
     //     printf("\n");
@@ -309,35 +311,34 @@ int main(int argc, const char *argv[])
 
     if (checkArguments(argc, argv) != 0)
         exit(1);
-    conf.n = strtol(argv[1], &endptr, 10);
-    conf.m = strtol(argv[2], &endptr, 10);
+    conf->n = strtol(argv[1], &endptr, 10);
+    conf->m = strtol(argv[2], &endptr, 10);
     //add paths to conf
 
     for (i = PRE_FILES_ARGS; i < argc; i++)
     {
-        addFileToConfig(&conf, argv[i]);
+        addFileToConfig(conf, argv[i]);
     }
-    conf.filesCount = argc - 3;
+    conf->filesCount = argc - 3;
 
     //TODO: if a filename is a folder then find the files
-    conf = checkDirectories(&conf, 1);
+    conf = checkDirectories(conf);
 
-    printf("filesCount:%d\n", conf.filesCount);
-    printFiles(&conf);
-    printFiles(&conf);
-    // printFiles(&conf);
+    printf("filesCount:%d\n", conf->filesCount);
+    printFiles(conf);
+    // printFiles(conf);
 
-    int *assignedFiles = distributeQuantity(conf.filesCount, conf.n);
+    int *assignedFiles = distributeQuantity(conf->filesCount, conf->n);
 
-    int *pipesToP = createPipes(conf.n);
+    int *pipesToP = createPipes(conf->n);
     pid_t *pids;
-    int error = allocWrapper(conf.n, sizeof(int), (void**) &pids);
+    error = allocWrapper(conf->n, sizeof(int), (void**) &pids);
     int pid;
 
     //creates subprocess p
-    printf("starting with n: %d, m: %d\n", conf.n, conf.m);
+    printf("starting with n: %d, m: %d\n", conf->n, conf->m);
     int offset = 0;
-    for (i = 0; i < conf.n; i++)
+    for (i = 0; i < conf->n; i++)
     {
         pid = fork();
         if (pid < 0)
@@ -347,7 +348,7 @@ int main(int argc, const char *argv[])
         }
         else if (pid == 0) //children
         {
-            int ret = p(conf.m, assignedFiles[i], conf.files, pipesToP[getPipeIndex(i, WRITE)], offset);
+            int ret = p(conf->m, assignedFiles[i], conf->files, pipesToP[getPipeIndex(i, WRITE)], offset);
             return ret;
         }
         else
@@ -357,9 +358,9 @@ int main(int argc, const char *argv[])
         offset += assignedFiles[i];
     }
     //father
-    char * sendToReport = getDataFromPs(conf, pipesToP);
+    char * sendToReport = getDataFromPs(*conf, pipesToP);
     //int isReportConnected = 
-    launchReportConnector(&conf, sendToReport);
+    launchReportConnector(conf, sendToReport);
     collectGarbage();
     printf("Analyzer done!\n");
     return 0;

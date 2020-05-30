@@ -75,13 +75,13 @@ void printTable(int start, int finish, char *name, int *arrayFrequencies)
 
         printf("|");
         cont++;
-
         k++;
     } while (k < finish);
 
     printf("\n");
+    int i, j;
 
-    for (int i = start; i < finish; i++)
+    for (i = start; i < finish; i++)
     {
         if (arrayFrequencies[i] < 10)
         {
@@ -111,7 +111,7 @@ void printTable(int start, int finish, char *name, int *arrayFrequencies)
         printf("|");
     }
     printf("\n");
-    for (int j = 0; j < cont; j++)
+    for (j = 0; j < cont; j++)
     {
         printf("-"); // Prints a line of -
     }
