@@ -3,13 +3,23 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdlib.h>
-int arrayFrequencies[256]; //could be 126
-void printTable(int, int, char *, int *);
+#include "stats.h"
+#include "commons.h"
+#include "config.h"
+
+void printTable(int start, int finish, char *name, int *);
+
 int main(int argc, char **argv)
 {
     srand(time(0));
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+    stats *stat;
+    config conf;
+
+    //int* arrayFrequencies = new int[256];
+    int arrayFrequencies[256];
 
     printf("lines %d\n", w.ws_row);
     printf("columns %d\n", w.ws_col);
@@ -19,21 +29,18 @@ int main(int argc, char **argv)
         // arrayFrequencies[j] = j;
         arrayFrequencies[j] = 1 + rand() % 1000;
     }
+    int i = 0;
+    for(i = 0; i < ASCII_CHARACTERS; i++)
+    {
+        arrayFrequencies[i] = stat->frequencies[i];
+    }
 
-    printTable(32, 48, "\nPunctuation:", arrayFrequencies);
-    printTable(48, 58, "\nNumbers:", arrayFrequencies);
-    printTable(58, 65, "\nOperators:", arrayFrequencies);
-    printTable(65, 78, "\nUppercase letters:", arrayFrequencies);
-    printTable(78, 91, "", arrayFrequencies); //letters are divided in two rows for style's sake
-    printTable(91, 97, "\nSymbols:", arrayFrequencies);
-    printTable(97, 110, "\nLowercase letters:", arrayFrequencies);
-    printTable(110, 123, "", arrayFrequencies);
-    printTable(123, 128, "\nLast characters:", arrayFrequencies); //letters are divided in two rows for style's sake
+    printf("FILE %s\n", conf.files[stat->fileID]);
 
     return 0;
 }
 
-void printTable(int start, int finish, char *name, int arrayFrequencies[256])
+void printTable(int start, int finish, char *name, int *arrayFrequencies)
 {
     int cont = 0; //counts all the characters written to have  adotted line of the same leght
 
