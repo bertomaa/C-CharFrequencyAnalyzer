@@ -3,11 +3,22 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdlib.h>
-#include "stats.h"
-#include "commons.h"
-#include "config.h"
+int arrayFrequencies[256]; //could be 126
+void printTable(int, int, char *, int *);
 
-void printTable(int start, int finish, char *name, int *);
+int getDigits(int n)
+{
+    int count = 0;
+        do 
+    {
+        /* Increment digit count */
+    count++;
+
+        /* Remove last digit of 'num' */
+        n /= 10;
+    } while(n != 0);
+    return count;
+}
 
 int main(int argc, char **argv)
 {
@@ -15,35 +26,48 @@ int main(int argc, char **argv)
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
-    stats *stat;
-    config conf;
-
-    //int* arrayFrequencies = new int[256];
-    int arrayFrequencies[256];
-
     printf("lines %d\n", w.ws_row);
     printf("columns %d\n", w.ws_col);
     int j;
+    int check = 0;
     for (j = 0; j < 256; j++)
     {
         // arrayFrequencies[j] = j;
-        arrayFrequencies[j] = 1 + rand() % 1000;
+        arrayFrequencies[j] = 1 + rand() % 1000000;
     }
-    int i = 0;
-    for(i = 0; i < ASCII_CHARACTERS; i++)
+    
+    for (j = 0; j < 256; j++)
     {
-        arrayFrequencies[i] = stat->frequencies[i];
+        if(arrayFrequencies[j] != 0)
+        {
+            check = 1;
+            j = 256;
+        }
     }
-
-    printf("FILE %s\n", conf.files[stat->fileID]);
+    if(check == 0)
+    {
+        printf("Empty file\n");
+        exit(0);
+    }
+    
+    printTable(32, 39, "Punctuation", arrayFrequencies);
+    printTable(40, 48, "Punctuation", arrayFrequencies);
+    printTable(48, 58, "Numbers", arrayFrequencies);
+    printTable(58, 65, "Operators", arrayFrequencies);
+    printTable(65, 73, "Uppercase letters", arrayFrequencies);
+    printTable(73, 82, "Uppercase letters", arrayFrequencies);
+    printTable(82, 91, "Uppercase letters", arrayFrequencies); 
+    printTable(91, 97, "Symbols", arrayFrequencies);
+    printTable(97, 105, "Lowercase letters", arrayFrequencies);
+    printTable(105, 114, "Lowercase letters", arrayFrequencies);
+    printTable(114, 123, "Lowercase letters", arrayFrequencies);
+    printTable(123, 128, "Other characters", arrayFrequencies); //some are divided in multiple row for style sake
 
     return 0;
 }
 
-void printTable(int start, int finish, char *name, int *arrayFrequencies)
+void printTable(int start, int finish, char *name, int arrayFrequencies[256])
 {
-    int cont = 0; //counts all the characters written to have  adotted line of the same leght
-
     /*printf("%s\n", name); //prints the name of the section
     int i = start;
     do
@@ -60,195 +84,100 @@ void printTable(int start, int finish, char *name, int *arrayFrequencies)
     }
     printf("\n");*****/
 
-    printf("%s\n", name); //prints the name of the section
+    printf("\n %s\n", name); //prints the name of the section
     int k = start; //k = counter for the ascii characters
+    int max = 0; //length of the biggest number
+    int dim = 0; //dimension of the "current" number
+    int search = 0; //i,j,k were already used
+    for (search = 0; search < 256; search++){
+        if (arrayFrequencies[search] > max){
+            max = arrayFrequencies[search]; //search for the biggest number in frequencies
+        }
+    }
+    //printf("\n %d \n", max);
+    const int dimMax = getDigits(max); //save the digits of the biggest number
+    // int dim = getDigits(arrayFrequencies[k]);
+    int i = 0;
+    
+    //CHARACTERS
     do
     {
-        printf("  "); //2 spaces before the letter/symbol
-        cont = cont + 2;
 
-        printf("%c", k); //prints the ascii character
-        cont++;
-
-        printf("  "); //2 spaces after the letter/symbol
-        cont = cont + 2;
-
-        printf("|");
-        cont++;
+        if (arrayFrequencies[k] != 0)
+        {
+            dim = getDigits(arrayFrequencies[k]); //digits of the current number
+            if (dim % 2 == 0) //even number of digits
+            {
+                for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
+                    printf(" ");
+                printf("%c", k);
+                for (i = dimMax / 2; i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                    printf(" ");
+            }
+            else //odd number of digits
+            {
+                for (i = 0; i < (dimMax / 2); i++) //prints spaces to the left of the CHARACTER
+                    printf(" ");
+                printf("%c", k);
+                for (i = (dimMax / 2) + 1; i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                    printf(" ");
+            }
+            printf("|");
+        }
         k++;
     } while (k < finish);
 
     printf("\n");
-    int i, j;
 
-    for (i = start; i < finish; i++)
+    // NUMERI
+    k = start;
+    dim = 0;
+    int d = 0;
+    do
     {
-        if (arrayFrequencies[i] < 10)
+
+        if (arrayFrequencies[k] != 0)
         {
-            printf("  ");
+            dim = getDigits(arrayFrequencies[k]);
+            //d = dimMax - dim;
+            if ((dimMax) % 2 == 0)
+            {
+                if(((dimMax - dim) / 2) - 1 == 0)
+                {
+                    printf(" ");
+                }
+                else
+                {
+                    for (i = 0; i < ((dimMax - dim) / 2) - 1; i++)
+                        printf(" ");
+                }
+                printf("%d", arrayFrequencies[k]);
+                for (i = (((dimMax - dim) / 2) + dim); i < dimMax ; i++)
+                    printf(" ");
+            }
+            else
+            {
+                for (i = 0; i < (dimMax - dim)/ 2; i++)
+                    printf(" ");
+                printf("%d", arrayFrequencies[k]);
+                for (i = (((dimMax - dim) / 2) + dim); i < dimMax; i++)
+                    printf(" ");
+            }
+            printf("|");
         }
-        if (arrayFrequencies[i] < 100 && arrayFrequencies[i] >= 10)
-        {
-            printf("  ");
-        }
-        if (arrayFrequencies[i] < 1000 && arrayFrequencies[i] >= 100)
-        {
+        k++;
+    } while (k < finish);
+
+    printf("\n");
+    
+    printf("\n");
+    int j = 0;
+    for (j = 0; j < dimMax*6; j++)
+    {
+        //for(i = 0; i < 1; i++)
             printf(" ");
-        }
-        printf("%d", arrayFrequencies[i]); //prints its frequency
-        if (arrayFrequencies[i] < 10)
-        {
-            printf("  ");
-        }
-        if (arrayFrequencies[i] < 100 && arrayFrequencies[i] >= 10)
-        {
-            printf(" ");
-        }
-        if (arrayFrequencies[i] < 1000 && arrayFrequencies[i] >= 100)
-        {
-            printf(" ");
-        }
-        printf("|");
+        //for(i = 0; i < 7; i++)
+            printf("-"); // Prints a line of -
     }
     printf("\n");
-    for (j = 0; j < cont; j++)
-    {
-        printf("-"); // Prints a line of -
-    }
 }
-
-/* printf("\n\nPunteggiatura:\n");
-    int i = 32;
-    do
-    {
-        printf("%c\t", i);
-        i++;
-    } while (i < 48);
-
-    printf("\n");
-
-    for (int i = 32; i < 48; i++)
-    {
-        printf("%d\t", i);
-    }
-
-    printf("\n\nNumeri:\n");
-    i = 48;
-    do
-    {
-        printf("%c\t", i);
-        i++;
-    } while (i < 58);
-
-    printf("\n");
-
-    for (int i = 48; i < 58; i++)
-    {
-        printf("%d\t", i);
-    }
-
-    printf("\n\nSimboli:\n");
-    i = 58;
-    do
-    {
-        printf("%c\t", i);
-        i++;
-    } while (i < 65);
-
-    printf("\n");
-
-    for (int i = 58; i < 65; i++)
-    {
-        printf("%d\t", i);
-    }
-
-    printf("\n\nLettere maiuscole:\n");
-    i = 65;
-    do
-    {
-        printf("%c\t", i);
-        i++;
-    } while (i < 78);
-
-    printf("\n");
-
-    for (int i = 65; i < 78; i++)
-    {
-        printf("%d\t", i);
-    }
-
-    printf("\n");
-    i = 78;
-    do
-    {
-        printf("%c\t", i);
-        i++;
-    } while (i < 91);
-
-    printf("\n");
-
-    for (int i = 78; i < 91; i++)
-    {
-        printf("%d\t", i);
-    }
-
-    printf("\n\nSegni:\n");
-    i = 91;
-    do
-    {
-        printf("%c\t", i);
-        i++;
-    } while (i < 97);
-
-    printf("\n");
-
-    for (int i = 91; i < 97; i++)
-    {
-        printf("%d\t", i);
-    }
-
-    printf("\n\nLettere minuscole:\n");
-    i = 97;
-    do
-    {
-        printf("%c\t", i);
-        i++;
-    } while (i < 110);
-
-    printf("\n");
-
-    for (int i = 97; i < 110; i++)
-    {
-        printf("%d\t", i);
-    }
-
-    printf("\n");
-    i = 110;
-    do
-    {
-        printf("%c\t", i);
-        i++;
-    } while (i < 123);
-
-    printf("\n");
-
-    for (int i = 110; i < 123; i++)
-    {
-        printf("%d\t", i);
-    }
-
-    printf("\n\nUltimi caratteri:\n");
-    i = 123;
-    do
-    {
-        printf("%c\t", i);
-        i++;
-    } while (i < 128);
-
-    printf("\n");
-
-    for (int i = 123; i < 128; i++)
-    {
-        printf("%d\t", i);
-    }
-    printf("\n");*/
