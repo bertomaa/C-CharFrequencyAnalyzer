@@ -5,7 +5,7 @@ int array[256];
 int main()
 {
     int j;
-    for (j = 0; j < 256; j++)
+    for (j = 0; j < DIM; j++)
     {
         array[j] = j;
     }
