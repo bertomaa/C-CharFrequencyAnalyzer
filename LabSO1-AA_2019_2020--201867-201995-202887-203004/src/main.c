@@ -6,6 +6,10 @@
 #include "config.h"
 #include "commons.h"
 
+char *mainToReportPipe = "/tmp/mainToReport.pipe";
+char *path;
+int fdToReport;
+
 char *getLine()
 {
     int size = MAX_COMMAND_LEN;
@@ -30,11 +34,28 @@ char *getLine()
     return line;
 }
 
-void runAnalyzer(config *conf)
+char *getBinPath(const char *arg0)
 {
-    printf("Run analyzer\n");
-    // sprintf(conf->files[0], "%d", conf->n);
-    // sprintf(conf->files[1], "%d", conf->m);
+    char *res;
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&res); //TODO: una piotta e diesci terza marcia
+    strcpy(res, arg0);
+    int i;
+    for (i = strlen(res) - 2; i > 0 && res[i] != '/'; i--)
+        ;
+    res[i + 1] = '\0';
+    return res;
+}
+
+void run(config *conf)
+{
+    printf("Run analyzer and Report\n");
+
+    if (!isReadyToRun(conf))
+    {
+        printf("Cannot run, set n, m and at least 1 file.\n");
+        return;
+    }
+
     int p = fork();
     if (p < 0)
     {
@@ -43,13 +64,44 @@ void runAnalyzer(config *conf)
     }
     else if (p == 0)
     { //figlio
-        char **args = exportAsArguments(conf);
-        execvp("./analyzer", args);
+        char *analyzerPath;
+        allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&analyzerPath); //TODO: una piotta e diesci terza marcia
+        strcpy(analyzerPath, path);
+        strcat(analyzerPath, "analyzer");
+        printf("%s\n", analyzerPath);
+        char **args = exportAsArguments(conf, analyzerPath);
+        execv(analyzerPath, args);
+        exit(0);
     }
-    else
-    { //padre
-        //wait();
+    //padre
+    int q = fork();
+    if (q < 0)
+    {
+        fprintf(stderr, "Impossible to fork, quit.\n");
+        exit(1);
     }
+    else if (q == 0)
+    { //figlio
+        char *reportPath;
+        allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&reportPath); //TODO: una piotta e diesci terza marcia
+        strcpy(reportPath, path);
+        strcat(reportPath, "report");
+        printf("%s\n", reportPath);
+        char **args = exportAsArguments(conf, reportPath);
+        execl(reportPath, reportPath, "--main", NULL);
+        exit(0);
+    }
+    printf("sono il main!\n");
+
+    //TODO: creare la pipe per report
+    // mkfifo(mainToReportPipe, 0666);
+    // fdToReport = open(mainToReportPipe, O_WRONLY);
+    // if(fdToReport == -1)
+    // {
+    //     printf("pipe error\n");
+    //     exit(1);
+    // }
+    // printf("main connected to report\n");
 }
 
 void addFiles(const char *arguments, config *conf)
@@ -66,33 +118,30 @@ void addFiles(const char *arguments, config *conf)
     }
 }
 
-void runReport(config *conf)
+void passToReport(char *command)
 {
-    printf("Run runReport\n");
-    int p = fork();
-    if (p < 0)
+    printf("pass to Report\n");
+    mkfifo(mainToReportPipe, 0666);
+    fdToReport = open(mainToReportPipe, O_WRONLY);
+    if(fdToReport == -1)
     {
-        fprintf(stderr, "Impossible to fork, quit.\n");
+        printf("pipe error\n");
         exit(1);
     }
-    else if (p == 0)
-    { //figlio
-        char **args = exportAsArguments(conf);
-        execvp("./report", args);
-    }
-    else
-    { //padre
-        //wait();
-    }
+    printf("main connected to report\n");
+    write(fdToReport, command, sizeof(command) + 1);
+    close(fdToReport);
 }
 
 void showHelp()
 {
     printf("Allowed actions:\n");
-    printf("set <n> <m>             - Set values of n and m.\n");
-    printf("add <file1> <file2> ... - Add files (or directories) to analyze.\n");
-    printf("config                  - Show the current configuration, with the added files \n");
-    printf("report                  - Run report that sums up the informations \n");
+    printf("set <n> <m>                 - Set values of n (number of p processes) and m (number of q processes) to pass to analyzer.\n");
+    printf("add <file1> <file2> ...     - Add files (or directories) to be analyzed.\n");
+    printf("config                      - Show the current configuration, with the added files\n");
+    printf("run                         - Run analyzer and report\n");
+    printf("report <cmd>                - Used to issue commands to report, must be used after run\n");
+    printf("remove <file1> <file2> ...  - Removes files (or directories) from the list to be analyzed\n");
 }
 
 void showCommandNotFoundError(const char *arguments)
@@ -126,6 +175,13 @@ void set(char *arguments, config *conf)
     }
 }
 
+int isReadyToRun(config *conf)
+{
+    if (conf->n > 0 && conf->m > 0 && conf->filesCount != 0)
+        return 1;
+    return 0;
+}
+
 void showConfig(config *conf)
 {
     printf("n = %d, m = %d\n", conf->n, conf->m);
@@ -155,27 +211,33 @@ void removeFiles(char *arguments, config *conf)
     }
 }
 
-int getAction(char *command, config *conf)
+int getAction(char *command, config *newConf, config *analyzedConf)
 {
     char *token = strtok(command, " ");
     if (token == NULL)
         return 1;
 
-    if (strcmp(token, "run") == 0)
+    if (strcmp(token, "run") == 0 || strcmp(token, "r") == 0)
     {
-        runAnalyzer(conf);
+        run(newConf);
+        int n = newConf->n;
+        int m = newConf->m;
+        joinConfigs(analyzedConf, newConf);
+        initConfig(newConf);
+        newConf->n = n;
+        newConf->m = m;
     }
     else if (strcmp(token, "add") == 0)
     {
-        addFiles(command + 4, conf);
+        addFiles(command + 4, newConf);
     }
     else if (strcmp(token, "set") == 0)
     {
-        set(command + 4, conf);
+        set(command + 4, newConf);
     }
     else if (strcmp(token, "report") == 0)
     {
-        runReport(conf);
+        passToReport(command + 7);
     }
     else if (strcmp(token, "help") == 0)
     {
@@ -183,11 +245,11 @@ int getAction(char *command, config *conf)
     }
     else if (strcmp(token, "config") == 0 || strcmp(token, "c") == 0)
     {
-        showConfig(conf); //works
+        showConfig(newConf); //works
     }
     else if (strcmp(token, "remove") == 0)
     {
-        removeFiles(command + 7, conf);
+        removeFiles(command + 7, newConf);
     }
     else if (strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "q") == 0)
     {
@@ -213,6 +275,7 @@ int checkArguments(int argc, const char *argv[])
 int main(int argc, const char *argv[])
 {
     initGC();
+    path = getBinPath(argv[0]);
     char *endptr;
     config initConf;
 
@@ -234,15 +297,18 @@ int main(int argc, const char *argv[])
         }
     }
 
-    config *conf;
-    conf = checkDirectories(&initConf);
+    config *analyzedFilesConf;
+    config *newFilesConf;
+    newFilesConf = checkDirectories(&initConf);
+    int error = allocWrapper(1, sizeof(config), (void **)&analyzedFilesConf);
+    initConfig(analyzedFilesConf);
 
     int action;
     do
     {
         printf("-> ");
         char *command = getLine();
-        action = getAction(command, conf);
+        action = getAction(command, newFilesConf, analyzedFilesConf);
     } while (action);
     collectGarbage();
     return 0;

@@ -34,7 +34,7 @@ void addFileToConfig(config *c, const char *file);
 
 void printFiles(const config *c);
 
-char **exportAsArguments(const config *c);
+char **exportAsArguments(const config *c, char* arg0);
 
 config *checkDirectories(config *conf);
 

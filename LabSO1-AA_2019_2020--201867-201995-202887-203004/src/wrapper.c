@@ -2,12 +2,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "commons.h"
-#include "wrapper.h"
 
 int openWrapper(const char *path, int *fd)
 {
@@ -34,7 +32,6 @@ int allocWrapper(int num, int size, void **p)
 }
 
 int reallocWrapper(void** pointer, int size){
-    printf("remove %p\n", *pointer);
     removeFromGC(*pointer);
     *pointer = realloc(*pointer, size);
     if(*pointer == NULL)

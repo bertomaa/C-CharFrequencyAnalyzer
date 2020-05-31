@@ -2,12 +2,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <math.h>
+#include <tgmath.h>
 #include "commons.h"
 #include "stats.h"
+
 
 void initStats(stats *stat, int _fileID)
 {

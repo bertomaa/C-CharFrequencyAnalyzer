@@ -2,12 +2,13 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <math.h>
+#include <tgmath.h>
+#include <signal.h>
+#include <pthread.h>
+#include "config.h"
 #include "reportConnector.h"
-
 
 void sendDataToReport(int fd, confAndEncodedString conf)
 {
@@ -27,14 +28,14 @@ void sendDataToReport(int fd, confAndEncodedString conf)
 
 void *tryToConnect(void *confPointer)
 {
-    //int e = unlink(pipeToReportName);
+    //int e = unlink(analyzerToReportPipe);
     //printf("error:%d\n", e);
     //TODO: contrllare che e sia 0 altrimenti bloccare tutto, in casoil file non esista in rpecedenza non so cosa ritorni e, ma in quel casso deve andare
     confAndEncodedString conf = *((confAndEncodedString *)confPointer);
-    mkfifo(pipeToReportName, 0666); //TODO: forse sti permessi vanno cambiati che naimoli può scriverci nella pipe
+    mkfifo(analyzerToReportPipe, 0666); //TODO: forse sti permessi vanno cambiati che naimoli può scriverci nella pipe
     printf("made fifo\n");
     int fd;
-    fd = open(pipeToReportName, O_WRONLY);
+    fd = open(analyzerToReportPipe, O_WRONLY);
     isReportConnected = 1;
     printf("connected!\n");
     sendDataToReport(fd, conf);

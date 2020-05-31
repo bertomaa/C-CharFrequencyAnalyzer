@@ -7,7 +7,15 @@
 #include <tgmath.h>
 #include "commons.h"
 #include "wrapper.h"
-#include "config.h"
+
+typedef struct config
+{
+    int dim;
+    int n;
+    int m;
+    int filesCount;
+    char **files;
+} config;
 
 void initConfig(config *conf)
 {
@@ -143,7 +151,7 @@ void printFiles(const config *c)
     printf("\n");
 }
 
-char **exportAsArguments(const config *c)
+char **exportAsArguments(const config *c, char* arg0)
 {
     //TODO: definire meglio quanto allocare
     char **res;
@@ -151,9 +159,9 @@ char **exportAsArguments(const config *c)
     error = allocWrapper(40, sizeof(char), (void **)&(res[0]));
     error = allocWrapper(40, sizeof(char), (void **)&(res[1]));
     error = allocWrapper(40, sizeof(char), (void **)&(res[2]));
+    sprintf(res[0], "%s", arg0);
     sprintf(res[1], "%d", c->n);
     sprintf(res[2], "%d", c->m);
-    printf("\n\n\n\n\n\n\n0: %s, 1: %s", res[0], res[1]);
     int i;
     for (i = 3; i < c->filesCount + 3; i++)
     {

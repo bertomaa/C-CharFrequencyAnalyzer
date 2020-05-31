@@ -6,4 +6,4 @@
 - main ha 2 config: una per i file già analizzati e una per quelli da analizzare, quando aggiungo file nuovi vengono analizzati solo quelli e messi nell'altra config
 - report ha 2 config: una con tutti i file e una con solo quelli da visualizzare.
 - pipe da main a report che manda comandi a report, redirect stdin sulla pipe per avere stesso comportamento senza main (dup2()).
-- sposta implementazioni da .h a .c
+- sposta implementazioni da .h a .c 

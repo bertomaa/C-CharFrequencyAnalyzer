@@ -10,10 +10,9 @@
 #include <tgmath.h>
 #include <signal.h>
 #include <pthread.h>
-#include "commons.h"
-#include "wrapper.h"
+#include "config.h"
 
-char *pipeToReportName = "/tmp/analyzerToReport.pipe";
+char *analyzerToReportPipe = "/tmp/analyzerToReport.pipe";
 int isReportConnected = 0;
 
 typedef struct confAndEncodedString

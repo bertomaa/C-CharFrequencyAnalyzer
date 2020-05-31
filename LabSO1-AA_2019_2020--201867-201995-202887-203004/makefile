@@ -1,48 +1,55 @@
 SHELL=/bin/bash
 
-CC=gcc
-CCFLAGS="-std=gnu90"
-COMMONDEPS="./bin/wrapper.o ./bin/stats.o ./bin/config.o ./bin/commons.o"
+SRCPATH= ./src/
+OBJPATH = ./bin/obj/
+CC = gcc
+CCFLAGS = -std=gnu90
 
-#TODO: update make
-#$(CC) -o  $@ $< $(CCFLAGS)
-
-build: $$(DEPS)
-	main
-	analyzer
-	report
-
-main: main.o wrapper.o stats.o config.o commons.o
-	$(CC) -o ./bin/main ./bin/main.o ./bin/wrapper.o ./bin/stats.o ./bin/config.o ./bin/commons.o $(CCFLAGS)
-
-analyzer: analyzer.o $$(COMMONDEPS) reportConnector.o
-	$(CC) -o ./bin/analyzer ./bin/analyzer.o $(COMMONDEPS) $(CCFLAGS)
-
-report: report.o $$(COMMONDEPS)
-	$(CC) -o ./bin/report ./bin/report.o $(COMMONDEPS) $(CCFLAGS)
-
-main.o: ./src/main.c
-	$(CC) -c -o ./bin/main.o ./src/main.c $(CCFLAGS)
-	
-analyzer.o: ./src/analyzer.c 
-	$(CC) -c -o ./bin/analyzer.o ./src/analyzer.c $(CCFLAGS)
-	
-commons.o: ./src/commons.c ./src/commons.h
-	$(CC) -c -o ./bin/commons.o ./src/commons.c $(CCFLAGS)
-
-stats.o: ./src/stats.c
-	$(CC) -c -o ./bin/stats.o ./src/stats.c $(CCFLAGS)
-
-wrapper.o: ./src/wrapper.c ./src/commons.c
-	$(CC) -c -o ./bin/wrapper.o ./src/wrapper.c $(CCFLAGS)
-
-config.o: ./src/config.c
-	$(CC) -c -o ./bin/config.o ./src/config.c $(CCFLAGS)
-	
-reportConnector.o: ./src/reportConnector.c
-	$(CC) -c -o ./bin/reportConnector.o ./src/reportConnector.c $(CCFLAGS)
-
-clean:
-	rm -f ./bin/
+OBJ = $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPATH)commons.o
+COMMONTARGETS = wrapper.o stats.o config.o commons.o
+SOURCES = $(SRCPATH)wrapper.c $(SRCPATH)stats.c $(SRCPATH)config.c $(SRCPATH)commons.c
+MAINDEPS = $(SRCPATH)wrapper.c $(SRCPATH)stats.c $(SRCPATH)config.c $(SRCPATH)commons.c $(SRCPATH)wrapper.h $(SRCPATH)stats.h $(SRCPATH)config.h $(SRCPATH)commons.h
 
 .PHONY: build clean
+
+build: bin main analyzer report
+
+bin:
+	mkdir -p bin/obj
+
+main: $(COMMONTARGETS) main.o
+	$(CC) -o ./bin/main $(OBJ) $(OBJPATH)main.o $(CCFLAGS)
+
+analyzer: $(COMMONTARGETS) reportConnector.o analyzer.o
+	$(CC) -o ./bin/analyzer $(OBJPATH)analyzer.o $(OBJ) $(OBJPATH)reportConnector.o -pthread $(CCFLAGS)
+
+report: $(COMMONTARGETS) report.o
+	$(CC) -o ./bin/report $(OBJPATH)report.o $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPATH)commons.o $(CCFLAGS)
+
+main.o: $(SRCPATH)main.c
+	$(CC) -c -o $(OBJPATH)main.o $(SRCPATH)main.c $(CCFLAGS)
+
+report.o: $(SRCPATH)report.c
+	$(CC) -c -o $(OBJPATH)report.o $(SRCPATH)report.c $(CCFLAGS)
+	
+analyzer.o: $(SRCPATH)analyzer.c 
+	$(CC) -c -o $(OBJPATH)analyzer.o $(SRCPATH)analyzer.c $(CCFLAGS)
+	
+commons.o: $(SRCPATH)commons.c $(SRCPATH)commons.h
+	$(CC) -c -o $(OBJPATH)commons.o $(SRCPATH)commons.c $(CCFLAGS)
+
+stats.o: $(SRCPATH)stats.c $(SRCPATH)stats.h
+	$(CC) -c -o $(OBJPATH)stats.o $(SRCPATH)stats.c $(CCFLAGS)
+
+wrapper.o: $(SRCPATH)wrapper.c $(SRCPATH)commons.c $(SRCPATH)wrapper.h
+	$(CC) -c -o $(OBJPATH)wrapper.o $(SRCPATH)wrapper.c $(CCFLAGS)
+
+config.o: $(SRCPATH)config.c $(SRCPATH)config.h
+	$(CC) -c -o $(OBJPATH)config.o $(SRCPATH)config.c $(CCFLAGS)
+	
+reportConnector.o: $(SRCPATH)reportConnector.c $(SRCPATH)reportConnector.h $(SRCPATH)config.h
+	$(CC) -c -o $(OBJPATH)reportConnector.o $(SRCPATH)reportConnector.c $(CCFLAGS)
+
+clean:
+	rm -rf ./bin/
+
