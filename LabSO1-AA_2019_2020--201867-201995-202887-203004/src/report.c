@@ -17,6 +17,124 @@ char *mainToReportPipe = "/tmp/mainToReport.pipe";
 int FDanalyzer;
 
 void readAnalyzer(confAndStats *conf);
+void printTable(int start, int finish, char *name, stats resultStats)
+{
+    printf("\n %s\n", name); //prints the name of the section
+    int k = start;           //k = counter for the ascii characters
+    int max = 0;             //length of the biggest number
+    int dim = 0;             //dimension of the "current" number
+    int search = 0;          //i,j,k were already used
+    for (search = 0; search < 256; search++)
+    {
+        if (resultStats.frequencies[search] > max)
+        {
+            max = resultStats.frequencies[search]; //search for the biggest number in frequencies
+        }
+    }
+    //printf("\n %d \n", max);
+    const int dimMax = getDigits(max); //save the digits of the biggest number
+    // int dim = getDigits(arrayFrequencies[k]);
+    int i = 0;
+
+    //CHARACTERS
+    do
+    {
+
+        if (resultStats.frequencies[k] != 0)
+        {
+            dim = getDigits(resultStats.frequencies[k]);
+            //dim = getDigits(resultStats.frequencies[k]); //digits of the current number
+            if (dim % 2 == 0) //even number of digits
+            {
+                for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
+                    printf(" ");
+                printf("%c", k);
+                for (i = dimMax / 2; i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                    printf(" ");
+            }
+            else //odd number of digits
+            {
+                for (i = 0; i < (dimMax / 2); i++) //prints spaces to the left of the CHARACTER
+                    printf(" ");
+                printf("%c", k);
+                for (i = (dimMax / 2) + 1; i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                    printf(" ");
+            }
+            printf("|");
+        }
+        k++;
+    } while (k < finish);
+
+    printf("\n");
+
+    // NUMERI
+    k = start;
+    dim = 0;
+    int d = 0;
+    do
+    {
+
+        if (resultStats.frequencies[k] != 0)
+        {
+            dim = getDigits(resultStats.frequencies[k]);
+            //d = dimMax - dim;
+            if ((dimMax) % 2 == 0)
+            {
+                if (((dimMax - dim) / 2) - 1 == 0)
+                {
+                    printf(" ");
+                }
+                else
+                {
+                    for (i = 0; i < ((dimMax - dim) / 2) - 1; i++)
+                        printf(" ");
+                }
+                printf("%d", resultStats.frequencies[k]);
+                for (i = (((dimMax - dim) / 2) + dim); i < dimMax; i++)
+                    printf(" ");
+            }
+            else
+            {
+                for (i = 0; i < (dimMax - dim) / 2; i++)
+                    printf(" ");
+                printf("%d", resultStats.frequencies[k]);
+                for (i = (((dimMax - dim) / 2) + dim); i < dimMax; i++)
+                    printf(" ");
+            }
+            printf("|");
+        }
+        k++;
+    } while (k < finish);
+
+    printf("\n");
+
+    printf("\n");
+    int j = 0;
+    for (j = 0; j < dimMax * 6; j++)
+    {
+        //for(i = 0; i < 1; i++)
+        printf(" ");
+        //for(i = 0; i < 7; i++)
+        printf("-"); // Prints a line of -
+    }
+    printf("\n");
+}
+
+void print(stats resultStats)
+{
+    printTable(32, 39, "Punctuation", resultStats);
+    printTable(40, 48, "Punctuation", resultStats);
+    printTable(48, 58, "Numbers", resultStats);
+    printTable(58, 65, "Operators", resultStats);
+    printTable(65, 73, "Uppercase letters", resultStats);
+    printTable(73, 82, "Uppercase letters", resultStats);
+    printTable(82, 91, "Uppercase letters", resultStats);
+    printTable(91, 97, "Symbols", resultStats);
+    printTable(97, 105, "Lowercase letters", resultStats);
+    printTable(105, 114, "Lowercase letters", resultStats);
+    printTable(114, 123, "Lowercase letters", resultStats);
+    printTable(123, 128, "Other characters", resultStats); //some are divided in multiple row for style sake
+}
 
 char *getLine()
 {
@@ -202,7 +320,7 @@ int main(int argc, char *argv[])
     initGC();
     confAndStats cs;
     allocWrapper(1, sizeof(config), (void **)&(cs.conf));
-    allocWrapper(INITIAL_CONFIG_SIZE, sizeof(stats), (void **) &(cs.stats));
+    allocWrapper(INITIAL_CONFIG_SIZE, sizeof(stats), (void **)&(cs.stats));
     // TODO: terza marcia
     initConfig(cs.conf);
     printf("Waiting for Analyzer...\n");
@@ -232,7 +350,7 @@ int main(int argc, char *argv[])
             printf("report cmd: %s\n", command);
             goOn = processCommand(command, &cs);
             close(fdFromMain);
-        }while(goOn);
+        } while (goOn);
     }
     else
     {
@@ -242,7 +360,7 @@ int main(int argc, char *argv[])
             scanf("%2048s", command);
             printf("report cmd: %s\n", command);
             goOn = processCommand(command, &cs);
-        }while(goOn);
+        } while (goOn);
     }
 
     printf("FINE REPORT!\n");
