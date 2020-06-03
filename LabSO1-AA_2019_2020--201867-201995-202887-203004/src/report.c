@@ -14,108 +14,16 @@
 
 char *analyzerToReportPipe = "/tmp/analyzerToReport.pipe";
 char *mainToReportPipe = "/tmp/mainToReport.pipe";
+int FDanalyzer;
 
-void print(int start, int finish, char* type, stats resultStats)
-{
-    int cont = 0; //counts all the characters written to have adotted line of the same length
-    int i = 0;
-    int j = 0;
-
-    /*printf("%s\n", name); //prints the name of the section
-    int i = start;
-    do
-    {
-        printf("%c\t", i); //prints the ascii character
-        i++;
-    } while (i < finish);
-
-    printf("\n");
-
-    for (int i = start; i < finish; i++)
-    {
-        printf("%d\t", arrayFrequencies[i]); //prints its frequency
-    }
-    printf("\n");*****/
-
-    int k = start;
-    printf("\n%s\n", type); //prints the name of the section
-    do
-    {
-        if(resultStats.frequencies[k] != 0)
-        {
-            printf("  "); //2 spaces before the character
-            cont = cont + 2;
-
-            printf("%c", k); //prints the ascii character
-            cont++;
-
-            printf("  "); //2 spaces after the character
-            cont = cont + 2;
-
-            printf("|");
-            cont++;
-        }
-        k++;
-
-    } while (k < finish);
-
-    printf("\n");
-
-    for (i = start; i < finish; i++)
-    {
-        if (resultStats.frequencies[i] < 10 && resultStats.frequencies[i] > 0)
-        {
-            printf("  ");
-        }
-        if (resultStats.frequencies[i] < 100 && resultStats.frequencies[i] >= 10)
-        {
-            printf("  ");
-        }
-        if (resultStats.frequencies[i] < 1000 && resultStats.frequencies[i] >= 100)
-        {
-            printf(" ");
-        }
-        printf("%d", resultStats.frequencies[i]); //prints its frequency
-        if (resultStats.frequencies[i] < 10 && resultStats.frequencies[i] > 0)
-        {
-            printf("  ");
-        }
-        if (resultStats.frequencies[i] < 100 && resultStats.frequencies[i] >= 10)
-        {
-            printf(" ");
-        }
-        if (resultStats.frequencies[i] < 1000 && resultStats.frequencies[i] >= 100)
-        {
-            printf(" ");
-        }
-        printf("|");
-    }
-    printf("\n");
-    for (j = 0; j < cont; j++)
-    {
-        printf("-"); // Prints a line of -
-    }
-}
-
-void printTable(stats resultStats)
-{
-    print(32, 48, "Punctuation", resultStats);
-    print(48, 58, "Numbers", resultStats);
-    print(58, 65, "Operators", resultStats);
-    print(65, 78, "Uppercase letters", resultStats);
-    print(78, 91, "Uppercase letters", resultStats); //letters are divided in two rows for style's sake
-    print(91, 97, "Symbols", resultStats);
-    print(97, 110, "Lowercase letters", resultStats);
-    print(110, 123, "Lowercase letters", resultStats);
-    print(123, 128, "Other characters", resultStats); //letters are divided in two rows for style's sake
-}
+void readAnalyzer(confAndStats *conf);
 
 char *getLine()
 {
     int size = MAX_COMMAND_LEN;
     int i = 0;
     char *line;
-    int error = allocWrapper(size, sizeof(char), (void **)&line);
+    allocWrapper(size, sizeof(char), (void **)&line);
     //TODO: error
     char c;
     while (c != '\n')
@@ -124,7 +32,7 @@ char *getLine()
         if (i + 1 >= size)
         {
             size += MAX_COMMAND_LEN;
-            error = reallocWrapper((void **)&line, size);
+            reallocWrapper((void **)&line, size);
             //TODO: error
         }
         line[i] = c;
@@ -137,10 +45,41 @@ char *getLine()
 void showHelp()
 {
     printf("Allowed actions:\n");
-    printf("report <file1> <file2> ...          - Shows the report of the specified files.\n");
-    printf("report <directory1> <directory2>... - Shows the report of the file in the specified directoy.\n");
-    printf("report <directory1> <directory2>... - Shows the report of the file in the specified directoy.\n");
-    printf("config                              - Show the current configuration, with the added files \n");
+    printf("show <file1> [directory1] ...       - Shows the report of the specified files or directories.\n");
+    printf("showall                             - Shows the report of all files analyzed.\n");
+    printf("help                                - Show this help message\n");
+    printf("read                                - Read data from analyzer, this action is not required if report was created by main\n");
+}
+
+void show(char *files, confAndStats *cs)
+{
+    int i;
+    char *pch;
+    char *input; //TODO: definire meglio size da allocare
+    allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
+    strcpy(input, files);
+    pch = strtok(input, " ");
+    while (pch != NULL)
+    {
+        for (i = 0; i < cs->conf->filesCount; i++)
+        {
+            if (does1StringMatch2(pch, cs->conf->files[i]))
+            {
+                printf("File %s:\n", cs->conf->files[i]);
+                //printTable(cs->stats[i]);
+            }
+        }
+    }
+}
+
+void showAll(confAndStats *cs)
+{
+    int i;
+    for (i = 0; i < cs->conf->filesCount; i++)
+    {
+        printf("File %s:\n", cs->conf->files[i]);
+        //printTable(cs->stats[i]);
+    }
 }
 
 void showCommandNotFoundError(const char *arguments)
@@ -149,64 +88,31 @@ void showCommandNotFoundError(const char *arguments)
         printf("Command %s is not valid, see usage with help\n", arguments);
 }
 
-void showConfig(config *conf)
-{
-    printf("n = %d, m = %d\n", conf->n, conf->m);
-    if (conf->n > 0 && conf->m > 0)
-    {
-        printf("Analyzer run with n = %d, m = %d\n", conf->n, conf->m);
-        printFiles(conf);
-    }
-    else
-    {
-        printf("n and m not valid, see usage with help\n");
-        printFiles(conf);
-    }
-}
-
-void report(char *arguments, config *conf)
-{
-    char *endptr;
-    char *pn = strtok(arguments, " ");
-    char *pm = strtok(NULL, " ");
-    if (pn != NULL && pm != NULL)
-    {
-        int n1 = strtol(pn, &endptr, 10);
-        int m1 = strtol(pm, &endptr, 10);
-        if (n1 > 0 && m1 > 0)
-        {
-            conf->n = n1;
-            conf->m = m1;
-        }
-        else
-        {
-            printf("Command \"set %s\" is not valid, see usage with help\n", arguments);
-        }
-    }
-    else
-    {
-        showHelp();
-    }
-}
-
-int getAction(char *command, config *conf)
+int processCommand(char *command, confAndStats *cs)
 {
     char *token = strtok(command, " ");
-    if(token == NULL)
+    if (token == NULL)
         return 1;
 
-    if (strcmp(token, "report") == 0)
+    //help, exit, read (richiama readAnalyzer), show (mostra il file/ i file nella directory) (showall mostra tutto),
+
+    if (strcmp(token, "read") == 0)
     {
-        //CHECK SE TOKEN VA BENE COME ARGOMENTO PASSATO: L'HO MESSO A CASO AFFINCHE' COMPILASSE CORRETTAMENTE
-        report(token, conf);
+        readAnalyzer(cs);
     }
     else if (strcmp(token, "help") == 0)
     {
         showHelp();
     }
-    else if (strcmp(token, "config") == 0 || strcmp(token, "c") == 0)
+    else if (strcmp(token, "show") == 0)
     {
-        showConfig(conf); //works
+
+        show(command + 5, cs);
+    }
+    else if (strcmp(token, "showall") == 0)
+    {
+
+        showAll(cs);
     }
     else if (strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "q") == 0)
     {
@@ -222,7 +128,7 @@ int getAction(char *command, config *conf)
 char *readStringFromPipe(int bufferLen, int fd)
 {
     char *buffer;
-    int error = allocWrapper(bufferLen, sizeof(char), (void **)&buffer); //TODO: usa il wrapper,
+    allocWrapper(bufferLen, sizeof(char), (void **)&buffer); //TODO: usa il wrapper,
     char c = '7';
     int i = 0;
     while (c != 0)
@@ -235,17 +141,11 @@ char *readStringFromPipe(int bufferLen, int fd)
     return buffer;
 }
 
-int main(int argc, char *argv[])
+void readAnalyzer(confAndStats *cs)
 {
-    initGC();
-    config conf;
-    initConfig(&conf);
-    int filesCount;
-    char *e;
-    printf("Waiting for Analyzer...\n");
-    int fd = open(analyzerToReportPipe, O_RDONLY);
-    printf("connected!\n");
-    while (fd == -1)
+    int lastStatsIndex = cs->conf->filesCount;
+    FDanalyzer = open(analyzerToReportPipe, O_RDONLY);
+    while (FDanalyzer == -1)
     {
         printf("Impossible to open pipe, did you run Analyzer first? Press anything to retry or q to quit\n");
         //int c = getchar();
@@ -253,84 +153,219 @@ int main(int argc, char *argv[])
         scanf("%c", &c);
         if (c == 'q')
             exit(0);
-        fd = open(analyzerToReportPipe, O_RDONLY);
+        FDanalyzer = open(analyzerToReportPipe, O_RDONLY);
     };
-    char *buffer = readStringFromPipe(40, fd);
-    filesCount = strtol(buffer, &e, 10);
+    printf("connected!\n");
+    char *e;
+    char *buffer = readStringFromPipe(40, FDanalyzer);
+    int filesCount = strtol(buffer, &e, 10);
     int i;
-    printf("%s\n%p\n%d\n", buffer, buffer, filesCount);
+    printf("a\n");
+
     for (i = 0; i < filesCount; i++)
     {
-        buffer = readStringFromPipe(MAX_PATH_LEN, fd);
+        buffer = readStringFromPipe(MAX_PATH_LEN, FDanalyzer);
         printf("%s\n", buffer);
-        addFileToConfig(&conf, buffer);
+        addFileToConfig(cs->conf, buffer);
+        if (cs->conf->filesCount + 1 >= cs->conf->dim)
+        {
+            reallocWrapper((void **)&(cs->stats), cs->conf->dim + INITIAL_CONFIG_SIZE); //TODO: error
+        }
     }
+    printf("b\n");
     char *statString;
-    int error = allocWrapper(MAX_PIPE_CHARACTERS * conf.filesCount, sizeof(char), (void **)&statString); //TODO: usa il wrapper,
-    read(fd, statString, MAX_PIPE_CHARACTERS * conf.filesCount);
-    stats *resultStats;
-    error = allocWrapper(conf.filesCount, sizeof(stats), (void **)&resultStats); //TODO:trova una stima migliore
-
-    for (i = 0; i < conf.filesCount; i++)
+    allocWrapper(MAX_PIPE_CHARACTERS * cs->conf->filesCount, sizeof(char), (void **)&statString); //TODO: usa il wrapper,
+    printf("b\n");
+    read(FDanalyzer, statString, MAX_PIPE_CHARACTERS * cs->conf->filesCount);
+    close(FDanalyzer);
+    printf("b\n");
+    for (i = lastStatsIndex; i < cs->conf->filesCount; i++)
     {
-        initStats(&(resultStats[i]), i);
+        printf("i %d, filesCount %d\n", i, cs->conf->filesCount);
+        initStats(&(cs->stats[i]), i);
     }
-    printf("a\n");
+    printf("b\n");
     //printf("\n\nstat string: %s\n\n", statString);
-    decodeMultiple(statString, resultStats); //TODO:check error
-    printf("a\n");
-
-    /*
-    int action;
-    do
+    decodeMultiple(statString, &(cs->stats[lastStatsIndex])); //TODO:check error
+    printf("b\n");
+    for (i = 0; i < cs->conf->filesCount; i++)
     {
-        printf("-> ");
-        char *command = getLine();
-        action = getAction(command, &conf);
-    } while (action);
-    */
-   
-    for (i = 0; i < conf.filesCount; i++)
-    {
-        //TODO: mettere in british
-        printf("In file %s was analyzed:\n", conf.files[i]);
-        printTable(*resultStats);
-        printStats(resultStats[i]);
-        printf("sgs\n");
+        printf("In file %s was analyzed:\n", cs->conf->files[i]);
+        //printTable(*resultStats);
+        printStats(cs->stats[i]);
     }
+    printf("b\n");
+}
 
-    printf("ss\n");
+int main(int argc, char *argv[])
+{
+    initGC();
+    confAndStats cs;
+    allocWrapper(1, sizeof(config), (void **)&(cs.conf));
+    allocWrapper(INITIAL_CONFIG_SIZE, sizeof(stats), (void **) &(cs.stats));
+    // TODO: terza marcia
+    initConfig(cs.conf);
+    printf("Waiting for Analyzer...\n");
+    readAnalyzer(&cs);
+    printf("fine\n");
+
     int fdFromMain;
-    printf("ss\n");
-    printf("%d, %s\n", argc, argv[1]);
-    char* command;
+    char *command;
+    int goOn;
     if (argc > 1 && strcmp(argv[1], "--main") == 0)
     {
-        while (1)
+        do
         {
-            //come faccio per sapere se sono stato creato dal main o eseguito da console?
             fdFromMain = open(mainToReportPipe, O_RDONLY);
-            if (fdFromMain == -1)
+            while (fdFromMain == -1)
             {
-                printf("pipe error with main\n");
-                exit(1);
-            }
-            i++;
-            printf("%d\n", i);
+                printf("Impossible to open pipe with main, did you run report --main from command line? Press anything to retry or q to quit\n");
+                //int c = getchar();
+                char c;
+                scanf("%c", &c);
+                if (c == 'q')
+                    exit(0);
+                fdFromMain = open(mainToReportPipe, O_RDONLY);
+            };
 
             command = readStringFromPipe(MAX_COMMAND_LEN, fdFromMain);
             printf("report cmd: %s\n", command);
+            goOn = processCommand(command, &cs);
             close(fdFromMain);
-        }
+        }while(goOn);
     }
     else
     {
-        int error = allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void**) &command); //TODO:
-        scanf("%s", command);
-        printf("report cmd: %s\n", command);
+        allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&command); //TODO:
+        do
+        {
+            scanf("%2048s", command);
+            printf("report cmd: %s\n", command);
+            goOn = processCommand(command, &cs);
+        }while(goOn);
     }
 
     printf("FINE REPORT!\n");
+    collectGarbage();
     return 0;
 }
 
+// void print(int start, int finish, char *type, stats resultStats)
+// {
+//     int cont = 0; //counts all the characters written to have adotted line of the same length
+//     int i = 0;
+//     int j = 0;
+
+//     /*
+//     printf("%s\n", name); //prints the name of the section
+//     int i = start;
+//     do
+//     {
+//         printf("%c\t", i); //prints the ascii character
+//         i++;
+//     } while (i < finish);
+
+//     printf("\n");
+
+//     for (int i = start; i < finish; i++)
+//     {
+//         printf("%d\t", arrayFrequencies[i]); //prints its frequency
+//     }
+//     printf("\n");*****/
+
+//     int k = start;
+//     int dim = 0;
+//     printf("\n%s\n", type); //prints the name of the section
+//     do
+//     {
+//         if (resultStats.frequencies[k] != 0)
+//         {
+//             dim = getDigits(resultStats.frequencies[k]);
+//             if (dim % 2 == 0)
+//             {
+//                 for (i = 0; i < dim / 2 - 1; i++)
+//                     printf(" ");
+//                 printf("%c", k);
+//                 for (i = dim / 2; i < dim; i++)
+//                     printf(" ");
+//             }
+//             else
+//             {
+//                 for (i = 0; i < dim / 2; i++)
+//                     printf(" ");
+//                 printf("%c", k);
+//                 for (i = dim / 2 + 1; i < dim; i++)
+//                     printf(" ");
+//             }
+//             cont += dim;
+//             /*
+//             printf("  "); //2 spaces before the character
+//             cont = cont + 2;
+
+//             printf("%c", k); //prints the ascii character
+//             cont++;
+
+//             printf("  "); //2 spaces after the character
+//             cont = cont + 2;
+
+//             printf("|");
+//             cont++;
+//             */
+//         }
+//         k++;
+
+//     } while (k < finish);
+
+//     printf("\n");
+
+//     for (i = start; i < finish; i++)
+//     {
+//         if (resultStats.frequencies[i] < 10 && resultStats.frequencies[i] > 0)
+//         {
+//             printf("  ");
+//         }
+//         if (resultStats.frequencies[i] < 100 && resultStats.frequencies[i] >= 10)
+//         {
+//             printf("  ");
+//         }
+//         if (resultStats.frequencies[i] < 1000 && resultStats.frequencies[i] >= 100)
+//         {
+//             printf(" ");
+//         }
+//         if (resultStats.frequencies[i] > 0)
+//         {
+//             printf("%d", resultStats.frequencies[i]); //prints its frequency
+//         }
+//         if (resultStats.frequencies[i] < 10 && resultStats.frequencies[i] > 0)
+//         {
+//             printf("  ");
+//         }
+//         if (resultStats.frequencies[i] < 100 && resultStats.frequencies[i] >= 10)
+//         {
+//             printf(" ");
+//         }
+//         if (resultStats.frequencies[i] < 1000 && resultStats.frequencies[i] >= 100)
+//         {
+//             printf(" ");
+//         }
+//         printf("|");
+//     }
+//     printf("\n");
+//     for (j = 0; j < cont; j++)
+//     {
+//         printf("-"); // Prints a line of -
+//     }
+// }
+
+// void printTable(stats resultStats)
+// {
+//     print(32, 48, "Punctuation", resultStats);
+//     print(48, 58, "Numbers", resultStats);
+//     print(58, 65, "Operators", resultStats);
+//     print(65, 78, "Uppercase letters", resultStats);
+//     print(78, 91, "Uppercase letters", resultStats); //letters are divided in two rows for style's sake
+//     print(91, 97, "Symbols", resultStats);
+//     print(97, 110, "Lowercase letters", resultStats);
+//     print(110, 123, "Lowercase letters", resultStats);
+//     print(123, 128, "Other characters", resultStats); //letters are divided in two rows for style's sake
+// }

@@ -14,6 +14,10 @@ MAINDEPS = $(SRCPATH)wrapper.c $(SRCPATH)stats.c $(SRCPATH)config.c $(SRCPATH)co
 
 build: bin main analyzer report
 
+pipe:
+	mkfifo /tmp/analyzerToReport.pipe
+	mkfifo /tmp/mainToReport.pipe
+
 bin:
 	mkdir -p bin/obj
 
@@ -52,4 +56,6 @@ reportConnector.o: $(SRCPATH)reportConnector.c $(SRCPATH)reportConnector.h $(SRC
 
 clean:
 	rm -rf ./bin/
+	rm -f /tmp/analyzerToReport.pipe
+	rm -f /tmp/mainToReport.pipe
 

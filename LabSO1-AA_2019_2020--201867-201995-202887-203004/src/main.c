@@ -9,13 +9,14 @@
 char *mainToReportPipe = "/tmp/mainToReport.pipe";
 char *path;
 int fdToReport;
+int isReportRunning = 0;
 
 char *getLine()
 {
     int size = MAX_COMMAND_LEN;
     int i = 0;
     char *line;
-    int error = allocWrapper(size, sizeof(char), (void **)&line);
+    allocWrapper(size, sizeof(char), (void **)&line);
     //TODO: error
     char c;
     while (c != '\n')
@@ -24,7 +25,7 @@ char *getLine()
         if (i + 1 >= size)
         {
             size += MAX_COMMAND_LEN;
-            error = reallocWrapper((void **)&line, size);
+            reallocWrapper((void **)&line, size);
             //TODO: error
         }
         line[i] = c;
@@ -46,6 +47,21 @@ char *getBinPath(const char *arg0)
     return res;
 }
 
+void passToReport(char *command)
+{
+    printf("pass to Report\n");
+    mkfifo(mainToReportPipe, 0666);
+    fdToReport = open(mainToReportPipe, O_WRONLY);
+    if (fdToReport == -1)
+    {
+        printf("pipe error\n");
+        exit(1);
+    }
+    printf("main connected to report\n");
+    write(fdToReport, command, sizeof(command) + 1);
+    close(fdToReport);
+}
+
 void run(config *conf)
 {
     printf("Run analyzer and Report\n");
@@ -64,6 +80,7 @@ void run(config *conf)
     }
     else if (p == 0)
     { //figlio
+        setIamChild();
         char *analyzerPath;
         allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&analyzerPath); //TODO: una piotta e diesci terza marcia
         strcpy(analyzerPath, path);
@@ -74,22 +91,31 @@ void run(config *conf)
         exit(0);
     }
     //padre
-    int q = fork();
-    if (q < 0)
+    if (!isReportRunning)
     {
-        fprintf(stderr, "Impossible to fork, quit.\n");
-        exit(1);
+        isReportRunning = 1;
+        int q = fork();
+        if (q < 0)
+        {
+            fprintf(stderr, "Impossible to fork, quit.\n");
+            exit(1);
+        }
+        else if (q == 0)
+        { //figlio
+            setIamChild();
+            char *reportPath;
+            allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&reportPath); //TODO: una piotta e diesci terza marcia
+            strcpy(reportPath, path);
+            strcat(reportPath, "report");
+            printf("%s\n", reportPath);
+            char **args = exportAsArguments(conf, reportPath);
+            execl(reportPath, reportPath, "--main", NULL);
+            exit(0);
+        }
     }
-    else if (q == 0)
-    { //figlio
-        char *reportPath;
-        allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&reportPath); //TODO: una piotta e diesci terza marcia
-        strcpy(reportPath, path);
-        strcat(reportPath, "report");
-        printf("%s\n", reportPath);
-        char **args = exportAsArguments(conf, reportPath);
-        execl(reportPath, reportPath, "--main", NULL);
-        exit(0);
+    else
+    {
+        passToReport("read");
     }
     printf("sono il main!\n");
 
@@ -108,7 +134,7 @@ void addFiles(const char *arguments, config *conf)
 {
     char *pch;
     char *input; //TODO: definire meglio size da allocare
-    int error = allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
+    allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
     strcpy(input, arguments);
     pch = strtok(input, " ");
     while (pch != NULL)
@@ -116,21 +142,6 @@ void addFiles(const char *arguments, config *conf)
         addFileToConfig(conf, pch);
         pch = strtok(NULL, " ");
     }
-}
-
-void passToReport(char *command)
-{
-    printf("pass to Report\n");
-    mkfifo(mainToReportPipe, 0666);
-    fdToReport = open(mainToReportPipe, O_WRONLY);
-    if(fdToReport == -1)
-    {
-        printf("pipe error\n");
-        exit(1);
-    }
-    printf("main connected to report\n");
-    write(fdToReport, command, sizeof(command) + 1);
-    close(fdToReport);
 }
 
 void showHelp()
@@ -201,7 +212,7 @@ void removeFiles(char *arguments, config *conf)
 {
     char *pch;
     char *input; //TODO: definire meglio size da allocare
-    int error = allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
+    allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
     strcpy(input, arguments);
     pch = strtok(input, " ");
     while (pch != NULL)
@@ -300,7 +311,7 @@ int main(int argc, const char *argv[])
     config *analyzedFilesConf;
     config *newFilesConf;
     newFilesConf = checkDirectories(&initConf);
-    int error = allocWrapper(1, sizeof(config), (void **)&analyzedFilesConf);
+    allocWrapper(1, sizeof(config), (void **)&analyzedFilesConf);
     initConfig(analyzedFilesConf);
 
     int action;

@@ -21,9 +21,9 @@
 int openWrapper(const char *path, int *fd);
 
 //memory allocation
-int allocWrapper(int num, int size, void **p);
+void allocWrapper(int num, int size, void **p);
 
-int reallocWrapper(void **pointer, int size);
+void reallocWrapper(void **pointer, int size);
 
 //read (pipe)
 //If successful, return the non-negative number of bytes actually read, on failure -1

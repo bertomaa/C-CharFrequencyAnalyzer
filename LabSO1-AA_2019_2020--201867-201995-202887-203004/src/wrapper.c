@@ -18,30 +18,27 @@ int openWrapper(const char *path, int *fd)
     return 0;
 }
 
+
 //memory allocation
-int allocWrapper(int num, int size, void **p)
+void allocWrapper(int num, int size, void **p)
 {
     *p = calloc(num, size);
     if (*p == NULL)
     {
-        fprintf(stderr, "Cannot allocate %d * %d byte in memory", num, size);
-        return 1;
+        fatalErrorHandler("Cannot allocate memory", 1);
     }
     addToGC(*p);
-    return 0;
 }
 
-int reallocWrapper(void** pointer, int size){
+void reallocWrapper(void **pointer, int size)
+{
     removeFromGC(*pointer);
     *pointer = realloc(*pointer, size);
-    if(*pointer == NULL)
+    if (*pointer == NULL)
     {
-        //TODO: qualcosa per sto errore
-        fprintf(stderr, "Cannot realloc %d bytes\n", size);
-        return 1;
+        fatalErrorHandler("Cannot realloc memory", 1);
     }
     addToGC(*pointer);
-    return 0;
 }
 
 //read (pipe)

@@ -107,12 +107,7 @@ char *encodeMultiple(stats *statsArray, int len)
     char *res;
     int offset = 0, i;
     //TODO: check error
-    int error = allocWrapper(MAX_PIPE_CHARACTERS * len, sizeof(char), (void **)&res);
-    if (error)
-    {
-        printf("Errore allocazione encode multiple");
-        exit(1);
-    }
+    allocWrapper(MAX_PIPE_CHARACTERS * len, sizeof(char), (void **)&res);
     for (i = 0; i < len; i++)
     {
         char *str = encode(statsArray[i]);

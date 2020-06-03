@@ -23,11 +23,7 @@ void initConfig(config *conf)
     conf->n = 0;
     conf->m = 0;
     conf->filesCount = 0;
-    int error = allocWrapper(INITIAL_CONFIG_SIZE, sizeof(char *), (void **)&(conf->files));
-    if (error)
-    {
-        exit(1);
-    }
+    allocWrapper(INITIAL_CONFIG_SIZE, sizeof(char *), (void **)&(conf->files));
 }
 
 // void deallocConfig(config *c)
@@ -65,7 +61,7 @@ void removeFileFromConfigByName(config *c, char* name)
 void removePathFromConfig(config *c, char *path)
 {
     char *buffer;
-    int error = allocWrapper(MAX_PATH_LEN, sizeof(char), (void **) &buffer);
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **) &buffer);
     //TODO: pupù
     char cmd[MAX_COMMAND_LEN];
     char *cmdOutput;
@@ -94,7 +90,7 @@ void joinConfigs(config *c1, config *c2)
     {
         if (c2->files[i] != NULL)
         {
-            int error = allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&(c1->files[c1->filesCount]));
+            allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&(c1->files[c1->filesCount]));
             //TODO: eccoci qua
             strcpy(c1->files[c1->filesCount], c2->files[i]);
             c1->filesCount++;
@@ -118,11 +114,11 @@ void addFileToConfig(config *c, const char *file)
     if (c->filesCount == c->dim)
     {
         c->dim += INITIAL_CONFIG_SIZE;
-        int error = reallocWrapper((void **)&(c->files), c->dim * sizeof(char *));
+        reallocWrapper((void **)&(c->files), c->dim * sizeof(char *));
         //TODO: check error
     }
 
-    int error = allocWrapper(stringLen + 2, sizeof(char), (void **)&(c->files[c->filesCount])); //Non so perchè stringLen+2, forse poteva essere 1 ma non voglio rischiarmela
+    allocWrapper(stringLen + 2, sizeof(char), (void **)&(c->files[c->filesCount])); //Non so perchè stringLen+2, forse poteva essere 1 ma non voglio rischiarmela
 
     strcpy(c->files[c->filesCount], file);
     if (c->files[c->filesCount][stringLen - 1] == '/')
@@ -155,10 +151,10 @@ char **exportAsArguments(const config *c, char* arg0)
 {
     //TODO: definire meglio quanto allocare
     char **res;
-    int error = allocWrapper(c->dim + 5, sizeof(char), (void **)&(res)); //TODO: esatto, per tutti
-    error = allocWrapper(40, sizeof(char), (void **)&(res[0]));
-    error = allocWrapper(40, sizeof(char), (void **)&(res[1]));
-    error = allocWrapper(40, sizeof(char), (void **)&(res[2]));
+    allocWrapper(c->dim + 5, sizeof(char), (void **)&(res)); //TODO: esatto, per tutti
+    allocWrapper(40, sizeof(char), (void **)&(res[0]));
+    allocWrapper(40, sizeof(char), (void **)&(res[1]));
+    allocWrapper(40, sizeof(char), (void **)&(res[2]));
     sprintf(res[0], "%s", arg0);
     sprintf(res[1], "%d", c->n);
     sprintf(res[2], "%d", c->m);
@@ -205,7 +201,7 @@ char **exportAsArguments(const config *c, char* arg0)
 //     int count;
 //     char cmdBuffer[MAX_COMMAND_LEN];
 //     char *newPath;
-//     int error = allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&newPath);
+//     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&newPath);
 //     //TODO: check error
 //     config conf;
 //     initConfig(&conf);
@@ -289,7 +285,7 @@ config *checkDirectories(config *conf)
     res->n = conf->n;
     res->m = conf->m;
     char *buffer, *fullBuffer;
-    int error = allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&fullBuffer);
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&fullBuffer);
     buffer = fullBuffer;
     //TODO: pupù
     char cmd[MAX_COMMAND_LEN];

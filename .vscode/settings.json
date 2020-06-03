@@ -1,10 +1,12 @@
 {
     "files.associations": {
         "*.js": "javascriptreact",
+        "*.cpp": "cpp",
         "characterstatistics.h": "c",
         "sstream": "cpp",
         "random": "c",
         "queue": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "__locale": "c"
     }
 }

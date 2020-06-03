@@ -10,6 +10,7 @@
 #include <tgmath.h>
 #include "commons.h"
 #include "wrapper.h"
+#include "stats.h"
 
 typedef struct config
 {
@@ -20,11 +21,17 @@ typedef struct config
     char **files;
 } config;
 
+typedef struct confAndStats
+{
+    config *conf;
+    stats *stats;
+} confAndStats;
+
 void initConfig(config *conf);
 
 void removeFileFromConfigByIndex(config *c, int i);
 
-void removeFileFromConfigByName(config *c, char* name);
+void removeFileFromConfigByName(config *c, char *name);
 
 void removePathFromConfig(config *c, char *path);
 
@@ -34,7 +41,7 @@ void addFileToConfig(config *c, const char *file);
 
 void printFiles(const config *c);
 
-char **exportAsArguments(const config *c, char* arg0);
+char **exportAsArguments(const config *c, char *arg0);
 
 config *checkDirectories(config *conf);
 

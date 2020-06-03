@@ -9,6 +9,9 @@
 #define WRITE 1
 #define ASCII_CHARACTERS 256
 #define MAX_PIPE_CHARACTERS 8128
+#define FATHER 0
+#define CHILD 1
+
 
 typedef struct garbageCollector
 {
@@ -36,5 +39,9 @@ int getPipeIndex(int index, int type);
 char *splitString(char *buffer, char **str, char delimiter);
 
 int getDigits(int n);
+
+int does1StringMatch2(char * s1, char * s2);
+
+void fatalErrorHandler(char *message, int errorCode);
 
 #endif

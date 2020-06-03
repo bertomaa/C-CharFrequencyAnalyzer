@@ -11,6 +11,28 @@
 
 garbageCollector gc;
 
+
+int processType = FATHER;
+
+void fatalErrorHandler(char *message, int errorCode)
+{
+    fprintf(stderr, "%s\n", message);
+    if(processType)
+        printf("Lo killoooo\n");
+    collectGarbage();
+    exit(errorCode);
+}
+
+void setIamChild()
+{
+    processType = 1;
+}
+
+int getProcessType()
+{
+    return processType;
+}
+
 int initGC()
 {
     gc.dim = 100;
@@ -67,7 +89,7 @@ void collectGarbage()
         free(gc.garbage[i]);
     }
     free(gc.garbage);
-    printf("freed %d elements in memory\n", gc.garbageCount);
+    //printf("freed %d elements in memory\n", gc.garbageCount);
 }
 
 void addDoubleQuotes(char *buffer, char *path)
@@ -97,12 +119,7 @@ char *getCommandOutput(const char *cmd)
     char cmdBuffer[MAX_COMMAND_LEN];
     char *ret;
     int size = 0;
-    int error = allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&ret);
-    if (error)
-    {
-        //TODO: gestisci errore
-        exit(1);
-    }
+    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&ret);
     FILE *fp = popen(cmd, "r");
     if (fp == NULL)
     {
@@ -154,4 +171,18 @@ int getDigits(int n)
         ++count;
     }
     return count;
+}
+
+//returns 1 if the first (length of s1) characters of s2 are equal to s1, 0 if they are not equal or s2 is shorter than s1
+int does1StringMatch2(char * s1, char * s2){
+    if(strlen(s1) > strlen(s2))
+        return 0;
+    int res = 1, i;
+    for(i = 0; i < strlen(s1); i++){
+        if(s1[i] != s2[i]){
+            res = 0;
+            break;
+        }
+    }
+    return res;
 }
