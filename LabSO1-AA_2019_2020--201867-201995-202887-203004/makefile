@@ -10,13 +10,14 @@ COMMONTARGETS = wrapper.o stats.o config.o commons.o
 SOURCES = $(SRCPATH)wrapper.c $(SRCPATH)stats.c $(SRCPATH)config.c $(SRCPATH)commons.c
 MAINDEPS = $(SRCPATH)wrapper.c $(SRCPATH)stats.c $(SRCPATH)config.c $(SRCPATH)commons.c $(SRCPATH)wrapper.h $(SRCPATH)stats.h $(SRCPATH)config.h $(SRCPATH)commons.h
 
+
+
 .PHONY: build clean
 
-build: bin main analyzer report
+build: bin  main analyzer report
 
 pipe:
-	mkfifo /tmp/analyzerToReport.pipe
-	mkfifo /tmp/mainToReport.pipe
+	test -e /tmp/analyzerToReport.pipe && mkfifo /tmp/analyzerToReport.pipe;
 
 bin:
 	mkdir -p bin/obj

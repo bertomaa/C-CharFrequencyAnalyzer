@@ -46,11 +46,12 @@ void removeFileFromConfigByIndex(config *c, int i)
     c->filesCount--;
 }
 
-void removeFileFromConfigByName(config *c, char* name)
+void removeFileFromConfigByName(config *c, char *name)
 {
     int i;
-    for(i = 0; i < c->filesCount; i++){
-        if(strcmp(c->files[i], name) == 0)
+    for (i = 0; i < c->filesCount; i++)
+    {
+        if (strcmp(c->files[i], name) == 0)
         {
             removeFileFromConfigByIndex(c, i);
             return;
@@ -61,7 +62,7 @@ void removeFileFromConfigByName(config *c, char* name)
 void removePathFromConfig(config *c, char *path)
 {
     char *buffer;
-    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **) &buffer);
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
     //TODO: pupù
     char cmd[MAX_COMMAND_LEN];
     char *cmdOutput;
@@ -147,20 +148,21 @@ void printFiles(const config *c)
     printf("\n");
 }
 
-char **exportAsArguments(const config *c, char* arg0)
+char **exportAsArguments(const config *c, char *arg0)
 {
-    //TODO: definire meglio quanto allocare
     char **res;
-    allocWrapper(c->dim + 5, sizeof(char), (void **)&(res)); //TODO: esatto, per tutti
-    allocWrapper(40, sizeof(char), (void **)&(res[0]));
+    allocWrapper(c->filesCount + 5, sizeof(char *), (void **)&res);
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&(res[0]));
     allocWrapper(40, sizeof(char), (void **)&(res[1]));
     allocWrapper(40, sizeof(char), (void **)&(res[2]));
     sprintf(res[0], "%s", arg0);
+    printf("%s\n", res[0]);
     sprintf(res[1], "%d", c->n);
     sprintf(res[2], "%d", c->m);
     int i;
     for (i = 3; i < c->filesCount + 3; i++)
     {
+        allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&(res[i]));
         res[i] = c->files[i - 3];
     }
     return res;
@@ -273,7 +275,7 @@ char **exportAsArguments(const config *c, char* arg0)
 //             joinConfigs(conf, &recursiveRes);
 //         }
 //         printFiles(conf);
-//     }    
+//     }
 //     return *conf;
 // }
 

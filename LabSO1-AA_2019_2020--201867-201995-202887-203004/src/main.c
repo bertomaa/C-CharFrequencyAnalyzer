@@ -50,7 +50,6 @@ char *getBinPath(const char *arg0)
 void passToReport(char *command)
 {
     printf("pass to Report\n");
-    mkfifo(mainToReportPipe, 0666);
     fdToReport = open(mainToReportPipe, O_WRONLY);
     if (fdToReport == -1)
     {
@@ -85,8 +84,8 @@ void run(config *conf)
         allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&analyzerPath); //TODO: una piotta e diesci terza marcia
         strcpy(analyzerPath, path);
         strcat(analyzerPath, "analyzer");
-        printf("%s\n", analyzerPath);
-        char **args = exportAsArguments(conf, analyzerPath);
+        char **args = exportAsArguments(conf, analyzerPath);        
+        printf("%s\n", args[0]);
         execv(analyzerPath, args);
         exit(0);
     }
@@ -94,6 +93,7 @@ void run(config *conf)
     if (!isReportRunning)
     {
         isReportRunning = 1;
+        mkfifo(mainToReportPipe, 0666);
         int q = fork();
         if (q < 0)
         {
@@ -107,7 +107,6 @@ void run(config *conf)
             allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&reportPath); //TODO: una piotta e diesci terza marcia
             strcpy(reportPath, path);
             strcat(reportPath, "report");
-            printf("%s\n", reportPath);
             char **args = exportAsArguments(conf, reportPath);
             execl(reportPath, reportPath, "--main", NULL);
             exit(0);
