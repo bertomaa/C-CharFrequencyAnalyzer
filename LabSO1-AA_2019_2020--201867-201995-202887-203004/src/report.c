@@ -19,109 +19,208 @@ int FDanalyzer;
 void readAnalyzer(confAndStats *conf);
 void printTable(int start, int finish, char *name, stats resultStats)
 {
-    printf("\n %s\n", name); //prints the name of the section
-    int k = start;           //k = counter for the ascii characters
-    int max = 0;             //length of the biggest number
-    int dim = 0;             //dimension of the "current" number
-    int search = 0;          //i,j,k were already used
-    for (search = 0; search < 256; search++)
+    //check se la sezione è vuota
+    int j = 0;
+    int check = 0;
+    for (j = start; j < finish; j++)
     {
-        if (resultStats.frequencies[search] > max)
+        if(resultStats.frequencies[j] != 0)
         {
-            max = resultStats.frequencies[search]; //search for the biggest number in frequencies
+            check = 1;
+            j = finish;
         }
     }
-    //printf("\n %d \n", max);
-    const int dimMax = getDigits(max); //save the digits of the biggest number
-    // int dim = getDigits(arrayFrequencies[k]);
-    int i = 0;
-
-    //CHARACTERS
-    do
+    if(check != 0)
     {
+        printf("\n %s\n", name); //prints the name of the section
+        int k = start; //k = counter for the ascii characters
+        int max = 0; //length of the biggest number
+        int dim = 0; //dimension of the "current" number
+        int search = 0; //i,j,k were already used
 
-        if (resultStats.frequencies[k] != 0)
-        {
-            dim = getDigits(resultStats.frequencies[k]);
-            //dim = getDigits(resultStats.frequencies[k]); //digits of the current number
-            if (dim % 2 == 0) //even number of digits
-            {
-                for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
-                    printf(" ");
-                printf("%c", k);
-                for (i = dimMax / 2; i < dimMax; i++) //prints spaces to the right of the CHARACTER
-                    printf(" ");
+        //search for the biggest number in frequencies from position START to FINISH
+        for (search = start; search < finish; search++){
+            if (resultStats.frequencies[search] > max){
+                max = resultStats.frequencies[search]; 
             }
-            else //odd number of digits
-            {
-                for (i = 0; i < (dimMax / 2); i++) //prints spaces to the left of the CHARACTER
-                    printf(" ");
-                printf("%c", k);
-                for (i = (dimMax / 2) + 1; i < dimMax; i++) //prints spaces to the right of the CHARACTER
-                    printf(" ");
-            }
-            printf("|");
         }
-        k++;
-    } while (k < finish);
 
-    printf("\n");
+        const int dimMax = getDigits(max); //save the digits of the biggest number
 
-    // NUMERI
-    k = start;
-    dim = 0;
-    int d = 0;
-    do
-    {
-
-        if (resultStats.frequencies[k] != 0)
+        int i = 0;
+        
+        //CHARACTERS
+        do
         {
-            dim = getDigits(resultStats.frequencies[k]);
-            //d = dimMax - dim;
-            if ((dimMax) % 2 == 0)
+            if (resultStats.frequencies[k] != 0)
             {
-                if (((dimMax - dim) / 2) - 1 == 0)
+                dim = getDigits(resultStats.frequencies[k]); //digits of the current number
+
+                //first space
+                printf(" ");
+
+                if(dimMax == 2)
                 {
-                    printf(" ");
+                    if(dim == 2)
+                        printf("%c", k);
+                    if(dim == 1)
+                    {
+                        printf("%c", k);
+                        printf(" ");
+                    }
                 }
-                else
+
+                else if(dimMax == 3)
                 {
-                    for (i = 0; i < ((dimMax - dim) / 2) - 1; i++)
+                    if(dim == 3)
+                    {
+                        printf("%c", k);
+                    }
+                    if(dim == 2)
+                    {
+                        printf("%c", k);
+                        printf(" ");
+                    }
+                    if(dim == 1)
+                    {
+                        printf(" ");
+                        printf("%c", k);
+                        printf(" ");
+                    }
+                }
+
+                else if (dim % 2 == 0) //even number of digits
+                {
+                    for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
+                        printf(" ");
+                    printf("%c", k);
+                    for (i = dimMax / 2; i < dimMax; i++) //prints spaces to the right of the CHARACTER
                         printf(" ");
                 }
-                printf("%d", resultStats.frequencies[k]);
-                for (i = (((dimMax - dim) / 2) + dim); i < dimMax; i++)
+                else //odd number of digits
+                {
+                    for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
+                        printf(" ");
+                    printf("%c", k);
+                    for (i = (dimMax / 2); i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                        printf(" ");
+                }
+
+
+
+                //last space
+                if((dimMax - dim) % 2 == 0)
                     printf(" ");
+                printf("|");
             }
-            else
+            k++;
+        } while (k < finish);
+
+        printf("\n");
+
+        // NUMERI
+        k = start;
+        dim = 0;
+        int d = 0;
+        do
+        {
+
+            if (resultStats.frequencies[k] != 0)
             {
-                for (i = 0; i < (dimMax - dim) / 2; i++)
+                dim = getDigits(resultStats.frequencies[k]);
+                
+                //first space
+                printf(" ");
+
+                if(dimMax == 2)
+                {
+                    if(dim == 2)
+                        printf("%c", k);
+                    if(dim == 1)
+                    {
+                        printf("%c", k);
+                        printf(" ");
+                    }
+                }
+
+                else if(dimMax == 3)
+                {
+                    if(dim == 3)
+                    {
+                        printf("%c", k);
+                    }
+                    if(dim == 2)
+                    {
+                        printf("%c", k);
+                        printf(" ");
+                    }
+                    if(dim == 1)
+                    {
+                        printf(" ");
+                        printf("%c", k);
+                        printf(" ");
+                    }
+                }
+
+                else if ((dimMax - dim) % 2 == 0)
+                {
+                    for(i = 0; i < (dimMax - dim)/2; i++)
+                        printf(" ");
+                    printf("%d", resultStats.frequencies[k]);
+                    for(i = 0; i < (dimMax - dim)/2; i++)
+                        printf(" ");
+                }
+                else if((dimMax - dim) % 2 != 0)
+                {
+                    for (i = 0; i < (dimMax - dim)/ 2; i++)
+                        printf(" ");
+                    printf("%d", resultStats.frequencies[k]);
+                    for (i = 0; i < (dimMax - dim)/ 2 + 1; i++)
+                        printf(" ");
+                }
+
+                //last space
+                if((dimMax - dim) % 2 == 0)
                     printf(" ");
-                printf("%d", resultStats.frequencies[k]);
-                for (i = (((dimMax - dim) / 2) + dim); i < dimMax; i++)
-                    printf(" ");
+                printf("|");
             }
-            printf("|");
+            k++;
+        } while (k < finish);
+
+        printf("\n");
+        
+        printf("\n");
+        j = 0;
+        for (j = 0; j < dimMax*6; j++)
+        {
+            //for(i = 0; i < 1; i++)
+                printf(" ");
+            //for(i = 0; i < 7; i++)
+                printf("-"); // Prints a line of -
         }
-        k++;
-    } while (k < finish);
-
-    printf("\n");
-
-    printf("\n");
-    int j = 0;
-    for (j = 0; j < dimMax * 6; j++)
-    {
-        //for(i = 0; i < 1; i++)
-        printf(" ");
-        //for(i = 0; i < 7; i++)
-        printf("-"); // Prints a line of -
+        printf("\n");
     }
-    printf("\n");
 }
+
 
 void print(stats resultStats)
 {
+    int j = 0;
+    int check = 0;
+    for (j = 0; j < 256; j++)
+    {
+        if(resultStats.frequencies[j] != 0)
+        {
+            check = 1;
+            j = 256;
+        }
+    }
+    if(check == 0)
+    {
+        printf("Empty file\n");
+        exit(0);
+    }
+    
     printTable(32, 39, "Punctuation", resultStats);
     printTable(40, 48, "Punctuation", resultStats);
     printTable(48, 58, "Numbers", resultStats);
@@ -387,7 +486,7 @@ int main(int argc, char *argv[])
 
 //     for (int i = start; i < finish; i++)
 //     {
-//         printf("%d\t", arrayFrequencies[i]); //prints its frequency
+//         printf("%d\t", resultStats.frequencies[i]); //prints its frequency
 //     }
 //     printf("\n");*****/
 
