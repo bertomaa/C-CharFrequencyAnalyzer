@@ -7,6 +7,7 @@
 #include <tgmath.h>
 #include "commons.h"
 #include "stats.h"
+#include "wrapper.h"
 
 
 void initStats(stats *stat, int _fileID)
@@ -22,7 +23,6 @@ void initStats(stats *stat, int _fileID)
 //returns 0 if decode has success
 int decode(const char *str, stats *res, int *i)
 {
-    char c;
     int currentCharacter = 0, numberStartingIndex = *i;
     int index = *i;
     char buffer[20];

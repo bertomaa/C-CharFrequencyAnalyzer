@@ -5,11 +5,19 @@
 #include "stats.h"
 #include "config.h"
 #include "commons.h"
+#include "forkHandler.h"
 
 char *mainToReportPipe = "/tmp/mainToReport.pipe";
 char *path;
-int fdToReport;
+int fdToReport = 0;
 int isReportRunning = 0;
+
+int isReadyToRun(config *conf)
+{
+    if (conf->n > 0 && conf->m > 0 && conf->filesCount != 0)
+        return 1;
+    return 0;
+}
 
 char *getLine()
 {
@@ -92,7 +100,6 @@ void run(config *conf)
             allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&reportPath); //TODO: una piotta e diesci terza marcia
             strcpy(reportPath, path);
             strcat(reportPath, "report");
-            char **args = exportAsArguments(conf, reportPath);
             execl(reportPath, reportPath, "--main", NULL);
             exit(0);
         }
@@ -168,13 +175,6 @@ void set(char *arguments, config *conf)
     {
         showHelp();
     }
-}
-
-int isReadyToRun(config *conf)
-{
-    if (conf->n > 0 && conf->m > 0 && conf->filesCount != 0)
-        return 1;
-    return 0;
 }
 
 void showConfig(config *conf)

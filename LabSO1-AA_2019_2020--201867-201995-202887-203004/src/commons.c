@@ -8,7 +8,9 @@
 #include <fcntl.h>
 #include "commons.h"
 #include "wrapper.h"
+#include "forkHandler.h"
 
+int isCollectingGarbage = 0;
 garbageCollector gc;
 
 void fatalErrorHandler(char *message, int errorCode)
@@ -77,7 +79,6 @@ void collectGarbage()
         free(gc.garbage[i]);
         // printf("collecting\n");
     }
-    printf("finished collecting\n");
     free(gc.garbage);
     //printf("freed %d elements in memory\n", gc.garbageCount);
 }

@@ -5,10 +5,12 @@
 
 #define PROCESS_MAX_CHILDREN 128
 
-int processType = FATHER;
-pid_t *children;
-int childrenCount = 0;
-int processMaxChildren = PROCESS_MAX_CHILDREN;
+extern int processType;
+extern pid_t *children;
+extern int childrenCount;
+extern int processMaxChildren;
+
+void alertFather(int sig);
 
 void initProcess();
 

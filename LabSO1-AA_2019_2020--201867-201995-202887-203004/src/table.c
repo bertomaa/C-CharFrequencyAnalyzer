@@ -179,7 +179,6 @@ void printTable(int start, int finish, char *name, int arrayFrequencies[256])
         // NUMERI
         k = start;
         dim = 0;
-        int d = 0;
         do
         {
 

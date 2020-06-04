@@ -12,8 +12,8 @@
 #include <pthread.h>
 #include "config.h"
 
-char *analyzerToReportPipe = "/tmp/analyzerToReport.pipe";
-int isReportConnected = 0;
+extern char *analyzerToReportPipe;
+extern int isReportConnected;
 
 typedef struct confAndEncodedString
 {

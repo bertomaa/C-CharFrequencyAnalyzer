@@ -12,14 +12,15 @@
 #define FATHER 0
 #define CHILD 1
 
-int isCollectingGarbage;
-
 typedef struct garbageCollector
 {
     int dim;
     int garbageCount;
     void **garbage;
 } garbageCollector;
+
+extern int isCollectingGarbage;
+extern garbageCollector gc;
 
 int initGC();
 
@@ -41,7 +42,7 @@ char *splitString(char *buffer, char **str, char delimiter);
 
 int getDigits(int n);
 
-int does1StringMatch2(char * s1, char * s2);
+int does1StringMatch2(char *s1, char *s2);
 
 void fatalErrorHandler(char *message, int errorCode);
 

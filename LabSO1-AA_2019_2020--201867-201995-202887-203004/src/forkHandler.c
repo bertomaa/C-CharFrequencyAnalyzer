@@ -10,6 +10,11 @@
 #include "commons.h"
 #include "wrapper.h"
 
+int processType = FATHER;
+pid_t *children;
+int childrenCount = 0;
+int processMaxChildren = PROCESS_MAX_CHILDREN;
+
 void alertFather(int sig)
 {
     if (getProcessType() == FATHER)
@@ -24,6 +29,7 @@ void alertFather(int sig)
 
 void initProcess()
 {
+    childrenCount = 0;
     signal(SIGUSR1, alertFather);
     signal(SIGTERM, killMeAndAllChildren);
     allocWrapper(processMaxChildren, sizeof(int), (void **)&children);
@@ -42,18 +48,15 @@ int createChild()
         setIamChild();
         return 0;
     }
-    else
+    if (childrenCount > processMaxChildren - 3)
     {
-        if (childrenCount > processMaxChildren - 3)
-        {
-            processMaxChildren += PROCESS_MAX_CHILDREN;
-            reallocWrapper((void **)&children, processMaxChildren);
-        }
-        printf(" %d %d \n", pid, childrenCount);
-        children[childrenCount] = pid;
-        childrenCount++;
-        return 1;
+        processMaxChildren += PROCESS_MAX_CHILDREN;
+        reallocWrapper((void **)&children, processMaxChildren);
     }
+    //printf("%s, parentPid: %d, sonPid: %d ,childrenCount:%d \n", desc, getpid(), pid, childrenCount);
+    children[childrenCount] = pid;
+    childrenCount++;
+    return 1;
 }
 
 void killMeAndAllChildren(int exitCode)
@@ -71,7 +74,7 @@ void killMeAndAllChildren(int exitCode)
     {
         collectGarbage();
     }
-    printf("Me ammazzoooo, pid:%d\n", getpid());
+    //printf("Me ammazzoooo, pid:%d\n", getpid());
     exit(exitCode);
 }
 
@@ -84,4 +87,3 @@ int getProcessType()
 {
     return processType;
 }
-

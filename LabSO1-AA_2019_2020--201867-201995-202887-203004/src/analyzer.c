@@ -13,6 +13,8 @@
 #include "stats.h"
 #include "config.h"
 #include "commons.h"
+#include "forkHandler.h"
+#include "reportConnector.h"
 
 int checkArguments(int argc, const char *argv[])
 {
@@ -117,7 +119,7 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
     for (i = 0; i < bytesRead; i++)
     {
         if(buffer[i] >= 0)
-            ret.frequencies[buffer[i]]++;
+            ret.frequencies[(int) buffer[i]]++;
     }
 
 
@@ -186,7 +188,7 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
     }
 
     int *pipes = createPipes(m);
-    int i, j;
+    int i;
     for (i = 0; i < m; i++)
     {
         if (createChild() == 0)
@@ -205,7 +207,6 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
     {
         initStats(&resultStats[i], i + fileIndex);
     }
-    int res;
     for (i = 0; i < m; i++)
     {
         readPipe(pipes, i, str, filesCount); //TODO: indovina? controlla  che la munnezz abbia ritornato e non sia andata al lago
@@ -236,11 +237,11 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
     //printf("mandato al main:%s\n", resultString);
     write(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
     close(writePipe);
-    if(writePipe == 7)
-    {
-        printf("SONO UN ASSASSINO!\n");
-        fatalErrorHandler("eeeee", 4);
-    }
+    // if(writePipe == 7)
+    // {
+    //     // printf("SONO UN ASSASSINO!\n");
+    //     fatalErrorHandler("eeeee", 4);
+    // }
     collectGarbage();
     // printf("p finished\n");
     return 0; //manco lo scrivo più
@@ -315,7 +316,6 @@ int main(int argc, const char *argv[])
     int *assignedFiles = distributeQuantity(conf->filesCount, conf->n);
 
     int *pipesToP = createPipes(conf->n);
-    int pid;
 
     //creates subprocess p
     printf("starting with n: %d, m: %d\n", conf->n, conf->m);

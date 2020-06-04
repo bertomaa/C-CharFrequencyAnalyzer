@@ -7,15 +7,7 @@
 #include <tgmath.h>
 #include "commons.h"
 #include "wrapper.h"
-
-typedef struct config
-{
-    int dim;
-    int n;
-    int m;
-    int filesCount;
-    char **files;
-} config;
+#include "config.h"
 
 void initConfig(config *conf)
 {

@@ -10,6 +10,9 @@
 #include "config.h"
 #include "reportConnector.h"
 
+char *analyzerToReportPipe = "/tmp/analyzerToReport.pipe";
+int isReportConnected = 0;
+
 void sendDataToReport(int fd, confAndEncodedString conf)
 {
     int i = 0;
@@ -41,6 +44,7 @@ void *tryToConnect(void *confPointer)
     sendDataToReport(fd, conf);
     close(fd);
     printf("finished sending data!\n");
+    return NULL;
 }
 
 void *readUserInputAndQuit()
@@ -54,6 +58,7 @@ void *readUserInputAndQuit()
     //printf("z\n");
     exit(0);
     //printf("z\n");
+    return NULL;
 }
 
 void launchReportConnector(config *conf, char *dataStr)
