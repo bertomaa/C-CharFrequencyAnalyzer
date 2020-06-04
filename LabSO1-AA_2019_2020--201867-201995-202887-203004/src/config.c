@@ -32,9 +32,11 @@ void removeFileFromConfigByIndex(config *c, int i)
 {
     if (c->filesCount == 0)
         return;
-    // free(c->files[i]);
     if (c->filesCount > 1)
+    {
+        //strcpy(c->files[i], c->files[c->filesCount - 1]);
         c->files[i] = c->files[c->filesCount - 1];
+    }
     c->filesCount--;
 }
 
@@ -51,6 +53,19 @@ void removeFileFromConfigByName(config *c, char *name)
     }
 }
 
+int checkFileInConfig(config *c, const char *name)
+{
+    int i;
+    for (i = 0; i < c->filesCount; i++)
+    {
+        if (strcmp(c->files[i], name) == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void removePathFromConfig(config *c, char *path)
 {
     char *buffer;
@@ -61,7 +76,9 @@ void removePathFromConfig(config *c, char *path)
     allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
     addDoubleQuotes(buffer, path);
     sprintf(cmd, "find %s -type f", buffer);
-    cmdOutput = getCommandOutput(cmd);
+    int filesCount = getFilesCountInPath(path);
+    printf("%d\n", filesCount);
+    cmdOutput = getCommandOutput(cmd, filesCount * MAX_PATH_LEN * sizeof(char));
     buffer = splitString(buffer, &cmdOutput, '\n');
     while (buffer != NULL)
     {
@@ -95,20 +112,23 @@ void joinConfigs(config *c1, config *c2)
 
 void addFileToConfig(config *c, const char *file)
 {
-    //todo se il file ha spazi controllare lo escape
+    if (checkFileInConfig(c, file))
+    {
+        return;
+    }
+    printf("dim %d count %d\n", c->dim, c->filesCount);
+
+    //TODO: se il file ha spazi controllare lo escape
     int stringLen = strlen(file);
     if (stringLen >= MAX_PATH_LEN)
     {
         fprintf(stdout, "Impossible to add file \"%s\" to configuration, file name too long. Max is %d.\n", file, MAX_PATH_LEN);
         return;
     }
-    //TODO: eccoci qua
-    //TODO: aggiungere al realloc
     if (c->filesCount == c->dim)
     {
         c->dim += INITIAL_CONFIG_SIZE;
         reallocWrapper((void **)&(c->files), c->dim * sizeof(char *));
-        //TODO: check error
     }
 
     allocWrapper(stringLen + 2, sizeof(char), (void **)&(c->files[c->filesCount])); //Non so perchè stringLen+2, forse poteva essere 1 ma non voglio rischiarmela
@@ -159,115 +179,32 @@ char **exportAsArguments(const config *c, char *arg0)
     return res;
 }
 
-// //returns boolean values 0 is file 1 is directory if doesnt exists
-// int isPathDirectory(const char *path)
+// config *checkDirectories(config *conf)
 // {
-//     //printf("IsPathDirectory:\n");
-//     int pathLen = strlen(path);
-//     char command[MAX_PIPE_CHARACTERS];
-//     command[0] = '\0';
-//     strcat(command, "ls -la ");
-//     strcat(command, path);
-//     char *output = getCommandOutput(command);
-//     //printf("output:%s\n", output);
-//     int ret = 0;
-//     switch (output[0])
-//     {
-//     case '-':
-//         ret = 0;
-//         break;
-//     case 't':
-//         ret = 1;
-//         break;
-//     default:
-//         ret = -1;
-//         //TODO: exit
-//         break;
-//     }
-//     // free((void *)output);
-//     return ret;
-// }
-
-// config getElementsInDirectory(char *path, int recursive)
-// {
-//     //printf("GetElementsInDirectory, path:%s\n", path);
-//     int count;
-//     char cmdBuffer[MAX_COMMAND_LEN];
-//     char *newPath;
-//     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&newPath);
-//     //TODO: check error
-//     config conf;
-//     initConfig(&conf);
-
-//     cmdBuffer[0] = '\0';
-//     strcat(cmdBuffer, "ls ");
-//     strcat(cmdBuffer, path);
-//     char *output = getCommandOutput(cmdBuffer);
-//     //printf("ls output = %s.\n\n", output);
-
-//     //retrieve all entries
-//     newPath = splitString(newPath, &output, '\n');
-//     //printf("newpath0: %s\n", newPath);
-//     //loop through the string to extract all other tokens
-//     char newFullPath[MAX_PATH_LEN];
-//     char pathWithoutQuotes[MAX_PATH_LEN];
-//     char newFullPathWithoutQuotes[MAX_PATH_LEN];
-//     removeDoubleQuotes(pathWithoutQuotes, path);
-
-//     while (newPath != NULL)
-//     {
-//         //printf("newpath1: %s\n", newPath);
-//         newFullPath[0] = '\0';
-//         strcat(newFullPath, "\"");
-//         strcat(newFullPath, pathWithoutQuotes);
-//         strcat(newFullPath, "/");
-//         strcat(newFullPath, newPath);
-//         strcat(newFullPath, "\"");
-//         //printf("newFullPath:%s\n", newFullPath);
-//         int isDirectory = isPathDirectory(newFullPath);
-//         if (isDirectory)
-//         {
-//             if (recursive)
-//             {
-//                 config recursiveRes = getElementsInDirectory(newFullPath, recursive);
-//                 joinConfigs(&conf, &recursiveRes);
-//             }
-//         }
-//         else
-//         {
-//             //printf("aggiunto file %s\n", newFullPath);
-//             addFileToConfig(&conf, removeDoubleQuotes(newFullPathWithoutQuotes, newFullPath));
-//         }
-//         //printf("newpath1: %s\n", newPath);
-//         newPath = splitString(newPath, &output, '\n');
-//         //printf("newpath2: %s\n", newPath);
-//     }
-//     //printf("esci\n");
-
-//     return conf;
-// }
-
-// config checkDirectories2(config *conf, int recursive)
-// {
-//     char buffer[MAX_PATH_LEN];
+//     char *buffer, *fullBuffer;
+//     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&fullBuffer);
+//     buffer = fullBuffer;
+//     char cmd[MAX_COMMAND_LEN];
+//     char *cmdOutput;
+//     allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
 //     int i = 0;
 //     int count = conf->filesCount;
-
 //     for (i = 0; i < count; i++)
 //     {
 //         addDoubleQuotes(buffer, conf->files[i]);
-//         if (isPathDirectory(buffer))
+//         sprintf(cmd, "find %s -type f", buffer);
+//         cmdOutput = getCommandOutput(cmd);
+//         buffer = splitString(buffer, &cmdOutput, '\n');
+//         removeFileFromConfigByName(conf, buffer);
+//         while (buffer != NULL)
 //         {
-//             //TODO: ? ask if the user wants to scan down this directory recursively and change recursive
-//             //printf("opening directory %s\n", buffer);
-//             removeFileFromConfig(conf, i);
-//             //get all the files in the directory
-//             config recursiveRes = getElementsInDirectory(buffer, recursive);
-//             joinConfigs(conf, &recursiveRes);
+//             addFileToConfig(conf, buffer);
+//             buffer = splitString(buffer, &cmdOutput, '\n');
 //         }
-//         printFiles(conf);
+//         buffer = fullBuffer;
+
 //     }
-//     return *conf;
+//     return conf;
 // }
 
 config *checkDirectories(config *conf)
@@ -290,7 +227,9 @@ config *checkDirectories(config *conf)
     {
         addDoubleQuotes(buffer, conf->files[i]);
         sprintf(cmd, "find %s -type f", buffer);
-        cmdOutput = getCommandOutput(cmd);
+        int filesCount = getFilesCountInPath(buffer);
+        printf("%d\n", filesCount);
+        cmdOutput = getCommandOutput(cmd, filesCount * MAX_PATH_LEN);
         buffer = splitString(buffer, &cmdOutput, '\n');
         while (buffer != NULL)
         {

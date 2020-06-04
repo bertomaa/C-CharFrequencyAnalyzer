@@ -51,7 +51,7 @@ int createChild()
     if (childrenCount > processMaxChildren - 3)
     {
         processMaxChildren += PROCESS_MAX_CHILDREN;
-        reallocWrapper((void **)&children, processMaxChildren);
+        reallocWrapper((void **)&children, processMaxChildren * sizeof(pid_t));
     }
     //printf("%s, parentPid: %d, sonPid: %d ,childrenCount:%d \n", desc, getpid(), pid, childrenCount);
     children[childrenCount] = pid;

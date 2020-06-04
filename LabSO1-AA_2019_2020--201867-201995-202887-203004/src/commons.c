@@ -37,7 +37,7 @@ int initGC()
 
 void addToGC(void *garbage)
 {
-    int i = 0;
+    int i;
     for (i = 0; i < gc.garbageCount; i++)
     {
         if (gc.garbage[i] == garbage)
@@ -49,7 +49,11 @@ void addToGC(void *garbage)
     if (gc.garbageCount == gc.dim - 10)
     {
         gc.dim += 100;
-        gc.garbage = realloc(gc.garbage, gc.dim);
+        gc.garbage = realloc(gc.garbage, gc.dim * sizeof(void*));
+        if (gc.garbage == NULL)
+        {
+            fatalErrorHandler("Cannot realloc memory", 1);
+        }
     }
     gc.garbage[gc.garbageCount] = garbage;
     gc.garbageCount++;
@@ -67,6 +71,17 @@ void removeFromGC(void *p)
             return;
         }
     }
+}
+
+int getFilesCountInPath(char * path){
+    char * endptr;
+    char * cmdOut;
+    char * command;
+    allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void**)&command);
+    allocWrapper(40, sizeof(char), (void**)&cmdOut);
+    sprintf(command, "find %s -type f | wc -l", path);
+    cmdOut = getCommandOutput(command, 40);
+    return strtol(cmdOut, &endptr, 10);
 }
 
 void collectGarbage()
@@ -103,24 +118,24 @@ char *removeDoubleQuotes(char *buffer, char *path)
     return buffer;
 }
 
-char *getCommandOutput(const char *cmd)
+char *getCommandOutput(const char *cmd, int bufferSizeInBytes)
 {
     //printf("cmd: %s\n", cmd);
     //TODO:dite che ce lo lascia usare?
     char cmdBuffer[MAX_COMMAND_LEN];
     char *ret;
     int size = 0;
-    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&ret);
+    allocWrapper(bufferSizeInBytes, sizeof(char), (void **)&ret);
     FILE *fp = popen(cmd, "r");
     if (fp == NULL)
     {
         //TODO: gestisci errore
         exit(1);
     }
-    while (fgets(cmdBuffer, MAX_PIPE_CHARACTERS, fp) != NULL)
+    while (fgets(cmdBuffer, bufferSizeInBytes, fp) != NULL)
     {
         size += strlen(cmdBuffer) + 1;
-        if (size >= MAX_PIPE_CHARACTERS) //TODO: gestisci errore, stringa più lunga del massimo
+        if (size >= bufferSizeInBytes) //TODO: gestisci errore, stringa più lunga del massimo
             exit(1);
         strcat(ret, cmdBuffer);
     };
@@ -149,6 +164,17 @@ char *splitString(char *buffer, char **str, char delimiter)
         return buffer;
     }
     return NULL;
+}
+
+char *splitStringWithQuotes(char *buffer, char **str, char delimiter)
+{
+    if ((*str)[0] == '"' || (*str)[0] == '\'')
+    {
+        char *res = splitString(buffer, str, (*str)[0]);
+        if (res != NULL)
+            return res;
+    }
+    return splitString(buffer, str, delimiter);
 }
 
 int getDigits(int n)

@@ -33,7 +33,7 @@ char *getLine()
         if (i + 1 >= size)
         {
             size += MAX_COMMAND_LEN;
-            reallocWrapper((void **)&line, size);
+            reallocWrapper((void **)&line, size * sizeof(char));
             //TODO: error
         }
         line[i] = c;
@@ -69,14 +69,14 @@ void passToReport(char *command)
     close(fdToReport);
 }
 
-void run(config *conf)
+int run(config *conf)
 {
     printf("Run analyzer and Report\n");
 
     if (!isReadyToRun(conf))
     {
         printf("Cannot run, set n, m and at least 1 file.\n");
-        return;
+        return 0;
     }
 
     if (createChild() == 0)
@@ -108,20 +108,10 @@ void run(config *conf)
     {
         passToReport("read");
     }
-    printf("sono il main!\n");
-
-    //TODO: creare la pipe per report
-    // mkfifo(mainToReportPipe, 0666);
-    // fdToReport = open(mainToReportPipe, O_WRONLY);
-    // if(fdToReport == -1)
-    // {
-    //     printf("pipe error\n");
-    //     exit(1);
-    // }
-    // printf("main connected to report\n");
+    return 1;
 }
 
-void addFiles(const char *arguments, config *conf)
+void addFiles(const char *arguments, config **conf)
 {
     char *pch;
     char *input; //TODO: definire meglio size da allocare
@@ -130,9 +120,10 @@ void addFiles(const char *arguments, config *conf)
     pch = strtok(input, " ");
     while (pch != NULL)
     {
-        addFileToConfig(conf, pch);
+        addFileToConfig(*conf, pch);
         pch = strtok(NULL, " ");
     }
+    *conf = checkDirectories(*conf);
 }
 
 void showHelp()
@@ -206,7 +197,7 @@ void removeFiles(char *arguments, config *conf)
     }
 }
 
-int getAction(char *command, config *newConf, config *analyzedConf)
+int getAction(char *command, config **newConf, config **analyzedConf)
 {
     char *token = strtok(command, " ");
     if (token == NULL)
@@ -214,13 +205,15 @@ int getAction(char *command, config *newConf, config *analyzedConf)
 
     if (strcmp(token, "run") == 0 || strcmp(token, "r") == 0)
     {
-        run(newConf);
-        int n = newConf->n;
-        int m = newConf->m;
-        joinConfigs(analyzedConf, newConf);
-        initConfig(newConf);
-        newConf->n = n;
-        newConf->m = m;
+        if (run(*newConf))
+        {
+            int n = (*newConf)->n;
+            int m = (*newConf)->m;
+            joinConfigs(*analyzedConf, *newConf);
+            initConfig(*newConf);
+            (*newConf)->n = n;
+            (*newConf)->m = m;
+        }
     }
     else if (strcmp(token, "add") == 0)
     {
@@ -228,7 +221,7 @@ int getAction(char *command, config *newConf, config *analyzedConf)
     }
     else if (strcmp(token, "set") == 0)
     {
-        set(command + 4, newConf);
+        set(command + 4, *newConf);
     }
     else if (strcmp(token, "report") == 0)
     {
@@ -240,11 +233,11 @@ int getAction(char *command, config *newConf, config *analyzedConf)
     }
     else if (strcmp(token, "config") == 0 || strcmp(token, "c") == 0)
     {
-        showConfig(newConf); //works
+        showConfig(*newConf); //works
     }
     else if (strcmp(token, "remove") == 0)
     {
-        removeFiles(command + 7, newConf);
+        removeFiles(command + 7, *newConf);
     }
     else if (strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "q") == 0)
     {
@@ -304,7 +297,7 @@ int main(int argc, const char *argv[])
     {
         printf("-> ");
         char *command = getLine();
-        action = getAction(command, newFilesConf, analyzedFilesConf);
+        action = getAction(command, &newFilesConf, &analyzedFilesConf);
     } while (action);
     collectGarbage();
     return 0;

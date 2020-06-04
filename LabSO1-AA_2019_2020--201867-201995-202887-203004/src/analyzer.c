@@ -150,7 +150,7 @@ int q(int mIndex, int filesCount, int m, char *const *files, int writePipe, int 
         allocWrapper(MAX_PATH_LEN, sizeof(char), (void**)&buffer2);
         addDoubleQuotes(buffer2, files[i]);
         sprintf(buffer, "wc -c %s", buffer2);
-        char* cmdOutput = getCommandOutput(buffer);
+        char* cmdOutput = getCommandOutput(buffer, 40);
         buffer[0] = 0;
         splitString(buffer, &cmdOutput, ' ');
         fileLength = strtol(buffer, &endptr, 10);

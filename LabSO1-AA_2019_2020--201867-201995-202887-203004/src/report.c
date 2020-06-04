@@ -37,7 +37,7 @@ char *getLine()
         if (i + 1 >= size)
         {
             size += MAX_COMMAND_LEN;
-            reallocWrapper((void **)&line, size);
+            reallocWrapper((void **)&line, size*sizeof(char));
             //TODO: error
         }
         line[i] = c;
@@ -174,7 +174,7 @@ void readAnalyzer(confAndStats *cs)
         addFileToConfig(cs->conf, buffer);
         if (cs->conf->filesCount + 1 >= cs->conf->dim)
         {
-            reallocWrapper((void **)&(cs->stats), cs->conf->dim + INITIAL_CONFIG_SIZE); //TODO: error
+            reallocWrapper((void **)&(cs->stats), (cs->conf->dim + INITIAL_CONFIG_SIZE) * sizeof(stats)); //TODO: error
         }
     }
     char *statString;

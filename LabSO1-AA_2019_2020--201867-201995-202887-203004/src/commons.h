@@ -34,7 +34,7 @@ void addDoubleQuotes(char *buffer, char *path);
 
 char *removeDoubleQuotes(char *buffer, char *path);
 
-char *getCommandOutput(const char *cmd);
+char *getCommandOutput(const char *cmd, int bufferSizeInBytes);
 
 int getPipeIndex(int index, int type);
 
@@ -45,5 +45,9 @@ int getDigits(int n);
 int does1StringMatch2(char *s1, char *s2);
 
 void fatalErrorHandler(char *message, int errorCode);
+
+char* splitStringWithQuotes(char *buffer, char **str, char delimiter);
+
+int getFilesCountInPath(char * path);
 
 #endif
