@@ -176,34 +176,32 @@ void readAnalyzer(confAndStats *cs)
             reallocWrapper((void **)&(cs->stats), cs->conf->dim + INITIAL_CONFIG_SIZE); //TODO: error
         }
     }
-    printf("b\n");
     char *statString;
     allocWrapper(MAX_PIPE_CHARACTERS * cs->conf->filesCount, sizeof(char), (void **)&statString); //TODO: usa il wrapper,
-    printf("b\n");
     read(FDanalyzer, statString, MAX_PIPE_CHARACTERS * cs->conf->filesCount);
     close(FDanalyzer);
-    printf("b\n");
     for (i = lastStatsIndex; i < cs->conf->filesCount; i++)
     {
-        printf("i %d, filesCount %d\n", i, cs->conf->filesCount);
         initStats(&(cs->stats[i]), i);
     }
-    printf("b\n");
     //printf("\n\nstat string: %s\n\n", statString);
-    decodeMultiple(statString, &(cs->stats[lastStatsIndex])); //TODO:check error
-    printf("b\n");
+    int error = decodeMultiple(statString, &(cs->stats[lastStatsIndex])); //TODO:check error
+    if(error)
+    {
+        fatalErrorHandler("Error in decoding pipe, exit.", 1);
+    }
     for (i = 0; i < cs->conf->filesCount; i++)
     {
         printf("In file %s was analyzed:\n", cs->conf->files[i]);
-        //printTable(*resultStats);
-        print(cs->stats[i]);
+        printStats(cs->stats[i]);
+        //print(cs->stats[i]);
     }
-    printf("b\n");
 }
 
 int main(int argc, char *argv[])
 {
     initGC();
+    initProcess();
     mkfifo(analyzerToReportPipe, 0666);
     confAndStats cs;
     allocWrapper(1, sizeof(config), (void **)&(cs.conf));

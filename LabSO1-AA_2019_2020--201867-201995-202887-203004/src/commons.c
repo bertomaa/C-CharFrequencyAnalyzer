@@ -11,30 +11,17 @@
 
 garbageCollector gc;
 
-
-int processType = FATHER;
-
 void fatalErrorHandler(char *message, int errorCode)
 {
     fprintf(stderr, "%s\n", message);
-    if(processType)
-        printf("Lo killoooo\n");
-    collectGarbage();
-    exit(errorCode);
-}
-
-void setIamChild()
-{
-    processType = 1;
-}
-
-int getProcessType()
-{
-    return processType;
+    alertFather(1);
+    // collectGarbage();
+    // exit(errorCode);
 }
 
 int initGC()
 {
+    isCollectingGarbage = 0;
     gc.dim = 100;
     gc.garbageCount = 0;
     gc.garbage = (void **)calloc(gc.dim, sizeof(void *));
@@ -82,12 +69,15 @@ void removeFromGC(void *p)
 
 void collectGarbage()
 {
+    isCollectingGarbage = 1;
     int i;
     for (i = gc.garbageCount - 1; i > 0; i--)
     {
         // printf("%d: deleting %p\n", i, gc.garbage[i]);
         free(gc.garbage[i]);
+        // printf("collecting\n");
     }
+    printf("finished collecting\n");
     free(gc.garbage);
     //printf("freed %d elements in memory\n", gc.garbageCount);
 }
@@ -174,12 +164,15 @@ int getDigits(int n)
 }
 
 //returns 1 if the first (length of s1) characters of s2 are equal to s1, 0 if they are not equal or s2 is shorter than s1
-int does1StringMatch2(char * s1, char * s2){
-    if(strlen(s1) > strlen(s2))
+int does1StringMatch2(char *s1, char *s2)
+{
+    if (strlen(s1) > strlen(s2))
         return 0;
     int res = 1, i;
-    for(i = 0; i < strlen(s1); i++){
-        if(s1[i] != s2[i]){
+    for (i = 0; i < strlen(s1); i++)
+    {
+        if (s1[i] != s2[i])
+        {
             res = 0;
             break;
         }

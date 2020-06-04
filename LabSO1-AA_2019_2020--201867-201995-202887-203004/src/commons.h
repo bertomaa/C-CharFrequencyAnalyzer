@@ -12,6 +12,7 @@
 #define FATHER 0
 #define CHILD 1
 
+int isCollectingGarbage;
 
 typedef struct garbageCollector
 {

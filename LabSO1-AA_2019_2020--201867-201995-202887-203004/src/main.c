@@ -71,21 +71,13 @@ void run(config *conf)
         return;
     }
 
-    int p = fork();
-    if (p < 0)
-    {
-        fprintf(stderr, "Impossible to fork, quit.\n");
-        exit(1);
-    }
-    else if (p == 0)
+    if (createChild() == 0)
     { //figlio
-        setIamChild();
         char *analyzerPath;
         allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&analyzerPath); //TODO: una piotta e diesci terza marcia
         strcpy(analyzerPath, path);
         strcat(analyzerPath, "analyzer");
-        char **args = exportAsArguments(conf, analyzerPath);        
-        printf("%s\n", args[0]);
+        char **args = exportAsArguments(conf, analyzerPath);
         execv(analyzerPath, args);
         exit(0);
     }
@@ -94,15 +86,8 @@ void run(config *conf)
     {
         isReportRunning = 1;
         mkfifo(mainToReportPipe, 0666);
-        int q = fork();
-        if (q < 0)
-        {
-            fprintf(stderr, "Impossible to fork, quit.\n");
-            exit(1);
-        }
-        else if (q == 0)
+        if (createChild() == 0)
         { //figlio
-            setIamChild();
             char *reportPath;
             allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&reportPath); //TODO: una piotta e diesci terza marcia
             strcpy(reportPath, path);
@@ -285,6 +270,7 @@ int checkArguments(int argc, const char *argv[])
 int main(int argc, const char *argv[])
 {
     initGC();
+    initProcess();
     path = getBinPath(argv[0]);
     char *endptr;
     config initConf;

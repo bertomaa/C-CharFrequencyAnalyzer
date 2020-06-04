@@ -5,10 +5,8 @@ OBJPATH = ./bin/obj/
 CC = gcc
 CCFLAGS = -std=gnu90
 
-OBJ = $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPATH)commons.o
-COMMONTARGETS = wrapper.o stats.o config.o commons.o
-SOURCES = $(SRCPATH)wrapper.c $(SRCPATH)stats.c $(SRCPATH)config.c $(SRCPATH)commons.c
-MAINDEPS = $(SRCPATH)wrapper.c $(SRCPATH)stats.c $(SRCPATH)config.c $(SRCPATH)commons.c $(SRCPATH)wrapper.h $(SRCPATH)stats.h $(SRCPATH)config.h $(SRCPATH)commons.h
+OBJ = $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPATH)commons.o $(OBJPATH)forkHandler.o
+COMMONTARGETS = wrapper.o stats.o config.o commons.o forkHandler.o
 
 
 
@@ -22,14 +20,14 @@ pipe:
 bin:
 	mkdir -p bin/obj
 
-main: $(COMMONTARGETS) main.o
+main: $(COMMONTARGETS) main.o 
 	$(CC) -o ./bin/main $(OBJ) $(OBJPATH)main.o $(CCFLAGS)
 
 analyzer: $(COMMONTARGETS) reportConnector.o analyzer.o
 	$(CC) -o ./bin/analyzer $(OBJPATH)analyzer.o $(OBJ) $(OBJPATH)reportConnector.o -pthread $(CCFLAGS)
 
 report: $(COMMONTARGETS) report.o
-	$(CC) -o ./bin/report $(OBJPATH)report.o $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPATH)commons.o $(CCFLAGS)
+	$(CC) -o ./bin/report $(OBJPATH)report.o $(OBJ) $(CCFLAGS)
 
 main.o: $(SRCPATH)main.c
 	$(CC) -c -o $(OBJPATH)main.o $(SRCPATH)main.c $(CCFLAGS)
@@ -54,6 +52,9 @@ config.o: $(SRCPATH)config.c $(SRCPATH)config.h
 	
 reportConnector.o: $(SRCPATH)reportConnector.c $(SRCPATH)reportConnector.h $(SRCPATH)config.h
 	$(CC) -c -o $(OBJPATH)reportConnector.o $(SRCPATH)reportConnector.c $(CCFLAGS)
+
+forkHandler.o: $(SRCPATH)forkHandler.c $(SRCPATH)forkHandler.h $(SRCPATH)commons.h $(SRCPATH)wrapper.h
+	$(CC) -c -o $(OBJPATH)forkHandler.o $(SRCPATH)forkHandler.c $(CCFLAGS)
 
 clean:
 	rm -rf ./bin/

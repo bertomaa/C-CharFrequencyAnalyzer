@@ -156,7 +156,6 @@ char **exportAsArguments(const config *c, char *arg0)
     allocWrapper(40, sizeof(char), (void **)&(res[1]));
     allocWrapper(40, sizeof(char), (void **)&(res[2]));
     sprintf(res[0], "%s", arg0);
-    printf("%s\n", res[0]);
     sprintf(res[1], "%d", c->n);
     sprintf(res[2], "%d", c->m);
     int i;
@@ -300,11 +299,9 @@ config *checkDirectories(config *conf)
         addDoubleQuotes(buffer, conf->files[i]);
         sprintf(cmd, "find %s -type f", buffer);
         cmdOutput = getCommandOutput(cmd);
-        printf("cmdo: %s\n", cmdOutput);
         buffer = splitString(buffer, &cmdOutput, '\n');
         while (buffer != NULL)
         {
-            printf("file: %s.\n", buffer);
             addFileToConfig(res, buffer);
             buffer = splitString(buffer, &cmdOutput, '\n');
         }
