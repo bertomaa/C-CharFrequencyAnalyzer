@@ -2,17 +2,18 @@ SHELL=/bin/bash
 
 SRCPATH= ./src/
 OBJPATH = ./bin/obj/
+BINPATH = ./bin/
 CC = gcc
-CCFLAGS = -std=gnu90
+CCFLAGS = -std=gnu90 -Wall
 
 OBJ = $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPATH)commons.o $(OBJPATH)forkHandler.o
-COMMONTARGETS = wrapper.o stats.o config.o commons.o forkHandler.o
+COMMONTARGETS = $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPATH)commons.o $(OBJPATH)forkHandler.o
 
 
 
-.PHONY: build clean
+.PHONY: build clean pipe 
 
-build: bin  main analyzer report
+build: bin  $(BINPATH)main $(BINPATH)analyzer $(BINPATH)report
 
 pipe:
 	test -e /tmp/analyzerToReport.pipe && mkfifo /tmp/analyzerToReport.pipe;
@@ -20,40 +21,40 @@ pipe:
 bin:
 	mkdir -p bin/obj
 
-main: $(COMMONTARGETS) main.o 
+$(BINPATH)main: $(COMMONTARGETS) $(OBJPATH)main.o 
 	$(CC) -o ./bin/main $(OBJ) $(OBJPATH)main.o $(CCFLAGS)
 
-analyzer: $(COMMONTARGETS) reportConnector.o analyzer.o
+$(BINPATH)analyzer: $(COMMONTARGETS) $(OBJPATH)reportConnector.o $(OBJPATH)analyzer.o
 	$(CC) -o ./bin/analyzer $(OBJPATH)analyzer.o $(OBJ) $(OBJPATH)reportConnector.o -pthread $(CCFLAGS)
 
-report: $(COMMONTARGETS) report.o
+$(BINPATH)report: $(COMMONTARGETS) $(OBJPATH)report.o
 	$(CC) -o ./bin/report $(OBJPATH)report.o $(OBJ) $(CCFLAGS)
 
-main.o: $(SRCPATH)main.c
+$(OBJPATH)main.o: $(SRCPATH)main.c
 	$(CC) -c -o $(OBJPATH)main.o $(SRCPATH)main.c $(CCFLAGS)
 
-report.o: $(SRCPATH)report.c
+$(OBJPATH)report.o: $(SRCPATH)report.c
 	$(CC) -c -o $(OBJPATH)report.o $(SRCPATH)report.c $(CCFLAGS)
 	
-analyzer.o: $(SRCPATH)analyzer.c 
+$(OBJPATH)analyzer.o: $(SRCPATH)analyzer.c 
 	$(CC) -c -o $(OBJPATH)analyzer.o $(SRCPATH)analyzer.c $(CCFLAGS)
 	
-commons.o: $(SRCPATH)commons.c $(SRCPATH)commons.h
+$(OBJPATH)commons.o: $(SRCPATH)commons.c $(SRCPATH)commons.h
 	$(CC) -c -o $(OBJPATH)commons.o $(SRCPATH)commons.c $(CCFLAGS)
 
-stats.o: $(SRCPATH)stats.c $(SRCPATH)stats.h
+$(OBJPATH)stats.o: $(SRCPATH)stats.c $(SRCPATH)stats.h
 	$(CC) -c -o $(OBJPATH)stats.o $(SRCPATH)stats.c $(CCFLAGS)
 
-wrapper.o: $(SRCPATH)wrapper.c $(SRCPATH)commons.c $(SRCPATH)wrapper.h
+$(OBJPATH)wrapper.o: $(SRCPATH)wrapper.c $(SRCPATH)commons.c $(SRCPATH)wrapper.h
 	$(CC) -c -o $(OBJPATH)wrapper.o $(SRCPATH)wrapper.c $(CCFLAGS)
 
-config.o: $(SRCPATH)config.c $(SRCPATH)config.h
+$(OBJPATH)config.o: $(SRCPATH)config.c $(SRCPATH)config.h
 	$(CC) -c -o $(OBJPATH)config.o $(SRCPATH)config.c $(CCFLAGS)
 	
-reportConnector.o: $(SRCPATH)reportConnector.c $(SRCPATH)reportConnector.h $(SRCPATH)config.h
+$(OBJPATH)reportConnector.o: $(SRCPATH)reportConnector.c $(SRCPATH)reportConnector.h $(SRCPATH)config.h
 	$(CC) -c -o $(OBJPATH)reportConnector.o $(SRCPATH)reportConnector.c $(CCFLAGS)
 
-forkHandler.o: $(SRCPATH)forkHandler.c $(SRCPATH)forkHandler.h $(SRCPATH)commons.h $(SRCPATH)wrapper.h
+$(OBJPATH)forkHandler.o: $(SRCPATH)forkHandler.c $(SRCPATH)forkHandler.h $(SRCPATH)commons.h $(SRCPATH)wrapper.h
 	$(CC) -c -o $(OBJPATH)forkHandler.o $(SRCPATH)forkHandler.c $(CCFLAGS)
 
 clean:
