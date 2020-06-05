@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     for (j = 0; j < 256; j++)
     {
         // arrayFrequencies[j] = j;
-        arrayFrequencies[j] = 1 + rand() % 1000000;
+        arrayFrequencies[j] = 1 + rand() % 1000;
     }
     arrayFrequencies[38] = 4444;
     arrayFrequencies[33] = 55555;
@@ -169,12 +169,20 @@ void printTable(int start, int finish, char *name, int arrayFrequencies[256])
                     for (i = dimMax / 2; i < dimMax; i++) //prints spaces to the right of the CHARACTER
                         printf(" ");
                 }
-                else //odd number of digits
+                else if (dim % 2 != 0 && dimMax % 2 == 0) //odd number of digits
                 {
                     for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
                         printf(" ");
                     printf("%c", k);
                     for (i = (dimMax / 2); i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                        printf(" ");
+                }
+                else if (dim % 2 != 0 && dimMax % 2 != 0)//odd number of digits
+                {
+                    for (i = 0; i < (dimMax / 2); i++) //prints spaces to the left of the CHARACTER
+                        printf(" ");
+                    printf("%c", k);
+                    for (i = (dimMax / 2) + 1; i < dimMax; i++) //prints spaces to the right of the CHARACTER
                         printf(" ");
                 }
 

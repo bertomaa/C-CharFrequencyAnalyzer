@@ -456,12 +456,12 @@ void print(stats resultStats)
         exit(0);
     }
 
-    printf("\nNumber of tabs: %d", resultStats);
-    printf("\nNumber of new lines: %d", resultStats);
-    printf("\nNumber of spaces: %d", resultStats);
-    printf("\nNumber of delete: %d \n", resultStats);
+    printf("\nNumber of tabs: %d", resultStats.frequencies[9]);
+    printf("\nNumber of new lines: %d", resultStats.frequencies[11]);
+    printf("\nNumber of spaces: %d", resultStats.frequencies[32]);
+    printf("\nNumber of delete: %d \n", resultStats.frequencies[127]);
 
-    printTable(32, 39, "Punctuation", resultStats);
+    printTable(33, 39, "Punctuation", resultStats);
     printTable(40, 48, "Punctuation", resultStats);
     printTable(48, 58, "Numbers", resultStats);
     printTable(58, 65, "Operators", resultStats);
