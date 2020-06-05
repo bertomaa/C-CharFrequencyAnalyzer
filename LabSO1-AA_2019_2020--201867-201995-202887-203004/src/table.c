@@ -186,8 +186,6 @@ void printTable(int start, int finish, char *name, int arrayFrequencies[256])
                         printf(" ");
                 }
 
-
-
                 //last space
                 if((dimMax - dim) % 2 == 0)
                     printf(" ");

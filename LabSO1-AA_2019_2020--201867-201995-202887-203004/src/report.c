@@ -336,12 +336,20 @@ void printTable(int start, int finish, char *name, stats resultStats)
                     for (i = dimMax / 2; i < dimMax; i++) //prints spaces to the right of the CHARACTER
                         printf(" ");
                 }
-                else //odd number of digits
+                else if (dim % 2 != 0 && dimMax % 2 == 0) //odd number of digits
                 {
                     for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
                         printf(" ");
                     printf("%c", k);
                     for (i = (dimMax / 2); i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                        printf(" ");
+                }
+                else if (dim % 2 != 0 && dimMax % 2 != 0)//odd number of digits
+                {
+                    for (i = 0; i < (dimMax / 2); i++) //prints spaces to the left of the CHARACTER
+                        printf(" ");
+                    printf("%c", k);
+                    for (i = (dimMax / 2) + 1; i < dimMax; i++) //prints spaces to the right of the CHARACTER
                         printf(" ");
                 }
 
