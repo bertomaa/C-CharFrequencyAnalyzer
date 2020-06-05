@@ -113,6 +113,7 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
     allocWrapper(bytesToRead + 1, sizeof(char), (void **)&buffer);
     //TODO:check error
 
+    int size = lseek(fd, 0, SEEK_END);
     lseek(fd, offset, SEEK_SET);
     ssize_t bytesRead = read(fd, buffer, bytesToRead);
     //printf("analyzing file: %d with offset %d reading %d\n", id, offset, bytesToRead);

@@ -116,7 +116,7 @@ void addFileToConfig(config *c, const char *file)
     {
         return;
     }
-    printf("dim %d count %d\n", c->dim, c->filesCount);
+    // printf("dim %d count %d\n", c->dim, c->filesCount);
 
     //TODO: se il file ha spazi controllare lo escape
     int stringLen = strlen(file);
@@ -228,7 +228,6 @@ config *checkDirectories(config *conf)
         addDoubleQuotes(buffer, conf->files[i]);
         sprintf(cmd, "find %s -type f", buffer);
         int filesCount = getFilesCountInPath(buffer);
-        printf("%d\n", filesCount);
         cmdOutput = getCommandOutput(cmd, filesCount * MAX_PATH_LEN);
         buffer = splitString(buffer, &cmdOutput, '\n');
         while (buffer != NULL)

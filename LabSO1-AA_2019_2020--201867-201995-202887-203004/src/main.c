@@ -113,15 +113,17 @@ int run(config *conf)
 
 void addFiles(const char *arguments, config **conf)
 {
-    char *pch;
     char *input; //TODO: definire meglio size da allocare
     allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
+    char* buffer;
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
     strcpy(input, arguments);
-    pch = strtok(input, " ");
-    while (pch != NULL)
+    buffer = splitStringWithQuotes(buffer, &input, ' ');
+    while (buffer != NULL)
     {
-        addFileToConfig(*conf, pch);
-        pch = strtok(NULL, " ");
+        printf("%s.\n", buffer);
+        addFileToConfig(*conf, buffer);
+        buffer = splitStringWithQuotes(buffer, &input, ' ');
     }
     *conf = checkDirectories(*conf);
 }
@@ -185,15 +187,17 @@ void showConfig(config *conf)
 
 void removeFiles(char *arguments, config *conf)
 {
-    char *pch;
     char *input; //TODO: definire meglio size da allocare
     allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
+    char* buffer;
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
     strcpy(input, arguments);
-    pch = strtok(input, " ");
-    while (pch != NULL)
+    buffer = splitStringWithQuotes(buffer, &input, ' ');
+    while (buffer != NULL)
     {
-        removePathFromConfig(conf, pch);
-        pch = strtok(NULL, " ");
+        printf("toRemove : %s.\n", buffer);
+        removePathFromConfig(conf, buffer);
+        buffer = splitStringWithQuotes(buffer, &input, ' ');
     }
 }
 

@@ -170,9 +170,13 @@ char *splitStringWithQuotes(char *buffer, char **str, char delimiter)
 {
     if ((*str)[0] == '"' || (*str)[0] == '\'')
     {
-        char *res = splitString(buffer, str, (*str)[0]);
+        char * tmpStr = (*str) + 1;
+        char *res = splitString(buffer, &tmpStr, (*str)[0]);
         if (res != NULL)
+        {
+            *str = tmpStr + 1;
             return res;
+        }
     }
     return splitString(buffer, str, delimiter);
 }
