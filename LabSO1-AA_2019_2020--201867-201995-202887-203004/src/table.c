@@ -19,6 +19,84 @@ int getDigits(int n)
     return count;
 }
 
+int position(int start, int finish, int arrayFrequencies[256])
+{
+    int pos = start;
+    int count = 0;
+    int stop = 0;
+    int i;
+    for(i = start; i < finish; i++)
+    {
+        if(arrayFrequencies[i] != 0)
+            count++;
+    }
+
+
+    int s = start;
+
+    while(stop < count/2 + 1)
+    {
+        if(arrayFrequencies[s] != 0)
+        {
+            stop++;
+            pos = s;
+        }
+
+        s++;
+    }
+    return pos;
+}
+
+
+/*
+    return -1 : errore
+    return 0 : print as much lines as "def"
+    return n : number of lines to print
+*/
+int align(int start, int finish, int arrayFrequencies[256], int def)
+{
+    int i = 0;
+    int c = 0;
+    for(i = start; i < finish; i++)
+    {
+        if(arrayFrequencies[i] != 0)
+            c++;
+    }
+
+    if(c == 0)
+        return -1;
+    
+    //every character appears in the file
+    if(c == finish - start)
+        return 0;
+
+    if(def == 3)
+    {
+        //x is used to check if count > (2/3)def --> if so, classical print in print function
+        float x = (2/3) * def;
+
+        //print 3 lines
+        if((float)c > 18)
+            return 0;
+
+        if((float)c > 9)
+            return 2;
+        
+        return 1;
+    }
+
+    if(def == 2)
+    {
+        //print 2 lines
+        if((float)c > 9)
+            return 0;
+
+        return 1;
+    }
+
+
+}
+
 int main(int argc, char **argv)
 {
     srand(time(0));
@@ -31,20 +109,10 @@ int main(int argc, char **argv)
     int check = 0;
     for (j = 0; j < 256; j++)
     {
-        // arrayFrequencies[j] = j;
+        //arrayFrequencies[j] = j;
         arrayFrequencies[j] = 1 + rand() % 1000;
     }
-    arrayFrequencies[38] = 4444;
-    arrayFrequencies[33] = 55555;
-    arrayFrequencies[34] = 333;
-    arrayFrequencies[35] = 1;
-    arrayFrequencies[36] = 22;
-    arrayFrequencies[37] = 666666;
-    arrayFrequencies[79] = 15;
-    arrayFrequencies[99] = 15;
-    arrayFrequencies[105] = 105;
-    arrayFrequencies[113] = 1133;
-    arrayFrequencies[100] = 1;
+
     for (j = 48; j < 58; j++)
     {
         // arrayFrequencies[j] = j;
@@ -69,19 +137,66 @@ int main(int argc, char **argv)
     printf("\nNumber of spaces: %d", arrayFrequencies[32]);
     printf("\nNumber of delete: %d \n", arrayFrequencies[127]);
 
-    printTable(33, 39, "Punctuation", arrayFrequencies);
-    printTable(40, 48, "Punctuation", arrayFrequencies);
+    int pos = 0;
+    switch(align(33, 48, arrayFrequencies, 2))
+    {
+        case 0:
+            printTable(33, 39, "Punctuation", arrayFrequencies);
+            printTable(40, 48, "Punctuation", arrayFrequencies);
+            break;
+        case 1:
+            printTable(33, 48, "Punctuation", arrayFrequencies);
+            break;
+        default:
+            break;
+            
+    }
+
     printTable(48, 58, "Numbers", arrayFrequencies);
     printTable(58, 65, "Operators", arrayFrequencies);
-    printTable(65, 73, "Uppercase letters", arrayFrequencies);
-    printTable(73, 82, "Uppercase letters", arrayFrequencies);
-    printTable(82, 91, "Uppercase letters", arrayFrequencies); 
+
+    switch(align(65, 91, arrayFrequencies, 3))
+    {
+        case 0:
+            printTable(65, 73, "Uppercase letters", arrayFrequencies);
+            printTable(73, 82, "Uppercase letters", arrayFrequencies);
+            printTable(82, 91, "Uppercase letters", arrayFrequencies); 
+            break;
+        case 1:
+            printTable(65, 91, "Uppercase letters", arrayFrequencies);
+            break;
+        case 2:
+            pos = position(65, 91, arrayFrequencies);
+            printTable(65, pos, "Uppercase letters", arrayFrequencies);
+            printTable(pos, 91, "Uppercase letters", arrayFrequencies);
+            break;
+        default:
+            break;
+    }
+    
     printTable(91, 97, "Symbols", arrayFrequencies);
-    printTable(97, 105, "Lowercase letters", arrayFrequencies);
-    printTable(105, 114, "Lowercase letters", arrayFrequencies);
-    printTable(114, 123, "Lowercase letters", arrayFrequencies);
+
+    switch(align(97, 123, arrayFrequencies, 3))
+    {
+        case 0:
+            printTable(97, 105, "Lowercase letters", arrayFrequencies);
+            printTable(105, 114, "Lowercase letters", arrayFrequencies);
+            printTable(114, 123, "Lowercase letters", arrayFrequencies);
+            break;
+        case 1:
+            printTable(97, 123, "Lowercase letters", arrayFrequencies);
+            break;
+        case 2:
+            pos = position(97, 123, arrayFrequencies);
+            printTable(97, pos, "Lowercase letters", arrayFrequencies);
+            printTable(pos, 123, "Lowercase letters", arrayFrequencies);
+            break;
+        default:
+            break;
+    }
+
+    
     printTable(123, 127, "Other characters", arrayFrequencies); //some are divided in multiple row for style sake
-    //printTable(127, 128, "Other characters", arrayFrequencies);
 
     return 0;
 }
@@ -131,37 +246,7 @@ void printTable(int start, int finish, char *name, int arrayFrequencies[256])
                 //first space
                 printf(" ");
 
-                if(dimMax == 2)
-                {
-                    if(dim == 2)
-                        printf("%c", k);
-                    if(dim == 1)
-                    {
-                        printf("%c", k);
-                        printf(" ");
-                    }
-                }
-
-                else if(dimMax == 3)
-                {
-                    if(dim == 3)
-                    {
-                        printf("%c", k);
-                    }
-                    if(dim == 2)
-                    {
-                        printf("%c", k);
-                        printf(" ");
-                    }
-                    if(dim == 1)
-                    {
-                        printf(" ");
-                        printf("%c", k);
-                        printf(" ");
-                    }
-                }
-
-                else if (dim % 2 == 0) //even number of digits
+                if (dim % 2 == 0) //even number of digits
                 {
                     for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
                         printf(" ");
@@ -186,6 +271,8 @@ void printTable(int start, int finish, char *name, int arrayFrequencies[256])
                         printf(" ");
                 }
 
+
+
                 //last space
                 if((dimMax - dim) % 2 == 0)
                     printf(" ");
@@ -209,37 +296,7 @@ void printTable(int start, int finish, char *name, int arrayFrequencies[256])
                 //first space
                 printf(" ");
 
-                if(dimMax == 2)
-                {
-                    if(dim == 2)
-                        printf("%c", k);
-                    if(dim == 1)
-                    {
-                        printf("%c", k);
-                        printf(" ");
-                    }
-                }
-
-                else if(dimMax == 3)
-                {
-                    if(dim == 3)
-                    {
-                        printf("%c", k);
-                    }
-                    if(dim == 2)
-                    {
-                        printf("%c", k);
-                        printf(" ");
-                    }
-                    if(dim == 1)
-                    {
-                        printf(" ");
-                        printf("%c", k);
-                        printf(" ");
-                    }
-                }
-
-                else if ((dimMax - dim) % 2 == 0)
+                if ((dimMax - dim) % 2 == 0)
                 {
                     for(i = 0; i < (dimMax - dim)/2; i++)
                         printf(" ");
@@ -265,10 +322,20 @@ void printTable(int start, int finish, char *name, int arrayFrequencies[256])
         } while (k < finish);
 
         printf("\n");
+
+        max = 0;
+        //search for the biggest number in frequencies
+        for (search = 33; search < 127; search++){
+            if (arrayFrequencies[search] > max){
+                max = arrayFrequencies[search]; 
+            }
+        }
+
+        const int maximum = getDigits(max); //save the digits of the biggest number
         
         printf("\n");
         j = 0;
-        for (j = 0; j < dimMax*6; j++)
+        for (j = 0; j < maximum * 6; j++)
         {
             //for(i = 0; i < 1; i++)
                 printf(" ");
