@@ -8,15 +8,14 @@ void printTable(int, int, char *, int *);
 
 int getDigits(int n)
 {
+    if (n == 0)
+        return 1;
     int count = 0;
-        do 
+    while (n != 0)
     {
-        /* Increment digit count */
-    count++;
-
-        /* Remove last digit of 'num' */
         n /= 10;
-    } while(n != 0);
+        ++count;
+    }
     return count;
 }
 
@@ -35,10 +34,17 @@ int main(int argc, char **argv)
         // arrayFrequencies[j] = j;
         arrayFrequencies[j] = 1 + rand() % 1000000;
     }
+    arrayFrequencies[38] = 4444;
+    arrayFrequencies[33] = 55555;
+    arrayFrequencies[34] = 333;
     arrayFrequencies[35] = 1;
+    arrayFrequencies[36] = 22;
+    arrayFrequencies[37] = 666666;
+    arrayFrequencies[79] = 15;
     arrayFrequencies[99] = 15;
     arrayFrequencies[105] = 105;
     arrayFrequencies[113] = 1133;
+    arrayFrequencies[100] = 1;
     for (j = 48; j < 58; j++)
     {
         // arrayFrequencies[j] = j;
@@ -58,7 +64,12 @@ int main(int argc, char **argv)
         exit(0);
     }
     
-    printTable(32, 39, "Punctuation", arrayFrequencies);
+    printf("\nNumber of tabs: %d", arrayFrequencies[9]);
+    printf("\nNumber of new lines: %d", arrayFrequencies[11]);
+    printf("\nNumber of spaces: %d", arrayFrequencies[32]);
+    printf("\nNumber of delete: %d \n", arrayFrequencies[127]);
+
+    printTable(33, 39, "Punctuation", arrayFrequencies);
     printTable(40, 48, "Punctuation", arrayFrequencies);
     printTable(48, 58, "Numbers", arrayFrequencies);
     printTable(58, 65, "Operators", arrayFrequencies);
@@ -69,7 +80,8 @@ int main(int argc, char **argv)
     printTable(97, 105, "Lowercase letters", arrayFrequencies);
     printTable(105, 114, "Lowercase letters", arrayFrequencies);
     printTable(114, 123, "Lowercase letters", arrayFrequencies);
-    printTable(123, 128, "Other characters", arrayFrequencies); //some are divided in multiple row for style sake
+    printTable(123, 127, "Other characters", arrayFrequencies); //some are divided in multiple row for style sake
+    //printTable(127, 128, "Other characters", arrayFrequencies);
 
     return 0;
 }
@@ -113,6 +125,8 @@ void printTable(int start, int finish, char *name, int arrayFrequencies[256])
             if (arrayFrequencies[k] != 0)
             {
                 dim = getDigits(arrayFrequencies[k]); //digits of the current number
+                //if (k == 9 || k==11)
+                   // k = 32;
 
                 //first space
                 printf(" ");

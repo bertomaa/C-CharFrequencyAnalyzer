@@ -456,6 +456,11 @@ void print(stats resultStats)
         exit(0);
     }
 
+    printf("\nNumber of tabs: %d", resultStats);
+    printf("\nNumber of new lines: %d", resultStats);
+    printf("\nNumber of spaces: %d", resultStats);
+    printf("\nNumber of delete: %d \n", resultStats);
+
     printTable(32, 39, "Punctuation", resultStats);
     printTable(40, 48, "Punctuation", resultStats);
     printTable(48, 58, "Numbers", resultStats);
@@ -467,5 +472,5 @@ void print(stats resultStats)
     printTable(97, 105, "Lowercase letters", resultStats);
     printTable(105, 114, "Lowercase letters", resultStats);
     printTable(114, 123, "Lowercase letters", resultStats);
-    printTable(123, 128, "Other characters", resultStats); //some are divided in multiple row for style sake
+    printTable(123, 127, "Other characters", resultStats); //some are divided in multiple row for style sake
 }
