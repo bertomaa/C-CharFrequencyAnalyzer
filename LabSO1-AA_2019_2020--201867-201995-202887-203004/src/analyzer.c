@@ -149,7 +149,7 @@ int q(int mIndex, int filesCount, int m, char *const *files, int writePipe, int 
         buffer[0] = 0;
         splitString(buffer, &cmdOutput, ' ');
         fileLength = strtol(buffer, &endptr, 10);
-        fileOffset = (fileLength / m) * mIndex; //TODO: gestire resto divisione, insomma che lo steso carattere non venga letto 2 volte o 0
+        fileOffset = (fileLength / m) * mIndex;
         if (mIndex == m - 1)
             tmp = analyzeText(fd, fileOffset, fileLength - fileOffset, i);
         else
@@ -172,15 +172,11 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
 {
     initGC();
     // printf("p: %d, con filescount: %d, fileindex: %d, file: %s\n", m, filesCount, fileIndex, files[fileIndex]);
-
-    
-
     if (filesCount == 0)
     {
         close(writePipe);
         return 0;
     }
-
     int *pipes = createPipes(m);
     int i;
     for (i = 0; i < m; i++)
@@ -203,7 +199,7 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
     }
     for (i = 0; i < m; i++)
     {
-        readPipe(pipes, i, str, filesCount); //TODO: indovina? controlla  che la munnezz abbia ritornato e non sia andata al lago
+        readPipe(pipes, i, str, filesCount);
         //printf("p ha ricevuto: %s\n", stat);
         /*
             //testing
@@ -223,8 +219,7 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
         //int decodeError = decode(str, resultStats, p); //TODO: check
         if (decodeError)
         {
-            printf("errore decode p\n");
-            return 1; //TODO: esegui free ecc..
+            fatalErrorHandler("errore decode p. Exit.", 1);
         }
     }
     char *resultString = encodeMultiple(resultStats, filesCount);
@@ -258,7 +253,7 @@ char *getDataFromPs(const config conf, int *pipesToP)
     }
     for (i = 0; i < conf.n && i < conf.filesCount; i++)
     {
-        readPipeAndAppend(pipesToP, i, stat, conf.filesCount); //TODO: indovina? contorlla  che la munnezz abbia ritornato e non sia andata al lago
+        readPipeAndAppend(pipesToP, i, stat, conf.filesCount);
     }
     //printf("dal main analizer ricevo: \n%s\n", stat);
     // decodeMultiple(stat, resultStats); //TODO:check error
@@ -291,7 +286,7 @@ int main(int argc, const char *argv[])
     }
 
     if (checkArguments(argc, argv) != 0)
-        exit(1);
+        fatalErrorHandler("Wrong arguments, exit.", 1);
     conf->n = strtol(argv[1], &endptr, 10);
     conf->m = strtol(argv[2], &endptr, 10);
     //add paths to conf

@@ -56,7 +56,7 @@ void *readUserInputAndQuit()
     //printf("z\n");
     scanf("%c", &c);
     //printf("z\n");
-    exit(0);
+    fatalErrorHandler("", 0);
     //printf("z\n");
     return NULL;
 }

@@ -91,7 +91,7 @@ int run(config *conf)
     if (createChild() == 0)
     { //figlio
         char *analyzerPath;
-        allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&analyzerPath); //TODO: una piotta e diesci terza marcia
+        allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&analyzerPath); 
         strcpy(analyzerPath, path);
         strcat(analyzerPath, "analyzer");
         char **args = exportAsArguments(conf, analyzerPath);
@@ -106,7 +106,7 @@ int run(config *conf)
         if (createChild() == 0)
         { //figlio
             char *reportPath;
-            allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&reportPath); //TODO: una piotta e diesci terza marcia
+            allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&reportPath); 
             strcpy(reportPath, path);
             strcat(reportPath, "report");
             execl(reportPath, reportPath, "--main", NULL);
@@ -286,7 +286,7 @@ int main(int argc, const char *argv[])
 
     if (argc > 1)
         if (checkArguments(argc, argv) != 0)
-            exit(1);
+            fatalErrorHandler("", 1);
     int i;
     //TODO: check error
     int filesCount = argc - PRE_FILES_ARGS;

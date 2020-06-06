@@ -50,8 +50,8 @@ char *getLine()
 void showHelp()
 {
     printf("Allowed actions:\n");
-    printf("show [--every] <file1> [directory1] ...   - Shows the report of the specified files or directories.\n");
-    printf("showall                                      - Shows the report of all files analyzed.\n");
+    printf("show [--every] <file1> [directory1] ...      - Shows the report of the specified files or directories.\n");
+    printf("showall --every                              - Shows the report of all files analyzed.\n");
     printf("help                                         - Show this help message\n");
     printf("read                                         - Read data from analyzer, this action is not required if report was created by main\n");
 }
@@ -182,7 +182,7 @@ void readAnalyzer(confAndStats *cs)
         char c;
         scanf("%c", &c);
         if (c == 'q')
-            exit(0);
+            fatalErrorHandler("", 1);
         FDanalyzer = open(analyzerToReportPipe, O_RDONLY);
     };
     printf("connected!\n");
@@ -198,11 +198,11 @@ void readAnalyzer(confAndStats *cs)
         addFileToConfig(cs->conf, buffer);
         if (cs->conf->filesCount + 1 >= cs->conf->dim)
         {
-            reallocWrapper((void **)&(cs->stats), (cs->conf->dim + INITIAL_CONFIG_SIZE) * sizeof(stats)); //TODO: error
+            reallocWrapper((void **)&(cs->stats), (cs->conf->dim + INITIAL_CONFIG_SIZE) * sizeof(stats));
         }
     }
     char *statString;
-    allocWrapper(MAX_PIPE_CHARACTERS * cs->conf->filesCount, sizeof(char), (void **)&statString); //TODO: usa il wrapper,
+    allocWrapper(MAX_PIPE_CHARACTERS * cs->conf->filesCount, sizeof(char), (void **)&statString);
     read(FDanalyzer, statString, MAX_PIPE_CHARACTERS * cs->conf->filesCount);
     close(FDanalyzer);
     for (i = lastStatsIndex; i < cs->conf->filesCount; i++)
@@ -210,7 +210,7 @@ void readAnalyzer(confAndStats *cs)
         initStats(&(cs->stats[i]), i);
     }
     //printf("\n\nstat string: %s\n\n", statString);
-    int error = decodeMultiple(statString, &(cs->stats[lastStatsIndex])); //TODO:check error
+    int error = decodeMultiple(statString, &(cs->stats[lastStatsIndex]));
     if (error)
     {
         fatalErrorHandler("Error in decoding pipe, exit.", 1);
@@ -218,9 +218,10 @@ void readAnalyzer(confAndStats *cs)
     for (i = 0; i < cs->conf->filesCount; i++)
     {
         printf("In file %s was analyzed:\n", cs->conf->files[i]);
-        printStats(cs->stats[i]);
-        //print(cs->stats[i]);
+        //printStats(cs->stats[i]);
+        print(cs->stats[i]);
     }
+    printf("non sono crashato nella read\n");
 }
 
 int main(int argc, char *argv[])
@@ -253,7 +254,7 @@ int main(int argc, char *argv[])
                 char c;
                 scanf("%c", &c);
                 if (c == 'q')
-                    exit(0);
+                    fatalErrorHandler("", 0);
                 fdFromMain = open(mainToReportPipe, O_RDONLY);
             };
             printf("report opened pipe\n");
@@ -279,6 +280,142 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+void printValues(int start, int finish, stats resultStats, int dimMax)
+{
+    
+    // NUMERI
+    int k = start;
+    int i;
+    int dim = 0;
+    do
+    {
+
+        if (resultStats.frequencies[k] != 0)
+        {
+            dim = getDigits(resultStats.frequencies[k]);
+
+            //first space
+            printf(" ");
+
+            if ((dimMax - dim) % 2 == 0)
+            {
+                for (i = 0; i < (dimMax - dim) / 2; i++)
+                    printf(" ");
+                printf("%d", resultStats.frequencies[k]);
+                for (i = 0; i < (dimMax - dim) / 2; i++)
+                    printf(" ");
+            }
+            else if ((dimMax - dim) % 2 != 0)
+            {
+                for (i = 0; i < (dimMax - dim) / 2; i++)
+                    printf(" ");
+                printf("%d", resultStats.frequencies[k]);
+                for (i = 0; i < (dimMax - dim) / 2 + 1; i++)
+                    printf(" ");
+            }
+
+            //last space
+            if ((dimMax - dim) % 2 == 0)
+                printf(" ");
+            printf("|");
+        }
+        k++;
+    } while (k < finish);
+
+    printf("\n");
+
+    int max = 0;
+    int search = 0;
+    //search for the biggest number in frequencies
+    for (search = 33; search < 127; search++)
+    {
+        if (resultStats.frequencies[search] > max)
+        {
+            max = resultStats.frequencies[search];
+        }
+    }
+
+    const int maximum = getDigits(max); //save the digits of the biggest number
+
+    printf("\n");
+    int j = 0;
+    for (j = 0; j < maximum * 6; j++)
+    {
+        //for(i = 0; i < 1; i++)
+        printf(" ");
+        //for(i = 0; i < 7; i++)
+        printf("-"); // Prints a line of -
+    }
+    printf("\n");
+
+}
+
+void printCharacters(int start, int finish, stats resultStats)
+{
+    int k = start;           //k = counter for the ascii characters
+    int max = 0;             //length of the biggest number
+    int dim = 0;             //dimension of the "current" number
+    int search = 0;          //i,j,k were already used
+
+    //search for the biggest number in frequencies from position START to FINISH
+    for (search = start; search < finish; search++)
+    {
+        if (resultStats.frequencies[search] > max)
+            max = resultStats.frequencies[search];
+    }
+
+    const int dimMax = getDigits(max); //save the digits of the biggest number
+
+    int i = 0;
+
+    //CHARACTERS
+    do
+    {
+        if (resultStats.frequencies[k] != 0)
+        {
+            dim = getDigits(resultStats.frequencies[k]); //digits of the current number
+
+            //first space
+            printf(" ");
+
+            if (dim % 2 == 0) //even number of digits
+            {
+                for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
+                    printf(" ");
+                printf("%c", k);
+                for (i = dimMax / 2; i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                    printf(" ");
+            }
+            else if (dim % 2 != 0 && dimMax % 2 == 0) //odd number of digits
+            {
+                for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
+                    printf(" ");
+                printf("%c", k);
+                for (i = (dimMax / 2); i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                    printf(" ");
+            }
+            else if (dim % 2 != 0 && dimMax % 2 != 0) //odd number of digits
+            {
+                for (i = 0; i < (dimMax / 2); i++) //prints spaces to the left of the CHARACTER
+                    printf(" ");
+                printf("%c", k);
+                for (i = (dimMax / 2) + 1; i < dimMax; i++) //prints spaces to the right of the CHARACTER
+                    printf(" ");
+            }
+
+            //last space
+            if ((dimMax - dim) % 2 == 0)
+                printf(" ");
+            printf("|");
+        }
+        k++;
+    } while (k < finish);
+
+    printf("\n");
+    printValues(start, finish, resultStats, dimMax);
+}
+
+
 void printTable(int start, int finish, char *name, stats resultStats)
 {
     //check se la sezione è vuota
@@ -295,130 +432,81 @@ void printTable(int start, int finish, char *name, stats resultStats)
     if (check != 0)
     {
         printf("\n %s\n", name); //prints the name of the section
-        int k = start;           //k = counter for the ascii characters
-        int max = 0;             //length of the biggest number
-        int dim = 0;             //dimension of the "current" number
-        int search = 0;          //i,j,k were already used
-
-        //search for the biggest number in frequencies from position START to FINISH
-        for (search = start; search < finish; search++)
-        {
-            if (resultStats.frequencies[search] > max)
-            {
-                max = resultStats.frequencies[search];
-            }
-        }
-
-        const int dimMax = getDigits(max); //save the digits of the biggest number
-
-        int i = 0;
-
-        //CHARACTERS
-        do
-        {
-            if (resultStats.frequencies[k] != 0)
-            {
-                dim = getDigits(resultStats.frequencies[k]); //digits of the current number
-
-                //first space
-                printf(" ");
-
-                if (dim % 2 == 0) //even number of digits
-                {
-                    for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
-                        printf(" ");
-                    printf("%c", k);
-                    for (i = dimMax / 2; i < dimMax; i++) //prints spaces to the right of the CHARACTER
-                        printf(" ");
-                }
-                else if (dim % 2 != 0 && dimMax % 2 == 0) //odd number of digits
-                {
-                    for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
-                        printf(" ");
-                    printf("%c", k);
-                    for (i = (dimMax / 2); i < dimMax; i++) //prints spaces to the right of the CHARACTER
-                        printf(" ");
-                }
-                else if (dim % 2 != 0 && dimMax % 2 != 0) //odd number of digits
-                {
-                    for (i = 0; i < (dimMax / 2); i++) //prints spaces to the left of the CHARACTER
-                        printf(" ");
-                    printf("%c", k);
-                    for (i = (dimMax / 2) + 1; i < dimMax; i++) //prints spaces to the right of the CHARACTER
-                        printf(" ");
-                }
-
-                //last space
-                if ((dimMax - dim) % 2 == 0)
-                    printf(" ");
-                printf("|");
-            }
-            k++;
-        } while (k < finish);
-
-        printf("\n");
-
-        // NUMERI
-        k = start;
-        dim = 0;
-        do
-        {
-
-            if (resultStats.frequencies[k] != 0)
-            {
-                dim = getDigits(resultStats.frequencies[k]);
-
-                //first space
-                printf(" ");
-
-                if ((dimMax - dim) % 2 == 0)
-                {
-                    for (i = 0; i < (dimMax - dim) / 2; i++)
-                        printf(" ");
-                    printf("%d", resultStats.frequencies[k]);
-                    for (i = 0; i < (dimMax - dim) / 2; i++)
-                        printf(" ");
-                }
-                else if ((dimMax - dim) % 2 != 0)
-                {
-                    for (i = 0; i < (dimMax - dim) / 2; i++)
-                        printf(" ");
-                    printf("%d", resultStats.frequencies[k]);
-                    for (i = 0; i < (dimMax - dim) / 2 + 1; i++)
-                        printf(" ");
-                }
-
-                //last space
-                if ((dimMax - dim) % 2 == 0)
-                    printf(" ");
-                printf("|");
-            }
-            k++;
-        } while (k < finish);
-
-        printf("\n");
-
-        max = 0;
-        //search for the biggest number in frequencies
-        for (search = 33; search < 127; search++){
-            if (resultStats.frequencies[search] > max){
-                max = resultStats.frequencies[search]; 
-            }
-        }
-
-        const int maximum = getDigits(max); //save the digits of the biggest number
         
-        printf("\n");
-        j = 0;
-        for (j = 0; j < maximum * 6; j++)
-        {
-            //for(i = 0; i < 1; i++)
-                printf(" ");
-            //for(i = 0; i < 7; i++)
-                printf("-"); // Prints a line of -
-        }
+        printCharacters(start, finish, resultStats);
+
         printf("\n");
     }
+}
+
+/*
+    return -1 : errore
+    return 0 : print as much lines as "def"
+    return n : number of lines to print
+*/
+int align(int start, int finish, stats resultStats, int def)
+{
+    int i = 0;
+    int c = 0;
+    for (i = start; i < finish; i++)
+    {
+        if (resultStats.frequencies[i] != 0)
+            c++;
+    }
+
+    if (c == 0)
+        return -1;
+
+    //every character appears in the file
+    if (c == finish - start)
+        return 0;
+
+    if (def == 3)
+    {
+        //print 3 lines
+        if ((float)c > 18)
+            return 0;
+
+        if ((float)c > 9)
+            return 2;
+
+        return 1;
+    }
+
+    if (def == 2)
+    {
+        //print 2 lines
+        if ((float)c > 9)
+            return 0;
+
+        return 1;
+    }
+    return -1;
+}
+
+int position(int start, int finish, stats resultStats)
+{
+    int pos = start;
+    int count = 0;
+    int stop = 0;
+    int i;
+    for (i = start; i < finish; i++)
+    {
+        if (resultStats.frequencies[i] != 0)
+            count++;
+    }
+    int s = start;
+    while (stop < count / 2 + 1)
+    {
+        if (resultStats.frequencies[s] != 0)
+        {
+            stop++;
+            pos = s;
+        }
+
+        s++;
+    }
+    return pos;
 }
 
 void print(stats resultStats)
@@ -436,7 +524,7 @@ void print(stats resultStats)
     if (check == 0)
     {
         printf("Empty file\n");
-        exit(0);
+        return;
     }
 
     printf("\nNumber of tabs: %d", resultStats.frequencies[9]);
@@ -445,142 +533,62 @@ void print(stats resultStats)
     printf("\nNumber of delete: %d \n", resultStats.frequencies[127]);
 
     int pos = 0;
-    switch(align(33, 48, resultStats, 2))
+    switch (align(33, 48, resultStats, 2))
     {
-        case 0:
-            printTable(33, 39, "Punctuation", resultStats);
-            printTable(40, 48, "Punctuation", resultStats);
-            break;
-        case 1:
-            printTable(33, 48, "Punctuation", resultStats);
-            break;
-        default:
-            break;
-            
+    case 0:
+        printTable(33, 39, "Punctuation", resultStats);
+        printTable(40, 48, "Punctuation", resultStats);
+        break;
+    case 1:
+        printTable(33, 48, "Punctuation", resultStats);
+        break;
+    default:
+        break;
     }
 
     printTable(48, 58, "Numbers", resultStats);
     printTable(58, 65, "Operators", resultStats);
 
-    switch(align(65, 91, resultStats, 3))
+    switch (align(65, 91, resultStats, 3))
     {
-        case 0:
-            printTable(65, 73, "Uppercase letters", resultStats);
-            printTable(73, 82, "Uppercase letters", resultStats);
-            printTable(82, 91, "Uppercase letters", resultStats); 
-            break;
-        case 1:
-            printTable(65, 91, "Uppercase letters", resultStats);
-            break;
-        case 2:
-            pos = position(65, 91, resultStats);
-            printTable(65, pos, "Uppercase letters", resultStats);
-            printTable(pos, 91, "Uppercase letters", resultStats);
-            break;
-        default:
-            break;
+    case 0:
+        printTable(65, 73, "Uppercase letters", resultStats);
+        printTable(73, 82, "Uppercase letters", resultStats);
+        printTable(82, 91, "Uppercase letters", resultStats);
+        break;
+    case 1:
+        printTable(65, 91, "Uppercase letters", resultStats);
+        break;
+    case 2:
+        pos = position(65, 91, resultStats);
+        printTable(65, pos, "Uppercase letters", resultStats);
+        printTable(pos, 91, "Uppercase letters", resultStats);
+        break;
+    default:
+        break;
     }
-    
+
     printTable(91, 97, "Symbols", resultStats);
 
-    switch(align(97, 123, resultStats, 3))
+    switch (align(97, 123, resultStats, 3))
     {
-        case 0:
-            printTable(97, 105, "Lowercase letters", resultStats);
-            printTable(105, 114, "Lowercase letters", resultStats);
-            printTable(114, 123, "Lowercase letters", resultStats);
-            break;
-        case 1:
-            printTable(97, 123, "Lowercase letters", resultStats);
-            break;
-        case 2:
-            pos = position(97, 123, resultStats);
-            printTable(97, pos, "Lowercase letters", resultStats);
-            printTable(pos, 123, "Lowercase letters", resultStats);
-            break;
-        default:
-            break;
+    case 0:
+        printTable(97, 105, "Lowercase letters", resultStats);
+        printTable(105, 114, "Lowercase letters", resultStats);
+        printTable(114, 123, "Lowercase letters", resultStats);
+        break;
+    case 1:
+        printTable(97, 123, "Lowercase letters", resultStats);
+        break;
+    case 2:
+        pos = position(97, 123, resultStats);
+        printTable(97, pos, "Lowercase letters", resultStats);
+        printTable(pos, 123, "Lowercase letters", resultStats);
+        break;
+    default:
+        break;
     }
 
-    
     printTable(123, 127, "Other characters", resultStats); //some are divided in multiple row for style sake
-
-}
-
-int position(int start, int finish, stats resultStats)
-{
-    int pos = start;
-    int count = 0;
-    int stop = 0;
-    int i;
-    for(i = start; i < finish; i++)
-    {
-        if(resultStats.frequencies[i] != 0)
-            count++;
-    }
-
-
-    int s = start;
-
-    while(stop < count/2 + 1)
-    {
-        if(resultStats.frequencies[s] != 0)
-        {
-            stop++;
-            pos = s;
-        }
-
-        s++;
-    }
-    return pos;
-}
-
-
-/*
-    return -1 : errore
-    return 0 : print as much lines as "def"
-    return n : number of lines to print
-*/
-int align(int start, int finish, stats resultStats, int def)
-{
-    int i = 0;
-    int c = 0;
-    for(i = start; i < finish; i++)
-    {
-        if(resultStats.frequencies[i] != 0)
-            c++;
-    }
-
-    if(c == 0)
-        return -1;
-    
-    //every character appears in the file
-    if(c == finish - start)
-        return 0;
-
-    if(def == 3)
-    {
-        //x is used to check if count > (2/3)def --> if so, classical print in print function
-        float x = (2/3) * def;
-
-        //print 3 lines
-        if((float)c > 18)
-            return 0;
-
-        if((float)c > 9)
-            return 2;
-        
-        return 1;
-    }
-
-    if(def == 2)
-    {
-        //print 2 lines
-        if((float)c > 9)
-            return 0;
-
-        return 1;
-    }
-
-
+    printf("fine di print\n\n");
 }

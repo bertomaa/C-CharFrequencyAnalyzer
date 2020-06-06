@@ -1,0 +1,5 @@
+find ./tests -type f | xargs grep -o -i parolaDaContare | wc -l
+
+a è il carattere o parola da contare
+
+606161

@@ -6,3 +6,5 @@
 - possibile ottimizzazione: non ricreare la conf ogni volta
 - scrivere meglio help(ad esempio --expanded su report)
 - rimuovere sleep
+- se nella show viene passato un path parziale(Es ./te invece di ./tests) funziona lo stesso e non dovrebbe
+- showall --remove per mostrare tutto tranne

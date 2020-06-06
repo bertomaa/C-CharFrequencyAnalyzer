@@ -13,12 +13,12 @@ COMMONTARGETS = $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPA
 
 .PHONY: build clean pipe 
 
-build: bin  $(BINPATH)main $(BINPATH)analyzer $(BINPATH)report
+build: bin/obj  $(BINPATH)main $(BINPATH)analyzer $(BINPATH)report
 
 pipe:
 	test -e /tmp/analyzerToReport.pipe && mkfifo /tmp/analyzerToReport.pipe;
 
-bin:
+bin/obj:
 	mkdir -p bin/obj
 
 $(BINPATH)main: $(COMMONTARGETS) $(OBJPATH)main.o 

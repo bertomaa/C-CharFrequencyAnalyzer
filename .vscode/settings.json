@@ -8,6 +8,8 @@
         "queue": "cpp",
         "stack": "cpp",
         "__locale": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "string.h": "c",
+        "ratio": "c"
     }
 }
