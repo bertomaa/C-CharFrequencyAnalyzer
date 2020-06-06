@@ -12,6 +12,8 @@ char *path;
 int fdToReport = 0;
 int isReportRunning = 0;
 
+void showHelp();
+
 int isReadyToRun(config *conf)
 {
     if (conf->n > 0 && conf->m > 0 && conf->filesCount != 0)
@@ -57,15 +59,22 @@ char *getBinPath(const char *arg0)
 
 void passToReport(char *command)
 {
+    if(!isReportRunning)
+    {
+        //Wait, that's illegal.
+        printf("\n Report is not running. \n\n");
+        showHelp();
+        return;
+    }
     printf("pass to Report\n");
     fdToReport = open(mainToReportPipe, O_WRONLY);
     if (fdToReport == -1)
     {
-        printf("pipe error\n");
-        exit(1);
+        fatalErrorHandler("Impossible to open pipe between main and report. Quit.",1);
     }
     printf("main connected to report\n");
-    write(fdToReport, command, sizeof(command) + 1);
+    printf("command from main: %s", command);
+    write(fdToReport, command, strlen(command) + 1);
     close(fdToReport);
 }
 
@@ -137,6 +146,7 @@ void showHelp()
     printf("run                         - Run analyzer and report\n");
     printf("report <cmd>                - Used to issue commands to report, must be used after run\n");
     printf("remove <file1> <file2> ...  - Removes files (or directories) from the list to be analyzed\n");
+    printf("\n");
 }
 
 void showCommandNotFoundError(const char *arguments)

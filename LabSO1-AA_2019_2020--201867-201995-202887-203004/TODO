@@ -4,3 +4,5 @@
 - report ha 2 config: una con tutti i file e una con solo quelli da visualizzare.
 - nella show permettere di passare file con spazio tramite "" o ''
 - possibile ottimizzazione: non ricreare la conf ogni volta
+- scrivere meglio help(ad esempio --expanded su report)
+- rimuovere sleep

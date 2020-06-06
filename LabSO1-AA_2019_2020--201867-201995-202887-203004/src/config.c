@@ -76,8 +76,7 @@ void removePathFromConfig(config *c, char *path)
     allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
     addDoubleQuotes(buffer, path);
     sprintf(cmd, "find %s -type f", buffer);
-    int filesCount = getFilesCountInPath(path);
-    printf("%d\n", filesCount);
+    int filesCount = getFilesCountInPath(buffer);
     cmdOutput = getCommandOutput(cmd, filesCount * MAX_PATH_LEN * sizeof(char));
     buffer = splitString(buffer, &cmdOutput, '\n');
     while (buffer != NULL)

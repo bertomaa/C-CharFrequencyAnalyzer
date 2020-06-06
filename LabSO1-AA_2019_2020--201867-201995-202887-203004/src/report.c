@@ -37,7 +37,7 @@ char *getLine()
         if (i + 1 >= size)
         {
             size += MAX_COMMAND_LEN;
-            reallocWrapper((void **)&line, size*sizeof(char));
+            reallocWrapper((void **)&line, size * sizeof(char));
             //TODO: error
         }
         line[i] = c;
@@ -50,30 +50,55 @@ char *getLine()
 void showHelp()
 {
     printf("Allowed actions:\n");
-    printf("show <file1> [directory1] ...       - Shows the report of the specified files or directories.\n");
-    printf("showall                             - Shows the report of all files analyzed.\n");
-    printf("help                                - Show this help message\n");
-    printf("read                                - Read data from analyzer, this action is not required if report was created by main\n");
+    printf("show [--every] <file1> [directory1] ...   - Shows the report of the specified files or directories.\n");
+    printf("showall                                      - Shows the report of all files analyzed.\n");
+    printf("help                                         - Show this help message\n");
+    printf("read                                         - Read data from analyzer, this action is not required if report was created by main\n");
 }
 
 void show(char *files, confAndStats *cs)
 {
+    printf("show\n");
     int i;
-    char *pch;
-    char *input; //TODO: definire meglio size da allocare
-    allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
-    strcpy(input, files);
-    pch = strtok(input, " ");
-    while (pch != NULL)
+    char *buffer;
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
+    buffer = splitStringWithQuotes(buffer, &files, ' ');
+    int every = 0;
+    int match = 0;
+    while (buffer != NULL)
     {
+        match = 0;
+        stats tmpStat;
+        initStats(&tmpStat, -1);
         for (i = 0; i < cs->conf->filesCount; i++)
         {
-            if (does1StringMatch2(pch, cs->conf->files[i]))
+            if (i == 0 && strcmp("--every", buffer) == 0)
             {
-                printf("File %s:\n", cs->conf->files[i]);
-                //printTable(cs->stats[i]);
+                every = 1;
+                break;
+            }
+            if (does1StringMatch2(buffer, cs->conf->files[i]))
+            {
+                match = 1;
+                if (every)
+                {
+                    printf("File %s:\n", cs->conf->files[i]);
+                    //printTable(cs->stats[i]);
+                    printStats(cs->stats[i]);
+                }
+                else
+                {
+                    sumStats(&tmpStat, &(cs->stats[i]));
+                }
             }
         }
+        if (!every && match)
+        {
+            printf("Path %s:\n", buffer);
+            //printTable(tmpStat);
+            printStats(tmpStat);
+        }
+        buffer = splitStringWithQuotes(buffer, &files, ' ');
     }
 }
 
@@ -84,6 +109,7 @@ void showAll(confAndStats *cs)
     {
         printf("File %s:\n", cs->conf->files[i]);
         //printTable(cs->stats[i]);
+        printStats(cs->stats[i]);
     }
 }
 
@@ -111,12 +137,10 @@ int processCommand(char *command, confAndStats *cs)
     }
     else if (strcmp(token, "show") == 0)
     {
-
         show(command + 5, cs);
     }
     else if (strcmp(token, "showall") == 0)
     {
-
         showAll(cs);
     }
     else if (strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "q") == 0)
@@ -133,7 +157,7 @@ int processCommand(char *command, confAndStats *cs)
 char *readStringFromPipe(int bufferLen, int fd)
 {
     char *buffer;
-    allocWrapper(bufferLen, sizeof(char), (void **)&buffer); //TODO: usa il wrapper,
+    allocWrapper(bufferLen, sizeof(char), (void **)&buffer);
     char c = '7';
     int i = 0;
     while (c != 0)
@@ -143,6 +167,7 @@ char *readStringFromPipe(int bufferLen, int fd)
         buffer[i] = c;
         i++;
     }
+    buffer[i] = '\0';
     return buffer;
 }
 
@@ -165,7 +190,6 @@ void readAnalyzer(confAndStats *cs)
     char *buffer = readStringFromPipe(40, FDanalyzer);
     int filesCount = strtol(buffer, &e, 10);
     int i;
-    printf("a\n");
 
     for (i = 0; i < filesCount; i++)
     {
@@ -194,8 +218,8 @@ void readAnalyzer(confAndStats *cs)
     for (i = 0; i < cs->conf->filesCount; i++)
     {
         printf("In file %s was analyzed:\n", cs->conf->files[i]);
-        //printStats(cs->stats[i]);
-        print(cs->stats[i]);
+        printStats(cs->stats[i]);
+        //print(cs->stats[i]);
     }
 }
 
@@ -220,6 +244,7 @@ int main(int argc, char *argv[])
     {
         do
         {
+            printf("report ready\n");
             fdFromMain = open(mainToReportPipe, O_RDONLY);
             while (fdFromMain == -1)
             {
@@ -231,7 +256,7 @@ int main(int argc, char *argv[])
                     exit(0);
                 fdFromMain = open(mainToReportPipe, O_RDONLY);
             };
-
+            printf("report opened pipe\n");
             command = readStringFromPipe(MAX_COMMAND_LEN, fdFromMain);
             printf("report cmd: %s\n", command);
             goOn = processCommand(command, &cs);
@@ -344,7 +369,7 @@ void printTable(int start, int finish, char *name, stats resultStats)
                     for (i = (dimMax / 2); i < dimMax; i++) //prints spaces to the right of the CHARACTER
                         printf(" ");
                 }
-                else if (dim % 2 != 0 && dimMax % 2 != 0)//odd number of digits
+                else if (dim % 2 != 0 && dimMax % 2 != 0) //odd number of digits
                 {
                     for (i = 0; i < (dimMax / 2); i++) //prints spaces to the left of the CHARACTER
                         printf(" ");

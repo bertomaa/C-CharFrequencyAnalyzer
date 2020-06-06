@@ -31,7 +31,6 @@ int checkArguments(int argc, const char *argv[])
 
 int *distributeQuantity(int quantity, int toDistribute)
 {
-    printf("%d %d\n", quantity, toDistribute);
     int *ret;
     allocWrapper(toDistribute, sizeof(int), (void **)&ret);
     int perProcess = quantity / toDistribute;
@@ -63,7 +62,6 @@ int *distributeQuantity(int quantity, int toDistribute)
         else
             break;
     }
-    printf("%d\n", ret[0]);
     return ret;
 }
 
@@ -113,7 +111,6 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
     allocWrapper(bytesToRead + 1, sizeof(char), (void **)&buffer);
     //TODO:check error
 
-    int size = lseek(fd, 0, SEEK_END);
     lseek(fd, offset, SEEK_SET);
     ssize_t bytesRead = read(fd, buffer, bytesToRead);
     //printf("analyzing file: %d with offset %d reading %d\n", id, offset, bytesToRead);
@@ -122,9 +119,6 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
         if(buffer[i] >= 0)
             ret.frequencies[(int) buffer[i]]++;
     }
-
-
-    //free(buffer);
     return ret;
 }
 
@@ -151,7 +145,7 @@ int q(int mIndex, int filesCount, int m, char *const *files, int writePipe, int 
         allocWrapper(MAX_PATH_LEN, sizeof(char), (void**)&buffer2);
         addDoubleQuotes(buffer2, files[i]);
         sprintf(buffer, "wc -c %s", buffer2);
-        char* cmdOutput = getCommandOutput(buffer, 40);
+        char* cmdOutput = getCommandOutput(buffer, MAX_PATH_LEN + 40);
         buffer[0] = 0;
         splitString(buffer, &cmdOutput, ' ');
         fileLength = strtol(buffer, &endptr, 10);
@@ -168,7 +162,6 @@ int q(int mIndex, int filesCount, int m, char *const *files, int writePipe, int 
     //char *encoded = encodeMultiple(statsToSend, filesCount);                   //TODO: come sempre controllare che si sia chiusa munnezz
     write(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
     close(writePipe);
-    //TODO: free varie e close
     collectGarbage();
     // printf("q finished\n");
     return 0;

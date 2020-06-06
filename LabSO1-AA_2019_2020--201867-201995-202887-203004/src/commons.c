@@ -158,7 +158,7 @@ char *splitString(char *buffer, char **str, char delimiter)
 
     //printf("buffer: %s, str: %s, delimiter: %c", buffer, *str, delimiter);
     buffer[i] = '\0';
-    if ((*str)[i] == delimiter)
+    if ((*str)[i] == delimiter || i != 0)
     {
         *str = *str + i + 1;
         return buffer;
