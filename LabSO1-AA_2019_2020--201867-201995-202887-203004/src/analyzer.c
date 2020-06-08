@@ -235,10 +235,10 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
 char *getDataFromPs(const config conf, int *pipesToP)
 {
     int i;
-    printf("\n\nmain: waiting for all children\n\n");
+    printf("Analyzing...\n");
     while (wait(NULL) != -1)
         ; //father waits all children
-    printf("\n\nmain: waited for all children\n\n");
+    printf("Analyzed!\n");
     char *stat;
     allocWrapper(MAX_PIPE_CHARACTERS * conf.filesCount, sizeof(char), (void **)&stat); //TODO:trova una stima migliore
     stats *resultStats;
@@ -320,6 +320,6 @@ int main(int argc, const char *argv[])
     //int isReportConnected =
     launchReportConnector(conf, sendToReport);
     collectGarbage();
-    printf("Analyzer done!\n");
+    printf("Analyzer exited!\n");
     exit(0);
 }

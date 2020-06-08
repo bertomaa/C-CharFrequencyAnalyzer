@@ -37,14 +37,12 @@ void *tryToConnect(void *confPointer)
     //TODO: contrllare che e sia 0 altrimenti bloccare tutto, in casoil file non esista in rpecedenza non so cosa ritorni e, ma in quel casso deve andare
     confAndEncodedString conf = *((confAndEncodedString *)confPointer);
     mkfifo(analyzerToReportPipe, 0666); //TODO: forse sti permessi vanno cambiati che naimoli può scriverci nella pipe
-    printf("made fifo\n");
     int fd;
     fd = open(analyzerToReportPipe, O_WRONLY);
     isReportConnected = 1;
-    printf("connected!\n");
     sendDataToReport(fd, conf);
     close(fd);
-    printf("finished sending data!\n");
+    printf("Data sent!\n");
     return NULL;
 }
 

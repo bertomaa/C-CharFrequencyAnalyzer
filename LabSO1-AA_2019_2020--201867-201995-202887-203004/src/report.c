@@ -19,27 +19,28 @@ int FDanalyzer;
 
 void readAnalyzer(confAndStats *conf);
 
-void printTable(int start, int finish, char *name, stats resultStats);
+// void printTable(int start, int finish, char *name, stats resultStats);
 
-void print(stats resultStats);
+void print(stats stat);
 
 void showHelp()
 {
     printf("Allowed actions:\n");
-    printf("show [--every] <file1> [directory1] ...      - Shows the report of the specified files or directories.\n");
-    printf("showall [--every] <file1> [directory1] ...   - Shows the report of all files analyzed, exept those listed.\n");
+    printf("show [-f --frequencies] [-e --group] <file1> [directory1] ...      - Shows the report of the specified files or directories.\n");
+    printf("showall [-f --frequencies] [-e --group]                            - Shows the report of all files analyzed.\n");
     printf("help                                         - Show this help message\n");
+    printf("remove <file or directory 1> ...             - Removes files (or directories) from the list to be analyzed\n");
     printf("read                                         - Read data from analyzer, this action is not required if report was created by main\n");
 }
 
 void show(char *files, confAndStats *cs)
 {
-    printf("show\n");
     int i;
     char *buffer;
     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
     buffer = splitStringWithQuotes(buffer, &files, ' ');
-    int every = 0;
+    int every = 1;
+    int 
     int match = 0;
     while (buffer != NULL)
     {
@@ -56,9 +57,9 @@ void show(char *files, confAndStats *cs)
         initStats(&tmpStat, -1);
         for (i = 0; i < cs->conf->filesCount; i++)
         {
-            if (i == 0 && strcmp("--every", buffer) == 0)
+            if (i == 0 && strcmp("--group", buffer) == 0)
             {
-                every = 1;
+                every = 0;
                 break;
             }
             if (does1StringMatch2(buffer, cs->conf->files[i]))
@@ -78,7 +79,8 @@ void show(char *files, confAndStats *cs)
         }
         if (!every && match)
         {
-            if(strcmp(buffer, "\"\"") == 0);
+            if (strcmp(buffer, "\"\"") == 0)
+                ;
             printf("Path %s:\n", buffer);
             print(tmpStat);
             //printStats(tmpStat);
@@ -86,79 +88,6 @@ void show(char *files, confAndStats *cs)
         buffer = splitStringWithQuotes(buffer, &files, ' ');
     }
 }
-
-// void printOnlyFlagged(confAndStats *cs, int *flags, int every)
-// {
-//     int i = 0;
-//     stats tmpStat;
-//     initStats(&tmpStat, -1);
-//     for (i = 0; i < cs->conf->filesCount; i++)
-//     {
-//         if (flags[i])
-//         {
-//             if (every)
-//             {
-//                 printf("File %s:\n", cs->conf->files[i]);
-//                 print(cs->stats[i]);
-//             }
-//             else
-//             {
-//                 sumStats(&tmpStat, &(cs->stats[i]));
-//             }
-//         }
-//     }
-//     if (!every)
-//     {
-//         printf("Query result:\n");
-//         print(tmpStat);
-//     }
-// }
-
-
-
-// void showAll(confAndStats *cs, char *files)
-// {
-//     printf("showAll");
-//     int i;
-//     int *toShow;
-//     char *cmd, *cmdOut;
-//     char *file, *bufferWithQuotes;
-//     int every = 0;
-//     allocWrapper(cs->conf->filesCount, sizeof(int), (void **)&toShow);
-//     char *buffer;
-//     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
-//     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&bufferWithQuotes);
-//     for (i = 0; i < cs->conf->filesCount; i++)
-//     {
-//         toShow[i] = 1;
-//     }
-//     buffer = splitStringWithQuotes(buffer, &files, ' ');
-//     if (buffer != NULL && strcmp(buffer, "--every") == 0)
-//     {
-//         every = 1;
-//         buffer = splitStringWithQuotes(buffer, &files, ' ');
-//     }
-//     allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&cmd);
-//     while (buffer != NULL)
-//     {
-//         addDoubleQuotes(bufferWithQuotes, buffer);
-//         cmd[0] = '\0';
-//         sprintf(cmd, "find %s -type f", bufferWithQuotes);
-//         cmdOut = getCommandOutput(cmd, MAX_PATH_LEN * getFilesCountInPath(buffer) * sizeof(char));
-//         file = splitString(file, &cmdOut, '\n');
-//         while (file != NULL)
-//         {
-//             int index = getFileIndexInConfig(cs->conf, buffer);
-//             if (index != -1)
-//             {
-//                 toShow[index] = 0;
-//             }
-//             file = splitString(file, &cmdOut, '\n');
-//         }
-//         buffer = splitStringWithQuotes(buffer, &files, ' ');
-//     }
-//     printOnlyFlagged(cs, toShow, every);
-// }
 
 void removeFiles(confAndStats *cs, char *arguments)
 {
@@ -201,7 +130,9 @@ int processCommand(char *command, confAndStats *cs)
     }
     else if (strcmp(token, "showall") == 0)
     {
-        show("\"\"", cs);
+        char buffer[MAX_COMMAND_LEN];
+        sprintf(buffer, "%s \"\"", command + 8);
+        show(buffer, cs);
     }
     else if (strcmp(token, "remove") == 0)
     {
@@ -253,7 +184,7 @@ void readAnalyzer(confAndStats *cs)
             fatalErrorHandler("", 1);
         FDanalyzer = open(analyzerToReportPipe, O_RDONLY);
     };
-    printf("connected!\n");
+    printf("Report connected!\n");
     char *e;
     char *buffer = readStringFromPipe(40, FDanalyzer);
     int filesCount = strtol(buffer, &e, 10);
@@ -306,7 +237,6 @@ int main(int argc, char *argv[])
     initConfig(cs.conf);
     printf("Waiting for Analyzer...\n");
     readAnalyzer(&cs);
-    printf("fine\n");
 
     int fdFromMain;
     char *command;
@@ -315,7 +245,6 @@ int main(int argc, char *argv[])
     {
         do
         {
-            printf("report ready\n");
             fdFromMain = open(mainToReportPipe, O_RDONLY);
             while (fdFromMain == -1)
             {
@@ -351,312 +280,197 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void printValues(int start, int finish, stats resultStats, int dimMax)
+void printDivider(int cellInCurrentRow, int maxDigits, int layer, int toSwitch)
 {
+    int j, k;
+    switch (layer)
+    {
+    case 0:
+        printf("\n┌");
+        break;
+    case 1:
+        printf("\n├");
+        break;
+    case 2:
+        printf("\n└");
+        break;
+    }
+    for (j = 0; j < cellInCurrentRow; j++)
+    {
+        for (k = 0; k < maxDigits + 5; k++)
+        {
+            printf("─");
+        }
+        if (j != cellInCurrentRow - 1)
+        {
+            if(j >= toSwitch){
+                layer = 2;
+            }
+            switch (layer)
+            {
+            case 0:
+                printf("┬");
+                break;
+            case 1:
+                printf("┼");
+                break;
+            case 2:
+                printf("┴");
+                break;
+            }
+        }
+    }
+    if(toSwitch+1 == cellInCurrentRow)
+        layer = 2;
+    switch (layer)
+    {
+    case 0:
+        printf("┐");
+        break;
+    case 1:
+        printf("┤");
+        break;
+    case 2:
+        printf("┘");
+        break;
+    }
+    printf("\n");
+}
 
-    // NUMERI
-    int k = start;
+void printSpaces(int n)
+{
     int i;
-    int dim = 0;
-    do
+    for (i = 0; i < n; i++)
+        printf(" ");
+}
+
+void printTable(char *categoryName, int maxDigits, int RowLength, int *indexes, stats *stat, int cellCount, int totLen)
+{
+    int linesWritten = 0;
+    int cellInCurrentRow = 0;
+    int i = 0, j = 0;
+    int cellsInRow = RowLength / (maxDigits + 6) < cellCount ? RowLength / (maxDigits + 6) : cellCount;
+    printSpaces((RowLength / 2) - (strlen(categoryName) / 2));
+    printf("%s\n", categoryName);
+    printDivider(cellsInRow, maxDigits, 0, cellCount);
+    printf("│");
+    for (i = 0; i < totLen; i++)
     {
-
-        if (resultStats.frequencies[k] != 0)
+        if (indexes[i] == -1)
+            continue;
+        if ((cellInCurrentRow + 1) * (maxDigits + 6) > RowLength)
         {
-            dim = getDigits(resultStats.frequencies[k]);
-
-            //first space
+            linesWritten++;
+            int remainder = cellCount - linesWritten * cellsInRow;
+            //printf("reminder: %d\n",remainder);
+            printDivider(cellInCurrentRow, maxDigits, 1, remainder);
+            printf("│");
+            cellInCurrentRow = 0;
+        }
+        printf(" %c: %d ", (char)indexes[i], stat->frequencies[indexes[i]]);
+        for (j = getDigits(stat->frequencies[indexes[i]]); j < maxDigits; j++)
+        {
             printf(" ");
-
-            if ((dimMax - dim) % 2 == 0)
-            {
-                for (i = 0; i < (dimMax - dim) / 2; i++)
-                    printf(" ");
-                printf("%d", resultStats.frequencies[k]);
-                for (i = 0; i < (dimMax - dim) / 2; i++)
-                    printf(" ");
-            }
-            else if ((dimMax - dim) % 2 != 0)
-            {
-                for (i = 0; i < (dimMax - dim) / 2; i++)
-                    printf(" ");
-                printf("%d", resultStats.frequencies[k]);
-                for (i = 0; i < (dimMax - dim) / 2 + 1; i++)
-                    printf(" ");
-            }
-
-            //last space
-            if ((dimMax - dim) % 2 == 0)
-                printf(" ");
-            printf("|");
         }
-        k++;
-    } while (k < finish);
-
-    printf("\n");
-
-    int max = 0;
-    int search = 0;
-    //search for the biggest number in frequencies
-    for (search = 33; search < 127; search++)
-    {
-        if (resultStats.frequencies[search] > max)
-        {
-            max = resultStats.frequencies[search];
-        }
+        printf("│");
+        cellInCurrentRow++;
     }
-
-    const int maximum = getDigits(max); //save the digits of the biggest number
-
-
-    int j = 0;
-    for (j = 0; j < (maximum + 2) * 4; j++)
-    {
-        //for(i = 0; i < 1; i++)
-        printf("-");
-        //for(i = 0; i < 7; i++)
-        printf(" "); // Prints a line of -
-    }
+    printDivider(cellInCurrentRow, maxDigits, 2, cellCount);
     printf("\n");
 }
 
-void printCharacters(int start, int finish, stats resultStats)
+int getMaxDigits(stats s)
 {
-    int k = start;  //k = counter for the ascii characters
-    int max = 0;    //length of the biggest number
-    int dim = 0;    //dimension of the "current" number
-    int search = 0; //i,j,k were already used
-
-    //search for the biggest number in frequencies from position START to FINISH
-    for (search = start; search < finish; search++)
+    int max = 0, i = 0, digits;
+    for (i = 0; i < ASCII_CHARACTERS; i++)
     {
-        if (resultStats.frequencies[search] > max)
-            max = resultStats.frequencies[search];
-    }
-
-    const int dimMax = getDigits(max); //save the digits of the biggest number
-
-    int i = 0;
-
-    //CHARACTERS
-    do
-    {
-        if (resultStats.frequencies[k] != 0)
+        digits = getDigits(s.frequencies[i]);
+        if (digits > max)
         {
-            dim = getDigits(resultStats.frequencies[k]); //digits of the current number
-
-            //first space
-            printf(" ");
-
-            if (dim % 2 == 0) //even number of digits
-            {
-                for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
-                    printf(" ");
-                printf("%c", k);
-                for (i = dimMax / 2; i < dimMax; i++) //prints spaces to the right of the CHARACTER
-                    printf(" ");
-            }
-            else if (dim % 2 != 0 && dimMax % 2 == 0) //odd number of digits
-            {
-                for (i = 0; i < (dimMax / 2) - 1; i++) //prints spaces to the left of the CHARACTER
-                    printf(" ");
-                printf("%c", k);
-                for (i = (dimMax / 2); i < dimMax; i++) //prints spaces to the right of the CHARACTER
-                    printf(" ");
-            }
-            else if (dim % 2 != 0 && dimMax % 2 != 0) //odd number of digits
-            {
-                for (i = 0; i < (dimMax / 2); i++) //prints spaces to the left of the CHARACTER
-                    printf(" ");
-                printf("%c", k);
-                for (i = (dimMax / 2) + 1; i < dimMax; i++) //prints spaces to the right of the CHARACTER
-                    printf(" ");
-            }
-
-            //last space
-            if ((dimMax - dim) % 2 == 0)
-                printf(" ");
-            printf("|");
-        }
-        k++;
-    } while (k < finish);
-
-    printf("\n");
-    printValues(start, finish, resultStats, dimMax);
-}
-
-void printTable(int start, int finish, char *name, stats resultStats)
-{
-    //check se la sezione è vuota
-    int j = 0;
-    int check = 0;
-    for (j = start; j < finish; j++)
-    {
-        if (resultStats.frequencies[j] != 0)
-        {
-            check = 1;
-            j = finish;
+            max = digits;
         }
     }
-    if (check != 0)
-    {
-        printf("%s\n", name); //prints the name of the section
-
-        printCharacters(start, finish, resultStats);
-
-        printf("\n");
-    }
+    return max;
 }
 
-/*
-    return -1 : errore
-    return 0 : print as much lines as "def"
-    return n : number of lines to print
-*/
-int align(int start, int finish, stats resultStats, int def)
+int removeZeroes(stats *s, int *indexes, int n)
 {
-    int i = 0;
-    int c = 0;
-    for (i = start; i < finish; i++)
-    {
-        if (resultStats.frequencies[i] != 0)
-            c++;
-    }
-
-    if (c == 0)
-        return -1;
-
-    //every character appears in the file
-    if (c == finish - start)
-        return 0;
-
-    if (def == 3)
-    {
-        //print 3 lines
-        if ((float)c > 18)
-            return 0;
-
-        if ((float)c > 9)
-            return 2;
-
-        return 1;
-    }
-
-    if (def == 2)
-    {
-        //print 2 lines
-        if ((float)c > 9)
-            return 0;
-
-        return 1;
-    }
-    return -1;
-}
-
-int position(int start, int finish, stats resultStats)
-{
-    int pos = start;
     int count = 0;
-    int stop = 0;
     int i;
-    for (i = start; i < finish; i++)
+    for (i = 0; i < n; i++)
     {
-        if (resultStats.frequencies[i] != 0)
+        if (s->frequencies[indexes[i]] == 0)
+            indexes[i] = -1;
+        else
             count++;
     }
-    int s = start;
-    while (stop < count / 2 + 1)
-    {
-        if (resultStats.frequencies[s] != 0)
-        {
-            stop++;
-            pos = s;
-        }
-
-        s++;
-    }
-    return pos;
+    return count;
 }
 
-void print(stats resultStats)
+void print(stats stat)
 {
-    int j = 0;
-    int check = 0;
-    for (j = 0; j < 256; j++)
+    int i;
+    char *endPtr;
+    int maxDigits = getMaxDigits(stat);
+    char *size = getCommandOutput("tput cols", 40);
+    int cols = (strtol(size, &endPtr, 10)) - 2;
+
+    int nonPrintable[32];
+    for (i = 0; i < 32; i++)
     {
-        if (resultStats.frequencies[j] != 0)
-        {
-            check = 1;
-            j = 256;
-        }
+        if (i != 11 && i != 12)
+            nonPrintable[i] = i;
+        else
+            nonPrintable[i] = -1;
     }
-    if (check == 0)
+    int symbols[22] = {35, 36, 37, 38, 42, 43, 44, 45, 47, 60, 61, 62, 64, 91, 92, 93, 94, 95, 123, 124, 125, 126};
+    int numbers[10];
+    for (i = 0; i < 10; i++)
     {
-        printf("Empty file\n");
-        return;
+        numbers[i] = i + 48;
     }
-
-    printf("\nNumber of tabs: %d", resultStats.frequencies[9]);
-    printf("\nNumber of new lines: %d", resultStats.frequencies[11]);
-    printf("\nNumber of spaces: %d", resultStats.frequencies[32]);
-    printf("\nNumber of delete: %d \n", resultStats.frequencies[127]);
-
-    int pos = 0;
-    switch (align(33, 48, resultStats, 2))
+    int uppercase[26];
+    for (i = 0; i < 26; i++)
     {
-    case 0:
-        printTable(33, 39, "Punctuation", resultStats);
-        printTable(40, 48, "Punctuation", resultStats);
-        break;
-    case 1:
-        printTable(33, 48, "Punctuation", resultStats);
-        break;
-    default:
-        break;
+        uppercase[i] = i + 65;
     }
-
-    printTable(48, 58, "Numbers", resultStats);
-    printTable(58, 65, "Operators", resultStats);
-
-    switch (align(65, 91, resultStats, 3))
+    int lowercase[26];
+    for (i = 0; i < 26; i++)
     {
-    case 0:
-        printTable(65, 73, "Uppercase letters", resultStats);
-        printTable(73, 82, "Uppercase letters", resultStats);
-        printTable(82, 91, "Uppercase letters", resultStats);
-        break;
-    case 1:
-        printTable(65, 91, "Uppercase letters", resultStats);
-        break;
-    case 2:
-        pos = position(65, 91, resultStats);
-        printTable(65, pos, "Uppercase letters", resultStats);
-        printTable(pos, 91, "Uppercase letters", resultStats);
-        break;
-    default:
-        break;
+        lowercase[i] = i + 97;
+    }
+    int punctuation[9] = {33, 34, 39, 40, 41, 58, 59, 63, 96};
+    int others[127];
+    for (i = 0; i < 127; i++)
+    {
+        others[i] = i + 128;
     }
 
-    printTable(91, 97, "Symbols", resultStats);
+    int nonPrintableLen = removeZeroes(&stat, nonPrintable, 32);
+    int symbolsLen = removeZeroes(&stat, symbols, 22);
+    int numbersLen = removeZeroes(&stat, numbers, 10);
+    int uppercaseLen = removeZeroes(&stat, uppercase, 26);
+    int lowercaseLen = removeZeroes(&stat, lowercase, 26);
+    int punctuationLen = removeZeroes(&stat, punctuation, 9);
+    int othersLen = removeZeroes(&stat, others, 127);
 
-    switch (align(97, 123, resultStats, 3))
+    if (numbersLen > 0)
+        printTable("NUMBERS", maxDigits, cols, numbers, &stat, numbersLen, 10);
+    if (uppercaseLen > 0)
+        printTable("UPPERCASE", maxDigits, cols, uppercase, &stat, uppercaseLen, 26);
+    if (lowercaseLen > 0)
+        printTable("LOWERCASE", maxDigits, cols, lowercase, &stat, lowercaseLen, 26);
+    if (punctuationLen > 0)
+        printTable("PUNCTUATION", maxDigits, cols, punctuation, &stat, punctuationLen, 9);
+    if (symbolsLen > 0)
+        printTable("SYMBOLS", maxDigits, cols, symbols, &stat, symbolsLen, 22);
+    if (othersLen > 0)
+        printTable("OTHERS", maxDigits, cols, others, &stat, othersLen, 127);
+    int npSum = 0;
+    for (i = 0; i < 32; i++)
     {
-    case 0:
-        printTable(97, 105, "Lowercase letters", resultStats);
-        printTable(105, 114, "Lowercase letters", resultStats);
-        printTable(114, 123, "Lowercase letters", resultStats);
-        break;
-    case 1:
-        printTable(97, 123, "Lowercase letters", resultStats);
-        break;
-    case 2:
-        pos = position(97, 123, resultStats);
-        printTable(97, pos, "Lowercase letters", resultStats);
-        printTable(pos, 123, "Lowercase letters", resultStats);
-        break;
-    default:
-        break;
+        if (nonPrintable[i] >= 0)
+            npSum += stat.frequencies[nonPrintable[i]];
     }
-
-    printTable(123, 127, "Other characters", resultStats); //some are divided in multiple row for style sake
+    printf("\nThere are %d different non-printable characters, for a total of %d occurrencies.\n", nonPrintableLen, npSum);
 }
