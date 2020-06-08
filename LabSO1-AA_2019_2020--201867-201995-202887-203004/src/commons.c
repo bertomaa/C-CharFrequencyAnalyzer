@@ -13,6 +13,7 @@
 int isCollectingGarbage = 0;
 garbageCollector gc;
 
+/*
 void printProgressBar(int now, int tot)
 {
     int i = 0;
@@ -30,9 +31,7 @@ void printProgressBar(int now, int tot)
         printf("-");
     }
     printf("]");
-    //if (now == tot)
-    //    printf("\n");
-}
+}*/
 
 void fatalErrorHandler(char *message, int errorCode)
 {

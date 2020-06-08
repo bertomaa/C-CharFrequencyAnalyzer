@@ -125,7 +125,7 @@ void showHelp()
     printf("report/r <cmd>              - Used to issue commands to report, must be used after run. Use \"report/r help\" for report help\n");
     printf("remove <file1> <file2> ...  - Removes files (or directories) from the list to be analyzed\n");
     printf("exit/quit/q                 - Close the program\n");
-    printf("\nATTENTION: if path contains files' (directories) name with spaces, please add double quotes to the entire path\n");
+    printf("\nWARNING: if path contains files' (directories) name with spaces, please add double quotes to the entire path\n");
     printf("\n");
 }
 
@@ -148,10 +148,6 @@ void set(char *arguments, config *conf)
         {
             conf->n = n1;
             conf->m = m1;
-        }
-        else if(n1 == 0 || m1 == 0)
-        {
-            printf("Command not valid, n and m must e both positive\n");
         }
         else
         {

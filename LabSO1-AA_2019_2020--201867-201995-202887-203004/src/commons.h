@@ -22,7 +22,7 @@ typedef struct garbageCollector
 extern int isCollectingGarbage;
 extern garbageCollector gc;
 
-void printProgressBar(int now, int tot);
+//void printProgressBar(int now, int tot);
 
 int initGC();
 
