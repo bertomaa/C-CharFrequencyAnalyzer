@@ -408,14 +408,14 @@ void printValues(int start, int finish, stats resultStats, int dimMax)
 
     const int maximum = getDigits(max); //save the digits of the biggest number
 
-    printf("\n");
+
     int j = 0;
-    for (j = 0; j < maximum * 6; j++)
+    for (j = 0; j < (maximum + 2) * 4; j++)
     {
         //for(i = 0; i < 1; i++)
-        printf(" ");
+        printf("-");
         //for(i = 0; i < 7; i++)
-        printf("-"); // Prints a line of -
+        printf(" "); // Prints a line of -
     }
     printf("\n");
 }
@@ -500,7 +500,7 @@ void printTable(int start, int finish, char *name, stats resultStats)
     }
     if (check != 0)
     {
-        printf("\n %s\n", name); //prints the name of the section
+        printf("%s\n", name); //prints the name of the section
 
         printCharacters(start, finish, resultStats);
 
@@ -659,5 +659,4 @@ void print(stats resultStats)
     }
 
     printTable(123, 127, "Other characters", resultStats); //some are divided in multiple row for style sake
-    printf("fine di print\n\n");
 }
