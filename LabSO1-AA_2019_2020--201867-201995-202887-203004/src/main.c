@@ -126,7 +126,10 @@ void showHelp()
     printf("remove <file1> <file2> ...  - Removes files (or directories) from the list to be analyzed\n");
     printf("exit/quit/q                 - Close the program\n");
 <<<<<<< HEAD
+<<<<<<< HEAD
     printf("\nWARNING: if path contains files' (directories) name with spaces, please add double quotes to the entire path\n");
+=======
+>>>>>>> parent of fdc1526... fare merge con commit di Marco :)
 =======
 >>>>>>> parent of fdc1526... fare merge con commit di Marco :)
     printf("\n");
