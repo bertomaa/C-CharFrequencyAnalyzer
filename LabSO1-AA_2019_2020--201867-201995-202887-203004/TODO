@@ -1,10 +1,4 @@
-- GESTIONE ERRORI -> nei wrapper così da non avere tutti i ...
-- remove file  (fatto in main)
-- aggiungere ad ogni return diverso da 0 con una free, meglio se con una funzione wrapper
-- report ha 2 config: una con tutti i file e una con solo quelli da visualizzare.
-- nella show permettere di passare file con spazio tramite "" o ''
 - possibile ottimizzazione: non ricreare la conf ogni volta
 - scrivere meglio help(ad esempio --expanded su report)
-- rimuovere sleep
-- se nella show viene passato un path parziale(Es ./te invece di ./tests) funziona lo stesso e non dovrebbe
-- showall --remove per mostrare tutto tranne
+- cambia il garbage collector per avere miglior gestione della memoria
+- in cmdOutput ussare fork ed exec invece dio file d

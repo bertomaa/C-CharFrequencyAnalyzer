@@ -19,9 +19,9 @@ typedef struct stats
 void initStats(stats *stat, int _fileID);
 
 //returns 0 if decode has success
-int decode(const char *str, stats *res, int *i);
+void decode(const char *str, stats *res, int *i);
 
-int decodeMultiple(const char *str, stats *array);
+void decodeMultiple(const char *str, stats *array);
 
 char *encode(const stats stat);
 
@@ -31,5 +31,7 @@ char *encodeMultiple(stats *statsArray, int len);
 void sumStats(stats *first, const stats *second);
 
 void printStats(const stats s);
+
+void removeFileFromStatsArray(stats *s, int index, int size);
 
 #endif

@@ -8,6 +8,7 @@
 #include "commons.h"
 #include "wrapper.h"
 #include "config.h"
+#include "stats.h"
 
 void initConfig(config *conf)
 {
@@ -53,17 +54,17 @@ void removeFileFromConfigByName(config *c, char *name)
     }
 }
 
-int checkFileInConfig(config *c, const char *name)
+int getFileIndexInConfig(config *c, const char *name)
 {
     int i;
     for (i = 0; i < c->filesCount; i++)
     {
         if (strcmp(c->files[i], name) == 0)
         {
-            return 1;
+            return i;
         }
     }
-    return 0;
+    return -1;
 }
 
 void removePathFromConfig(config *c, char *path)
@@ -87,6 +88,29 @@ void removePathFromConfig(config *c, char *path)
     }
 }
 
+void removePathFromConfAndStats(confAndStats *c, char *path)
+{
+    char *buffer;
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
+    //TODO: pupù
+    char cmd[MAX_COMMAND_LEN];
+    char *cmdOutput;
+    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
+    addDoubleQuotes(buffer, path);
+    sprintf(cmd, "find %s -type f", buffer);
+    int filesCount = getFilesCountInPath(buffer);
+    cmdOutput = getCommandOutput(cmd, filesCount * MAX_PATH_LEN * sizeof(char));
+    buffer = splitString(buffer, &cmdOutput, '\n');
+    while (buffer != NULL)
+    {
+        int index = getFileIndexInConfig(c->conf, buffer);
+        printf("remove file: %s.\n", buffer);
+        removeFileFromStatsArray(c->stats, index, c->conf->filesCount);
+        removeFileFromConfigByIndex(c->conf, index);
+        buffer = splitString(buffer, &cmdOutput, '\n');
+    }
+}
+
 void joinConfigs(config *c1, config *c2)
 {
     int totalFiles = c1->filesCount + c2->filesCount, i;
@@ -106,12 +130,11 @@ void joinConfigs(config *c1, config *c2)
         }
     }
     //printf("filesCount:%d\n", c1->filesCount);
-    // deallocConfig(c2);
 }
 
 void addFileToConfig(config *c, const char *file)
 {
-    if (checkFileInConfig(c, file))
+    if (getFileIndexInConfig(c, file) != -1)
     {
         return;
     }
@@ -178,33 +201,15 @@ char **exportAsArguments(const config *c, char *arg0)
     return res;
 }
 
-// config *checkDirectories(config *conf)
-// {
-//     char *buffer, *fullBuffer;
-//     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&fullBuffer);
-//     buffer = fullBuffer;
-//     char cmd[MAX_COMMAND_LEN];
-//     char *cmdOutput;
-//     allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
-//     int i = 0;
-//     int count = conf->filesCount;
-//     for (i = 0; i < count; i++)
-//     {
-//         addDoubleQuotes(buffer, conf->files[i]);
-//         sprintf(cmd, "find %s -type f", buffer);
-//         cmdOutput = getCommandOutput(cmd);
-//         buffer = splitString(buffer, &cmdOutput, '\n');
-//         removeFileFromConfigByName(conf, buffer);
-//         while (buffer != NULL)
-//         {
-//             addFileToConfig(conf, buffer);
-//             buffer = splitString(buffer, &cmdOutput, '\n');
-//         }
-//         buffer = fullBuffer;
-
-//     }
-//     return conf;
-// }
+void deallocConfig(config*c)
+{
+    int i;
+    for(i = 0; i < c->filesCount; i++){
+        removeFromGCAndFree(c->files[i]);
+    }
+    removeFromGCAndFree(c->files);
+    removeFromGCAndFree(c);
+}
 
 config *checkDirectories(config *conf)
 {
@@ -216,10 +221,9 @@ config *checkDirectories(config *conf)
     char *buffer, *fullBuffer;
     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&fullBuffer);
     buffer = fullBuffer;
-    //TODO: pupù
     char cmd[MAX_COMMAND_LEN];
     char *cmdOutput;
-    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
+    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput);
     int i = 0;
     int count = conf->filesCount;
     for (i = 0; i < count; i++)
@@ -228,6 +232,9 @@ config *checkDirectories(config *conf)
         sprintf(cmd, "find %s -type f", buffer);
         int filesCount = getFilesCountInPath(buffer);
         cmdOutput = getCommandOutput(cmd, filesCount * MAX_PATH_LEN);
+        if(cmdOutput == NULL){
+            continue;
+        }
         buffer = splitString(buffer, &cmdOutput, '\n');
         while (buffer != NULL)
         {
@@ -236,6 +243,6 @@ config *checkDirectories(config *conf)
         }
         buffer = fullBuffer;
     }
-
+    deallocConfig(conf);
     return res;
 }

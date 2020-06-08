@@ -208,7 +208,7 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
             decode(stat, &tmp, (3));
             //testing
             */
-        int decodeError = decodeMultiple(str, resultStats); //TODO: check
+        decodeMultiple(str, resultStats); //TODO: check
         // for (j = 0; j < filesCount; j++)
         // {
         //     printf("(p)In totale è stato letto nel file %d da q %d:\n", j, i);
@@ -217,10 +217,6 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
         //int *p = malloc(sizeof(int));
         //*p = 3;
         //int decodeError = decode(str, resultStats, p); //TODO: check
-        if (decodeError)
-        {
-            fatalErrorHandler("errore decode p. Exit.", 1);
-        }
     }
     char *resultString = encodeMultiple(resultStats, filesCount);
     //printf("mandato al main:%s\n", resultString);
@@ -280,10 +276,10 @@ int main(int argc, const char *argv[])
     // {
     //     printf("\n");
     // }
-    for (i = 0; i < argc; i++)
-    {
-        printf("%s.\n", argv[i]);
-    }
+    // for (i = 0; i < argc; i++)
+    // {
+    //     printf("%s.\n", argv[i]);
+    // }
 
     if (checkArguments(argc, argv) != 0)
         fatalErrorHandler("Wrong arguments, exit.", 1);
@@ -299,7 +295,7 @@ int main(int argc, const char *argv[])
 
     conf = checkDirectories(conf);
 
-    printf("filesCount:%d\n", conf->filesCount);
+    // printf("filesCount:%d\n", conf->filesCount);
     // printFiles(conf);
 
     int *assignedFiles = distributeQuantity(conf->filesCount, conf->n);
@@ -325,5 +321,5 @@ int main(int argc, const char *argv[])
     launchReportConnector(conf, sendToReport);
     collectGarbage();
     printf("Analyzer done!\n");
-    return 0;
+    exit(0);
 }

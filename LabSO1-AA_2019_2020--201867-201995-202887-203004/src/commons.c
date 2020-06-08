@@ -35,6 +35,30 @@ int initGC()
     return 0;
 }
 
+char *getLine()
+{
+    int size = MAX_COMMAND_LEN;
+    int i = 0;
+    char *line;
+    allocWrapper(size, sizeof(char), (void **)&line);
+    //TODO: error
+    char c = 7;
+    while (c != '\n')
+    {
+        scanf("%c", &c);
+        if (i + 1 >= size)
+        {
+            size += MAX_COMMAND_LEN;
+            reallocWrapper((void **)&line, size * sizeof(char));
+            //TODO: error
+        }
+        line[i] = c;
+        i++;
+    }
+    line[i - 1] = 0;
+    return line;
+}
+
 void addToGC(void *garbage)
 {
     int i;
@@ -73,6 +97,21 @@ void removeFromGC(void *p)
     }
 }
 
+void removeFromGCAndFree(void *p)
+{
+    int i;
+    for (i = 0; i < gc.garbageCount; i++)
+    {
+        if (gc.garbage[i] == p)
+        {
+            free(gc.garbage[i]);
+            gc.garbage[i] = gc.garbage[gc.garbageCount - 1];
+            gc.garbageCount--;
+            return;
+        }
+    }
+}
+
 int getFilesCountInPath(char * path){
     char * endptr;
     char * cmdOut;
@@ -88,7 +127,7 @@ void collectGarbage()
 {
     isCollectingGarbage = 1;
     int i;
-    for (i = gc.garbageCount - 1; i > 0; i--)
+    for (i = gc.garbageCount - 1; i >= 0; i--)
     {
         // printf("%d: deleting %p\n", i, gc.garbage[i]);
         free(gc.garbage[i]);
@@ -132,14 +171,16 @@ char *getCommandOutput(const char *cmd, int bufferSizeInBytes)
         //TODO: gestisci errore
         exit(1);
     }
+    int res = 0;
     while (fgets(cmdBuffer, bufferSizeInBytes, fp) != NULL)
     {
+        res = 1;
         size += strlen(cmdBuffer) + 1;
         if (size >= bufferSizeInBytes) //TODO: gestisci errore, stringa più lunga del massimo
             exit(1);
         strcat(ret, cmdBuffer);
     };
-    return ret;
+    return res ? ret : NULL;
 }
 
 int getPipeIndex(int index, int type)

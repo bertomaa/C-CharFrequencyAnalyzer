@@ -33,11 +33,17 @@ void removeFileFromConfigByIndex(config *c, int i);
 
 void removeFileFromConfigByName(config *c, char *name);
 
+int getFileIndexInConfig(config *c, const char *name);
+
+void removePathFromConfAndStats(confAndStats *c, char *path);
+
 void removePathFromConfig(config *c, char *path);
 
 void joinConfigs(config *c1, config *c2);
 
 void addFileToConfig(config *c, const char *file);
+
+void deallocConfig(config*c);
 
 void printFiles(const config *c);
 

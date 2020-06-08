@@ -23,35 +23,11 @@ void printTable(int start, int finish, char *name, stats resultStats);
 
 void print(stats resultStats);
 
-char *getLine()
-{
-    int size = MAX_COMMAND_LEN;
-    int i = 0;
-    char *line;
-    allocWrapper(size, sizeof(char), (void **)&line);
-    //TODO: error
-    char c;
-    while (c != '\n')
-    {
-        scanf("%c", &c);
-        if (i + 1 >= size)
-        {
-            size += MAX_COMMAND_LEN;
-            reallocWrapper((void **)&line, size * sizeof(char));
-            //TODO: error
-        }
-        line[i] = c;
-        i++;
-    }
-    line[i - 1] = 0;
-    return line;
-}
-
 void showHelp()
 {
     printf("Allowed actions:\n");
     printf("show [--every] <file1> [directory1] ...      - Shows the report of the specified files or directories.\n");
-    printf("showall --every                              - Shows the report of all files analyzed.\n");
+    printf("showall [--every] <file1> [directory1] ...   - Shows the report of all files analyzed, exept those listed.\n");
     printf("help                                         - Show this help message\n");
     printf("read                                         - Read data from analyzer, this action is not required if report was created by main\n");
 }
@@ -67,6 +43,14 @@ void show(char *files, confAndStats *cs)
     int match = 0;
     while (buffer != NULL)
     {
+        int index = getFileIndexInConfig(cs->conf, buffer);
+        if (index != -1)
+        {
+            printf("File %s:\n", cs->conf->files[index]);
+            print(cs->stats[index]);
+            buffer = splitStringWithQuotes(buffer, &files, ' ');
+            continue;
+        }
         match = 0;
         stats tmpStat;
         initStats(&tmpStat, -1);
@@ -83,8 +67,8 @@ void show(char *files, confAndStats *cs)
                 if (every)
                 {
                     printf("File %s:\n", cs->conf->files[i]);
-                    //printTable(cs->stats[i]);
-                    printStats(cs->stats[i]);
+                    print(cs->stats[i]);
+                    //printStats(cs->stats[i]);
                 }
                 else
                 {
@@ -95,21 +79,96 @@ void show(char *files, confAndStats *cs)
         if (!every && match)
         {
             printf("Path %s:\n", buffer);
-            //printTable(tmpStat);
-            printStats(tmpStat);
+            print(tmpStat);
+            //printStats(tmpStat);
         }
         buffer = splitStringWithQuotes(buffer, &files, ' ');
     }
 }
 
-void showAll(confAndStats *cs)
+// void printOnlyFlagged(confAndStats *cs, int *flags, int every)
+// {
+//     int i = 0;
+//     stats tmpStat;
+//     initStats(&tmpStat, -1);
+//     for (i = 0; i < cs->conf->filesCount; i++)
+//     {
+//         if (flags[i])
+//         {
+//             if (every)
+//             {
+//                 printf("File %s:\n", cs->conf->files[i]);
+//                 print(cs->stats[i]);
+//             }
+//             else
+//             {
+//                 sumStats(&tmpStat, &(cs->stats[i]));
+//             }
+//         }
+//     }
+//     if (!every)
+//     {
+//         printf("Query result:\n");
+//         print(tmpStat);
+//     }
+// }
+
+
+
+// void showAll(confAndStats *cs, char *files)
+// {
+//     printf("showAll");
+//     int i;
+//     int *toShow;
+//     char *cmd, *cmdOut;
+//     char *file, *bufferWithQuotes;
+//     int every = 0;
+//     allocWrapper(cs->conf->filesCount, sizeof(int), (void **)&toShow);
+//     char *buffer;
+//     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
+//     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&bufferWithQuotes);
+//     for (i = 0; i < cs->conf->filesCount; i++)
+//     {
+//         toShow[i] = 1;
+//     }
+//     buffer = splitStringWithQuotes(buffer, &files, ' ');
+//     if (buffer != NULL && strcmp(buffer, "--every") == 0)
+//     {
+//         every = 1;
+//         buffer = splitStringWithQuotes(buffer, &files, ' ');
+//     }
+//     allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&cmd);
+//     while (buffer != NULL)
+//     {
+//         addDoubleQuotes(bufferWithQuotes, buffer);
+//         cmd[0] = '\0';
+//         sprintf(cmd, "find %s -type f", bufferWithQuotes);
+//         cmdOut = getCommandOutput(cmd, MAX_PATH_LEN * getFilesCountInPath(buffer) * sizeof(char));
+//         file = splitString(file, &cmdOut, '\n');
+//         while (file != NULL)
+//         {
+//             int index = getFileIndexInConfig(cs->conf, buffer);
+//             if (index != -1)
+//             {
+//                 toShow[index] = 0;
+//             }
+//             file = splitString(file, &cmdOut, '\n');
+//         }
+//         buffer = splitStringWithQuotes(buffer, &files, ' ');
+//     }
+//     printOnlyFlagged(cs, toShow, every);
+// }
+
+void removeFiles(confAndStats *cs, char *arguments)
 {
-    int i;
-    for (i = 0; i < cs->conf->filesCount; i++)
+    char *buffer;
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
+    buffer = splitStringWithQuotes(buffer, &arguments, ' ');
+    while (buffer != NULL)
     {
-        printf("File %s:\n", cs->conf->files[i]);
-        //printTable(cs->stats[i]);
-        printStats(cs->stats[i]);
+        printf("toRemove : %s.\n", buffer);
+        removePathFromConfAndStats(cs, buffer);
+        buffer = splitStringWithQuotes(buffer, &arguments, ' ');
     }
 }
 
@@ -141,11 +200,19 @@ int processCommand(char *command, confAndStats *cs)
     }
     else if (strcmp(token, "showall") == 0)
     {
-        showAll(cs);
+        show("\"\"", cs);
+    }
+    else if (strcmp(token, "remove") == 0)
+    {
+        removeFiles(cs, command + 7);
     }
     else if (strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "q") == 0)
     {
         return 0;
+    }
+    else if (strcmp(token, "files") == 0)
+    {
+        printFiles(cs->conf);
     }
     else
     {
@@ -195,6 +262,13 @@ void readAnalyzer(confAndStats *cs)
     {
         buffer = readStringFromPipe(MAX_PATH_LEN, FDanalyzer);
         printf("%s\n", buffer);
+        int index = getFileIndexInConfig(cs->conf, buffer);
+        if (index != -1)
+        {
+            removeFileFromStatsArray(cs->stats, index, cs->conf->filesCount);
+            removeFileFromConfigByIndex(cs->conf, index);
+            lastStatsIndex--;
+        }
         addFileToConfig(cs->conf, buffer);
         if (cs->conf->filesCount + 1 >= cs->conf->dim)
         {
@@ -210,18 +284,13 @@ void readAnalyzer(confAndStats *cs)
         initStats(&(cs->stats[i]), i);
     }
     //printf("\n\nstat string: %s\n\n", statString);
-    int error = decodeMultiple(statString, &(cs->stats[lastStatsIndex]));
-    if (error)
-    {
-        fatalErrorHandler("Error in decoding pipe, exit.", 1);
-    }
-    for (i = 0; i < cs->conf->filesCount; i++)
-    {
-        printf("In file %s was analyzed:\n", cs->conf->files[i]);
-        //printStats(cs->stats[i]);
-        print(cs->stats[i]);
-    }
-    printf("non sono crashato nella read\n");
+    decodeMultiple(statString, &(cs->stats[lastStatsIndex]));
+    // for (i = 0; i < cs->conf->filesCount; i++)
+    // {
+    //     printf("In file %s was analyzed:\n", cs->conf->files[i]);
+    //     //printStats(cs->stats[i]);
+    //     print(cs->stats[i]);
+    // }
 }
 
 int main(int argc, char *argv[])
@@ -266,10 +335,11 @@ int main(int argc, char *argv[])
     }
     else
     {
-        allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&command); //TODO:
+        allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&command);
         do
         {
-            scanf("%2048s", command);
+            printf("->");
+            command = getLine();
             printf("report cmd: %s\n", command);
             goOn = processCommand(command, &cs);
         } while (goOn);
@@ -282,7 +352,7 @@ int main(int argc, char *argv[])
 
 void printValues(int start, int finish, stats resultStats, int dimMax)
 {
-    
+
     // NUMERI
     int k = start;
     int i;
@@ -347,15 +417,14 @@ void printValues(int start, int finish, stats resultStats, int dimMax)
         printf("-"); // Prints a line of -
     }
     printf("\n");
-
 }
 
 void printCharacters(int start, int finish, stats resultStats)
 {
-    int k = start;           //k = counter for the ascii characters
-    int max = 0;             //length of the biggest number
-    int dim = 0;             //dimension of the "current" number
-    int search = 0;          //i,j,k were already used
+    int k = start;  //k = counter for the ascii characters
+    int max = 0;    //length of the biggest number
+    int dim = 0;    //dimension of the "current" number
+    int search = 0; //i,j,k were already used
 
     //search for the biggest number in frequencies from position START to FINISH
     for (search = start; search < finish; search++)
@@ -415,7 +484,6 @@ void printCharacters(int start, int finish, stats resultStats)
     printValues(start, finish, resultStats, dimMax);
 }
 
-
 void printTable(int start, int finish, char *name, stats resultStats)
 {
     //check se la sezione è vuota
@@ -432,7 +500,7 @@ void printTable(int start, int finish, char *name, stats resultStats)
     if (check != 0)
     {
         printf("\n %s\n", name); //prints the name of the section
-        
+
         printCharacters(start, finish, resultStats);
 
         printf("\n");

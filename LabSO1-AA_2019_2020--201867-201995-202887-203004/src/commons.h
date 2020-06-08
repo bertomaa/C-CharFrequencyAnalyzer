@@ -28,6 +28,10 @@ void addToGC(void *garbage);
 
 void removeFromGC(void *p);
 
+char *getLine();
+
+void removeFromGCAndFree(void *p);
+
 void collectGarbage();
 
 void addDoubleQuotes(char *buffer, char *path);

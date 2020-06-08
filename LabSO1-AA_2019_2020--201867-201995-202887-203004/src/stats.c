@@ -21,7 +21,7 @@ void initStats(stats *stat, int _fileID)
 }
 
 //returns 0 if decode has success
-int decode(const char *str, stats *res, int *i)
+void decode(const char *str, stats *res, int *i)
 {
     int currentCharacter = 0, numberStartingIndex = *i;
     int index = *i;
@@ -31,7 +31,7 @@ int decode(const char *str, stats *res, int *i)
         if (currentCharacter >= ASCII_CHARACTERS)
         {
             fprintf(stderr, "String decode error, too many entries.\n");
-            return 1;
+            return;
         }
         if (str[index] == '.' || str[index] == '\0')
         {
@@ -45,13 +45,12 @@ int decode(const char *str, stats *res, int *i)
     if (currentCharacter < ASCII_CHARACTERS - 1)
     {
         fprintf(stderr, "String decode error, too few entries. There were %d.\n", currentCharacter);
-        return 1;
+        return;
     }
     *i = index;
-    return 0;
 }
 
-int decodeMultiple(const char *str, stats *array)
+void decodeMultiple(const char *str, stats *array)
 {
     char buffer[20];
     int statCounter = 0, i, idStartingIndex = 0;
@@ -68,22 +67,19 @@ int decodeMultiple(const char *str, stats *array)
             buffer[i - idStartingIndex] = '\0';
             array[statCounter].fileID = atoi(buffer);
             i++;
-            int decodeError = decode(str, array + statCounter, &i);
+            decode(str, array + statCounter, &i);
             idStartingIndex = i + 1;
-            if (decodeError)
-            {
-                return 1;
-            }
             statCounter++;
         }
     }
-    return 0;
+    return;
 }
 
 char *encode(const stats stat)
 {
     //TODO: fai la free da qualche parte, allocare col wrapper
-    char *buffer = (char *)calloc(MAX_PIPE_CHARACTERS, sizeof(char));
+     char *buffer;// = (char *)calloc(MAX_PIPE_CHARACTERS, sizeof(char));
+    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void**)&buffer);
     int i, pointer;
     sprintf(buffer, "-%d_", stat.fileID);
     //printf("\nwrinting id: -%d_\n", stat.fileID);
@@ -116,6 +112,16 @@ char *encodeMultiple(stats *statsArray, int len)
         offset += stringLen;
     }
     return res;
+}
+
+void removeFileFromStatsArray(stats * s, int index, int size){
+    if (size == 0)
+        return;
+    if (size > 1)
+    {
+        //strcpy(c->files[i], c->files[c->filesCount - 1]);
+        s[index] = s[size-1];
+    }
 }
 
 //sums the content of first and second modifying first

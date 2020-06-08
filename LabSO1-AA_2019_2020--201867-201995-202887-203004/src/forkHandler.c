@@ -15,11 +15,14 @@ pid_t *children;
 int childrenCount = 0;
 int processMaxChildren = PROCESS_MAX_CHILDREN;
 
+
+
+
 void alertFather(int sig)
 {
     if (getProcessType() == FATHER)
     {
-        printf("is father %d\n", getpid());
+        // printf("is father %d\n", getpid());
         //printf("SIGTERM FATHER %d\n", getpid());
         killMeAndAllChildren(1);
     }

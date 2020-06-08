@@ -4,7 +4,7 @@ SRCPATH= ./src/
 OBJPATH = ./bin/obj/
 BINPATH = ./bin/
 CC = gcc
-CCFLAGS = -std=gnu90 -Wall
+CCFLAGS = -std=gnu90 -Wall -ggdb3
 
 OBJ = $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPATH)commons.o $(OBJPATH)forkHandler.o
 COMMONTARGETS = $(OBJPATH)wrapper.o $(OBJPATH)stats.o $(OBJPATH)config.o $(OBJPATH)commons.o $(OBJPATH)forkHandler.o
