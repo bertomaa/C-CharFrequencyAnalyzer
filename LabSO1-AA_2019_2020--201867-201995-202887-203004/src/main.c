@@ -123,9 +123,10 @@ void showHelp()
     printf("add <file1> <file2> ...     - Add files (or directories) to be analyzed.\n");
     printf("config                      - Show the current configuration, with the added files\n");
     printf("run                         - Run analyzer and report\n");
-    printf("report/r <cmd>              - Used to issue commands to report, must be used after run\n");
+    printf("report/r <cmd>              - Used to issue commands to report, must be used after run. Use \"report/r help\" for report help\n");
     printf("remove <file1> <file2> ...  - Removes files (or directories) from the list to be analyzed\n");
     printf("exit/quit/q                 - Close the program\n");
+    printf("\nATTENTION: if path contains files' (directories) name with spaces, please add double quotes to the entire path\n");
     printf("\n");
 }
 
@@ -149,6 +150,10 @@ void set(char *arguments, config *conf)
             conf->n = n1;
             conf->m = m1;
         }
+        else if(n1 == 0 || m1 == 0)
+        {
+            printf("Command not valid, n and m must e both positive\n");
+        }
         else
         {
             printf("Command \"set %s\" is not valid, see usage with help\n", arguments);
@@ -162,7 +167,6 @@ void set(char *arguments, config *conf)
 
 void showConfig(config *conf)
 {
-    printf("n = %d, m = %d\n", conf->n, conf->m);
     if (conf->n > 0 && conf->m > 0)
     {
         printf("Ready to run with n = %d, m = %d\n", conf->n, conf->m);
@@ -288,6 +292,7 @@ int main(int argc, const char *argv[])
     initConfig(analyzedFilesConf);
 
     int action;
+    printf("Welcome! Please use \"help\" for instructions\n");
     do
     {
         printf("-> ");
