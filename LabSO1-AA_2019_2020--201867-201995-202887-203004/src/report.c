@@ -78,6 +78,7 @@ void show(char *files, confAndStats *cs)
         }
         if (!every && match)
         {
+            if(strcmp(buffer, "\"\"") == 0);
             printf("Path %s:\n", buffer);
             print(tmpStat);
             //printStats(tmpStat);
@@ -261,7 +262,7 @@ void readAnalyzer(confAndStats *cs)
     for (i = 0; i < filesCount; i++)
     {
         buffer = readStringFromPipe(MAX_PATH_LEN, FDanalyzer);
-        printf("%s\n", buffer);
+        // printf("%s\n", buffer);
         int index = getFileIndexInConfig(cs->conf, buffer);
         if (index != -1)
         {
@@ -326,9 +327,9 @@ int main(int argc, char *argv[])
                     fatalErrorHandler("", 0);
                 fdFromMain = open(mainToReportPipe, O_RDONLY);
             };
-            printf("report opened pipe\n");
+            //printf("report opened pipe\n");
             command = readStringFromPipe(MAX_COMMAND_LEN, fdFromMain);
-            printf("report cmd: %s\n", command);
+            //printf("report cmd: %s\n", command);
             goOn = processCommand(command, &cs);
             close(fdFromMain);
         } while (goOn);
@@ -340,7 +341,7 @@ int main(int argc, char *argv[])
         {
             printf("->");
             command = getLine();
-            printf("report cmd: %s\n", command);
+            //printf("report cmd: %s\n", command);
             goOn = processCommand(command, &cs);
         } while (goOn);
     }

@@ -41,7 +41,7 @@ void initProcess()
 int createChild()
 {
     pid_t pid = fork();
-    if (pid < 0)
+    if (pid == -1)
     {
         fatalErrorHandler("Cannot create child process, exit", 1);
     }

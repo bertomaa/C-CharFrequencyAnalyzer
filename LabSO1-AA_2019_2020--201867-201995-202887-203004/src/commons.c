@@ -13,6 +13,27 @@
 int isCollectingGarbage = 0;
 garbageCollector gc;
 
+void printProgressBar(int now, int tot)
+{
+    int i = 0;
+    char *endPtr;
+    char *size = getCommandOutput("tput cols", 10);
+    int cols = (strtol(size, &endPtr, 10)) - 2;
+    printf("\r[");
+    int progress = ((float)now / (float)tot) * cols;
+    for (i = 0; i < progress; i++)
+    {
+        printf("#");
+    }
+    for (i = 0; i < (cols - progress); i++)
+    {
+        printf("-");
+    }
+    printf("]");
+    //if (now == tot)
+    //    printf("\n");
+}
+
 void fatalErrorHandler(char *message, int errorCode)
 {
     fprintf(stderr, "%s\n", message);
@@ -73,7 +94,7 @@ void addToGC(void *garbage)
     if (gc.garbageCount == gc.dim - 10)
     {
         gc.dim += 100;
-        gc.garbage = realloc(gc.garbage, gc.dim * sizeof(void*));
+        gc.garbage = realloc(gc.garbage, gc.dim * sizeof(void *));
         if (gc.garbage == NULL)
         {
             fatalErrorHandler("Cannot realloc memory", 1);
@@ -112,12 +133,13 @@ void removeFromGCAndFree(void *p)
     }
 }
 
-int getFilesCountInPath(char * path){
-    char * endptr;
-    char * cmdOut;
-    char * command;
-    allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void**)&command);
-    allocWrapper(40, sizeof(char), (void**)&cmdOut);
+int getFilesCountInPath(char *path)
+{
+    char *endptr;
+    char *cmdOut;
+    char *command;
+    allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&command);
+    allocWrapper(40, sizeof(char), (void **)&cmdOut);
     sprintf(command, "find %s -type f | wc -l", path);
     cmdOut = getCommandOutput(command, 40);
     return strtol(cmdOut, &endptr, 10);
@@ -135,6 +157,20 @@ void collectGarbage()
     }
     free(gc.garbage);
     //printf("freed %d elements in memory\n", gc.garbageCount);
+}
+
+int isFileNameAcceptable(char *fileName)
+{
+    int i;
+    int len = strlen(fileName);
+    for (i = 0; i < len; i++)
+    {
+        if (fileName[i] == '\"')
+        {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 void addDoubleQuotes(char *buffer, char *path)
@@ -211,7 +247,7 @@ char *splitStringWithQuotes(char *buffer, char **str, char delimiter)
 {
     if ((*str)[0] == '"' || (*str)[0] == '\'')
     {
-        char * tmpStr = (*str) + 1;
+        char *tmpStr = (*str) + 1;
         char *res = splitString(buffer, &tmpStr, (*str)[0]);
         if (res != NULL)
         {

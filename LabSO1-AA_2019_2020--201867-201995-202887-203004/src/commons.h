@@ -22,6 +22,8 @@ typedef struct garbageCollector
 extern int isCollectingGarbage;
 extern garbageCollector gc;
 
+void printProgressBar(int now, int tot);
+
 int initGC();
 
 void addToGC(void *garbage);
@@ -31,6 +33,8 @@ void removeFromGC(void *p);
 char *getLine();
 
 void removeFromGCAndFree(void *p);
+
+int isFileNameAcceptable(char* fileName);
 
 void collectGarbage();
 

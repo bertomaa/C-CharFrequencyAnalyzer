@@ -1,4 +1,3 @@
-- possibile ottimizzazione: non ricreare la conf ogni volta
 - scrivere meglio help(ad esempio --expanded su report)
 - cambia il garbage collector per avere miglior gestione della memoria
 - in cmdOutput ussare fork ed exec invece dio file d

@@ -82,7 +82,7 @@ void removePathFromConfig(config *c, char *path)
     buffer = splitString(buffer, &cmdOutput, '\n');
     while (buffer != NULL)
     {
-        printf("remove file: %s.\n", buffer);
+        //printf("remove file: %s.\n", buffer);
         removeFileFromConfigByName(c, buffer);
         buffer = splitString(buffer, &cmdOutput, '\n');
     }
@@ -104,7 +104,7 @@ void removePathFromConfAndStats(confAndStats *c, char *path)
     while (buffer != NULL)
     {
         int index = getFileIndexInConfig(c->conf, buffer);
-        printf("remove file: %s.\n", buffer);
+        //printf("remove file: %s.\n", buffer);
         removeFileFromStatsArray(c->stats, index, c->conf->filesCount);
         removeFileFromConfigByIndex(c->conf, index);
         buffer = splitString(buffer, &cmdOutput, '\n');
@@ -201,10 +201,11 @@ char **exportAsArguments(const config *c, char *arg0)
     return res;
 }
 
-void deallocConfig(config*c)
+void deallocConfig(config *c)
 {
     int i;
-    for(i = 0; i < c->filesCount; i++){
+    for (i = 0; i < c->filesCount; i++)
+    {
         removeFromGCAndFree(c->files[i]);
     }
     removeFromGCAndFree(c->files);
@@ -228,20 +229,31 @@ config *checkDirectories(config *conf)
     int count = conf->filesCount;
     for (i = 0; i < count; i++)
     {
-        addDoubleQuotes(buffer, conf->files[i]);
-        sprintf(cmd, "find %s -type f", buffer);
-        int filesCount = getFilesCountInPath(buffer);
-        cmdOutput = getCommandOutput(cmd, filesCount * MAX_PATH_LEN);
-        if(cmdOutput == NULL){
-            continue;
-        }
-        buffer = splitString(buffer, &cmdOutput, '\n');
-        while (buffer != NULL)
+        if (isFileNameAcceptable(conf->files[i]))
         {
-            addFileToConfig(res, buffer);
+            addDoubleQuotes(buffer, conf->files[i]);
+            sprintf(cmd, "find %s -type f", buffer);
+            int filesCount = getFilesCountInPath(buffer);
+            cmdOutput = getCommandOutput(cmd, filesCount * MAX_PATH_LEN);
+            if (cmdOutput == NULL)
+            {
+                continue;
+            }
             buffer = splitString(buffer, &cmdOutput, '\n');
+            while (buffer != NULL)
+            {
+                if (isFileNameAcceptable(buffer))
+                    addFileToConfig(res, buffer);
+                else
+                    fprintf(stderr, "File %s contains \" therefore it cannot be analyzed.\n", buffer);
+                buffer = splitString(buffer, &cmdOutput, '\n');
+            }
+            buffer = fullBuffer;
         }
-        buffer = fullBuffer;
+        else
+        {
+            fprintf(stderr, "Path %s contains \" therefore it cannot be analyzed.\n", conf->files[i]);
+        }
     }
     deallocConfig(conf);
     return res;

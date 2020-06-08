@@ -16,6 +16,36 @@
 #include "forkHandler.h"
 #include "reportConnector.h"
 
+int maxProgress = 0;
+int currentProgress = 0;
+int *pToAlyzerPipeFD;
+
+void qHasFinisherHandler()
+{
+    while (maxProgress < currentProgress)
+    {
+        char *e;
+        allocWrapper(1, sizeof(char), (void **)&e);
+        int bytesRead = read(pToAlyzerPipeFD[READ], e, 1);
+        if (bytesRead == 1 && *e == '.')
+        {
+            //printf("q: %d, f: %d\n", maxProgress, currentProgress);
+            if (getProcessType() == CHILD)
+                kill(getppid(), SIGUSR2);
+            else
+            {
+                //print percentuale
+                printProgressBar(maxProgress, currentProgress);
+            }
+            //}
+            maxProgress++;
+        }
+    }
+    printProgressBar(maxProgress, currentProgress);
+    close(pToAlyzerPipeFD[READ]);
+    close(pToAlyzerPipeFD[WRITE]);
+}
+
 int checkArguments(int argc, const char *argv[])
 {
     if (argc < 4)
@@ -116,8 +146,8 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
     //printf("analyzing file: %d with offset %d reading %d\n", id, offset, bytesToRead);
     for (i = 0; i < bytesRead; i++)
     {
-        if(buffer[i] >= 0)
-            ret.frequencies[(int) buffer[i]]++;
+        if (buffer[i] >= 0)
+            ret.frequencies[(int)buffer[i]]++;
     }
     return ret;
 }
@@ -139,13 +169,13 @@ int q(int mIndex, int filesCount, int m, char *const *files, int writePipe, int 
     {
         // printf("fileindex:%d trying to read file #%d: %s\n",fileIndex, i, files[i]);
         openWrapper(files[i], &fd);
-        char * buffer;
-        char * buffer2;
-        allocWrapper(MAX_PATH_LEN, sizeof(char), (void**)&buffer);
-        allocWrapper(MAX_PATH_LEN, sizeof(char), (void**)&buffer2);
+        char *buffer;
+        char *buffer2;
+        allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
+        allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer2);
         addDoubleQuotes(buffer2, files[i]);
         sprintf(buffer, "wc -c %s", buffer2);
-        char* cmdOutput = getCommandOutput(buffer, MAX_PATH_LEN + 40);
+        char *cmdOutput = getCommandOutput(buffer, MAX_PATH_LEN + 40);
         buffer[0] = 0;
         splitString(buffer, &cmdOutput, ' ');
         fileLength = strtol(buffer, &endptr, 10);
@@ -188,7 +218,10 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
         }
     }
     while (wait(NULL) != -1)
-        ; //father waits all children
+    {
+        //kill(getppid(), SIGUSR2);
+        write(pToAlyzerPipeFD[WRITE], ".", 1);
+    }
     char *str;
     allocWrapper(MAX_PIPE_CHARACTERS * filesCount, sizeof(stats), (void **)&str);
     stats *resultStats;
@@ -229,6 +262,8 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
     // }
     collectGarbage();
     // printf("p finished\n");
+    // kill(getppid(), SIGUSR2);
+    write(pToAlyzerPipeFD[WRITE], ".", 1);
     return 0; //manco lo scrivo più
 }
 
@@ -267,6 +302,7 @@ int main(int argc, const char *argv[])
 {
     initGC();
     initProcess();
+    signal(SIGUSR2, &qHasFinisherHandler);
     int i;
     char *endptr;
     config *conf;
@@ -280,11 +316,12 @@ int main(int argc, const char *argv[])
     // {
     //     printf("%s.\n", argv[i]);
     // }
-
+    pToAlyzerPipeFD = createPipes(1);
     if (checkArguments(argc, argv) != 0)
         fatalErrorHandler("Wrong arguments, exit.", 1);
     conf->n = strtol(argv[1], &endptr, 10);
     conf->m = strtol(argv[2], &endptr, 10);
+    currentProgress = conf->n * (conf->m + 1);
     //add paths to conf
 
     for (i = PRE_FILES_ARGS; i < argc; i++)
@@ -316,6 +353,7 @@ int main(int argc, const char *argv[])
     }
     //fatalErrorHandler("prova fatal error main", 0);
     //father
+    qHasFinisherHandler();
     char *sendToReport = getDataFromPs(*conf, pipesToP);
     //int isReportConnected =
     launchReportConnector(conf, sendToReport);

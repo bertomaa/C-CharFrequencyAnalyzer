@@ -43,14 +43,13 @@ void passToReport(char *command)
         showHelp();
         return;
     }
-    printf("pass to Report\n");
     fdToReport = open(mainToReportPipe, O_WRONLY);
     if (fdToReport == -1)
     {
         fatalErrorHandler("Impossible to open pipe between main and report. Quit.", 1);
     }
-    printf("main connected to report\n");
-    printf("command from main: %s", command);
+    //printf("main connected to report\n");
+    //printf("command from main: %s", command);
     write(fdToReport, command, strlen(command) + 1);
     close(fdToReport);
     if (strcmp(command, "exit") == 0 || strcmp(command, "quit") == 0 || strcmp(command, "q") == 0)
