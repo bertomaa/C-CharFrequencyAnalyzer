@@ -13,26 +13,6 @@
 int isCollectingGarbage = 0;
 garbageCollector gc;
 
-/*
-void printProgressBar(int now, int tot)
-{
-    int i = 0;
-    char *sizePtr;
-    char *size = getCommandOutput("tput cols", 10);
-    int cols = (strtol(size, &sizePtr, 10)) - 2;
-    printf("\r[");
-    int progress = ((float)now / (float)tot) * cols;
-    for (i = 0; i < progress; i++)
-    {
-        printf("#");
-    }
-    for (i = 0; i < (cols - progress); i++)
-    {
-        printf("-");
-    }
-    printf("]");
-}*/
-
 void fatalErrorHandler(char *message, int errorCode)
 {
     fprintf(stderr, "%s\n", message);
@@ -193,9 +173,6 @@ void addDoubleQuotes(char *buffer, char *path)
 {
     buffer[0] = '\0';
     sprintf(buffer, "\"%s\"", path);
-    // strcat(buffer, "\"");
-    // strcat(buffer, path);
-    // strcat(buffer, "\"");
 }
 
 char *removeDoubleQuotes(char *buffer, char *path)

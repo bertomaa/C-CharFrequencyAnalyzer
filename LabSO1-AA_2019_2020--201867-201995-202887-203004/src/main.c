@@ -117,14 +117,6 @@ void addFiles(const char *arguments, config **conf)
     *conf = checkDirectories(*conf);
 }
 
-void killAnalyzer()
-{
-    if (analyzerPid != -1)
-    {
-        kill(analyzerPid, SIGTERM);
-    }
-}
-
 void showHelp()
 {
     printf("\nMain allowed actions:\n\n");
@@ -239,7 +231,7 @@ int getAction(char *command, config **newConf, config **analyzedConf)
     }
     else if (strcmp(token, "config") == 0 || strcmp(token, "c") == 0)
     {
-        showConfig(*newConf); //works
+        showConfig(*newConf);
     }
     else if (strcmp(token, "remove") == 0)
     {

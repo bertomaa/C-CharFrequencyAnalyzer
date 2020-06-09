@@ -45,15 +45,10 @@ void *tryToConnect(void *confPointer)
 
 void *readUserInputAndQuit()
 {
-    //printf("z\n");
     char c;
-    //printf("z\n");
     printf("Press enter to quit or open report to see data.\n");
-    //printf("z\n");
     scanf("%c", &c);
-    //printf("z\n");
     fatalErrorHandler("", 0);
-    //printf("z\n");
     return NULL;
 }
 

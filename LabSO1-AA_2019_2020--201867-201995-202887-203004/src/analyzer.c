@@ -87,7 +87,6 @@ int writePipe(int *pipes, int index, const char *toWrite)
 
 int readPipe(int *pipes, int index, char *buf, int toRead)
 {
-    //readWrapper(pipes, index, buf, toRead)
     read(pipes[getPipeIndex(index, READ)], buf, MAX_PIPE_CHARACTERS * toRead);
     //printf("Read from pipe %d chars\n", (int)strlen(buf));
     return 0; //error code
@@ -206,11 +205,11 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
     char *resultString = encodeMultiple(resultStats, filesCount);
     //removeFromGCAndFree(resultStats);
     //printf("mandato al main:%s\n", resultString);
-    write(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
+    write(writePipe, resultString, strlen(resultString) + 1);
     close(writePipe);
     collectGarbage();
     // printf("p finished\n");
-    return 0; //manco lo scrivo più
+    return 0;
 }
 
 char *getDataFromPs(const config conf, int *pipesToP)
@@ -240,14 +239,6 @@ int main(int argc, const char *argv[])
     config *conf;
     allocWrapper(1, sizeof(config), (void **)&conf);
     initConfig(conf);
-    // for (i = 0; i < 50; i++)
-    // {
-    //     printf("\n");
-    // }
-    // for (i = 0; i < argc; i++)
-    // {
-    //     printf("%s.\n", argv[i]);
-    // }
 
     if (checkArguments(argc, argv) != 0)
         fatalErrorHandler("Wrong arguments, exit.", 1);
@@ -282,10 +273,10 @@ int main(int argc, const char *argv[])
         }
         offset += assignedFiles[i];
     }
-    //fatalErrorHandler("prova fatal error main", 0);
+
     //father
     char *sendToReport = getDataFromPs(*conf, pipesToP);
-    //int isReportConnected =
+
     launchReportConnector(conf, sendToReport);
     collectGarbage();
     printf("Analyzer exited!\n");

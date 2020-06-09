@@ -25,7 +25,6 @@ void removeFileFromConfigByIndex(config *c, int i)
         return;
     if (c->filesCount > 1)
     {
-        //strcpy(c->files[i], c->files[c->filesCount - 1]);
         c->files[i] = c->files[c->filesCount - 1];
     }
     c->filesCount--;
@@ -165,8 +164,6 @@ void printFiles(const config *c)
     for (i = 0; i < c->filesCount; i++)
     {
         printf("%d : %s", i, c->files[i]);
-        // if (i != c->filesCount - 1)
-        //     printf(", ");
         printf("\n");
     }
     printf("\n");
