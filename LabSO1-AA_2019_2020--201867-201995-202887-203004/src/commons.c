@@ -135,8 +135,8 @@ int getFilesCountInPath(char *path)
     sprintf(command, "find %s -type f | wc -l", path);
     cmdOut = getCommandOutput(command, 40);
     int ret =  strtol(cmdOut, &sizeptr, 10);
-    //removeFromGCAndFree(command);
-    //removeFromGCAndFree(cmdOut);
+    removeFromGCAndFree(command);
+    removeFromGCAndFree(cmdOut);
     return ret;
 }
 

@@ -288,7 +288,13 @@ void readAnalyzer(confAndStats *cs)
         initStats(&(cs->stats[i]), i);
     }
     decodeMultiple(statString, &(cs->stats[lastStatsIndex]));
-    //removeFromGCAndFree(statString);
+    removeFromGCAndFree(statString);
+    // for (i = 0; i < cs->conf->filesCount; i++)
+    // {
+    //     printf("In file %s was analyzed:\n", cs->conf->files[i]);
+    //     //printStats(cs->stats[i]);
+    //     print(cs->stats[i]);
+    // }
 }
 
 int main(int argc, char *argv[])
@@ -335,7 +341,7 @@ int main(int argc, char *argv[])
             command = getLine();
             //printf("report cmd: %s\n", command);
             goOn = processCommand(command, &cs);
-            //removeFromGCAndFree(command);
+            removeFromGCAndFree(command);
         } while (goOn);
     }
 

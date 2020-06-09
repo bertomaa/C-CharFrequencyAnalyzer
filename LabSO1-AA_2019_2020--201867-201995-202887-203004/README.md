@@ -28,3 +28,5 @@ Tramite make è possibile compilare il progetto attraverso il comando `make` o `
 - N ed M non possono essere cambiati durante l'esecuzione di analyzer ma tramite main possono essere impostati a piacere tra le singole esecuzioni di analyzer.
 - Il nome di un file da analizzare non può contenere le doppie virgolette `"`, ma è possibile lavorare con path che contengono spazi inserendoli in queste ultime.
 - Il GC viene ripulito al termine del processo, alcune allocazioni di grande dimensione o evidentemente non utili in futuro vengono manualmente rimosse per risparmiare memoria.
+- Bug: Analyzer con quantità grandi di file (circa maggiori di 120) a volte si blocca e non risponde.
+- Bug: Raramente con grandi quantità di file e n, m elevati nell'uscire il programma genera un double free or corruption.
