@@ -32,7 +32,6 @@ void showHelp()
     printf("   q / quit / exit                      - Close the program\n");
 }
 
-
 void show(char *files, confAndStats *cs)
 {
     while (files[0] == ' ')
@@ -44,7 +43,6 @@ void show(char *files, confAndStats *cs)
     int every = 1;
     int frequencies = 0;
     int order = 0;
-    //int match = 0;
     int hasArgs = 0;
     int printConf[7] = {1, 0, 0, 0, 0, 0, 0}; //0 true: una tabella con tutto, dal 1 in poi true se voglio vederli
     stats tmpStat;
@@ -146,12 +144,10 @@ void show(char *files, confAndStats *cs)
             }
             if (does1StringMatch2(buffer, cs->conf->files[i]))
             {
-                //match = 1;
                 if (every)
                 {
                     printf("File %s:\n", cs->conf->files[i]);
                     print(cs->stats[i], frequencies, order, printConf);
-                    //printStats(cs->stats[i]);
                 }
                 else
                 {
@@ -165,7 +161,6 @@ void show(char *files, confAndStats *cs)
     if (!every)
     {
         print(tmpStat, frequencies, order, printConf);
-        //printStats(tmpStat);
     }
 }
 
@@ -242,7 +237,6 @@ char *readStringFromPipe(int bufferLen, int fd)
     while (c != 0)
     {
         read(fd, &c, 1);
-        // printf("%c ", c);
         buffer[i] = c;
         i++;
     }
@@ -257,7 +251,6 @@ void readAnalyzer(confAndStats *cs)
     while (FDanalyzer == -1)
     {
         printf("Impossible to open pipe, did you run Analyzer first? Press anything to retry or q to quit\n");
-        //int c = getchar();
         char c;
         scanf("%c", &c);
         if (c == 'q')
@@ -273,7 +266,6 @@ void readAnalyzer(confAndStats *cs)
     for (i = 0; i < filesCount; i++)
     {
         buffer = readStringFromPipe(MAX_PATH_LEN, FDanalyzer);
-        // printf("%s\n", buffer);
         int index = getFileIndexInConfig(cs->conf, buffer);
         if (index != -1)
         {
@@ -295,15 +287,8 @@ void readAnalyzer(confAndStats *cs)
     {
         initStats(&(cs->stats[i]), i);
     }
-    //printf("\n\nstat string: %s\n\n", statString);
     decodeMultiple(statString, &(cs->stats[lastStatsIndex]));
     removeFromGCAndFree(statString);
-    // for (i = 0; i < cs->conf->filesCount; i++)
-    // {
-    //     printf("In file %s was analyzed:\n", cs->conf->files[i]);
-    //     //printStats(cs->stats[i]);
-    //     print(cs->stats[i]);
-    // }
 }
 
 int main(int argc, char *argv[])
@@ -314,7 +299,6 @@ int main(int argc, char *argv[])
     confAndStats cs;
     allocWrapper(1, sizeof(config), (void **)&(cs.conf));
     allocWrapper(INITIAL_CONFIG_SIZE, sizeof(stats), (void **)&(cs.stats));
-    // TODO: terza marcia
     initConfig(cs.conf);
     printf("Waiting for Analyzer...\n");
     readAnalyzer(&cs);
@@ -330,7 +314,6 @@ int main(int argc, char *argv[])
             while (fdFromMain == -1)
             {
                 printf("Impossible to open pipe with main, did you run report --main from command line? Press anything to retry or q to quit\n");
-                //int c = getchar();
                 char c;
                 scanf("%c", &c);
                 if (c == 'q')

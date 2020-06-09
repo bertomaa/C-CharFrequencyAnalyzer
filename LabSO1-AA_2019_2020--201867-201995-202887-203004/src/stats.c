@@ -77,8 +77,7 @@ void decodeMultiple(const char *str, stats *array)
 
 char *encode(const stats stat)
 {
-    //TODO: fai la free da qualche parte, allocare col wrapper
-     char *buffer;// = (char *)calloc(MAX_PIPE_CHARACTERS, sizeof(char));
+    char *buffer;
     allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void**)&buffer);
     int i, pointer;
     sprintf(buffer, "-%d_", stat.fileID);
@@ -102,7 +101,6 @@ char *encodeMultiple(stats *statsArray, int len)
 {
     char *res;
     int offset = 0, i;
-    //TODO: check error
     allocWrapper(MAX_PIPE_CHARACTERS * len, sizeof(char), (void **)&res);
     for (i = 0; i < len; i++)
     {
@@ -120,7 +118,6 @@ void removeFileFromStatsArray(stats * s, int index, int size){
         return;
     if (size > 1)
     {
-        //strcpy(c->files[i], c->files[c->filesCount - 1]);
         s[index] = s[size-1];
     }
 }
@@ -146,25 +143,3 @@ void printStats(const stats s)
     }
     printf("\n\n");
 }
-
-// void writeStatsToFile(const stats s)
-// { 
-//     FILE* fd;
-//     int i;
-//     remove("stats.txt");
-//     fd = fopen("stats.txt", "w");
-//     for(i = 0; i < ASCII_CHARACTERS; i++)
-//     {
-//         if(s.frequencies[i] != 0 && i != 13 && i != 10 && i != 34 && i != 39)
-//             fprintf(fd, "\"%c\" : %d, ", i, s.frequencies[i]);
-//     }
-//     fseek(fd, -2, SEEK_END);
-//     fprintf(fd, "}");
-//     fclose(fd);
-//     int i, fd;
-//     fd = open("stats.txt", O_RDONLY);
-//     char *str = encode(s);
-//     sprintf(fd, str);
-//     close(fd);
-//     free(str);
-// }

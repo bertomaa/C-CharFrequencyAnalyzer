@@ -19,23 +19,12 @@ void initConfig(config *conf)
     allocWrapper(INITIAL_CONFIG_SIZE, sizeof(char *), (void **)&(conf->files));
 }
 
-// void deallocConfig(config *c)
-// {
-//     int i;
-//     for (i = 0; i < c->filesCount; i++)
-//     {
-//         // free(c->files[i]);
-//     }
-//     // free(c->files);
-// }
-
 void removeFileFromConfigByIndex(config *c, int i)
 {
     if (c->filesCount == 0)
         return;
     if (c->filesCount > 1)
     {
-        //strcpy(c->files[i], c->files[c->filesCount - 1]);
         c->files[i] = c->files[c->filesCount - 1];
     }
     c->filesCount--;
@@ -71,10 +60,9 @@ void removePathFromConfig(config *c, char *path)
 {
     char *buffer;
     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
-    //TODO: pupù
     char cmd[MAX_COMMAND_LEN];
     char *cmdOutput;
-    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
+    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput);
     addDoubleQuotes(buffer, path);
     sprintf(cmd, "find %s -type f", buffer);
     int filesCount = getFilesCountInPath(buffer);
@@ -94,10 +82,9 @@ void removePathFromConfAndStats(confAndStats *c, char *path)
 {
     char *buffer;
     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
-    //TODO: pupù
     char cmd[MAX_COMMAND_LEN];
     char *cmdOutput;
-    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
+    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput);
     addDoubleQuotes(buffer, path);
     sprintf(cmd, "find %s -type f", buffer);
     int filesCount = getFilesCountInPath(buffer);
@@ -128,7 +115,6 @@ void joinConfigs(config *c1, config *c2)
         if (c2->files[i] != NULL)
         {
             allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&(c1->files[c1->filesCount]));
-            //TODO: eccoci qua
             strcpy(c1->files[c1->filesCount], c2->files[i]);
             c1->filesCount++;
         }
@@ -144,7 +130,6 @@ void addFileToConfig(config *c, const char *file)
     }
     // printf("dim %d count %d\n", c->dim, c->filesCount);
 
-    //TODO: se il file ha spazi controllare lo escape
     int stringLen = strlen(file);
     if (stringLen >= MAX_PATH_LEN)
     {
@@ -179,8 +164,6 @@ void printFiles(const config *c)
     for (i = 0; i < c->filesCount; i++)
     {
         printf("%d : %s", i, c->files[i]);
-        // if (i != c->filesCount - 1)
-        //     printf(", ");
         printf("\n");
     }
     printf("\n");

@@ -22,8 +22,6 @@ void alertFather(int sig)
 {
     if (getProcessType() == FATHER)
     {
-        // printf("is father %d\n", getpid());
-        //printf("SIGTERM FATHER %d\n", getpid());
         killMeAndAllChildren(1);
     }
     printf("child: me:%d padre:%d\n", getpid(), getppid());
@@ -77,7 +75,6 @@ void killMeAndAllChildren(int exitCode)
     {
         collectGarbage();
     }
-    //printf("Me ammazzoooo, pid:%d\n", getpid());
     exit(exitCode);
 }
 

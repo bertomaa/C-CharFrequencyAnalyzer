@@ -117,14 +117,6 @@ void addFiles(const char *arguments, config **conf)
     *conf = checkDirectories(*conf);
 }
 
-void killAnalyzer()
-{
-    if (analyzerPid != -1)
-    {
-        kill(analyzerPid, SIGTERM);
-    }
-}
-
 void showHelp()
 {
     printf("\nMain allowed actions:\n\n");
@@ -133,7 +125,6 @@ void showHelp()
     printf("   add <file or direcotry> <file or direcotry> ...    - Add files (or directories) to be analyzed on the next run.\n");
     printf("   config                                             - Show the configuration of the next run\n");
     printf("   run                                                - Run analyzer and report\n");
-    printf("   analyzer-quit                                      - Quit analyzer if it is running.\n");
     printf("   r report <cmd>                                     - Used to issue commands to report, must be used after run.\n");
     printf("                                                        Use \"report help\" for report help\n");
     printf("   remove <file or direcotry> <file or direcotry> ... - Removes files (or directories) from the list to be analyzed\n");
@@ -230,10 +221,6 @@ int getAction(char *command, config **newConf, config **analyzedConf)
     {
         passToReport(command + 7);
     }
-    else if (strcmp(token, "analyzer-quit") == 0)
-    {
-        killAnalyzer();
-    }
     else if (strcmp(token, "r") == 0)
     {
         passToReport(command + 2);
@@ -244,7 +231,7 @@ int getAction(char *command, config **newConf, config **analyzedConf)
     }
     else if (strcmp(token, "config") == 0 || strcmp(token, "c") == 0)
     {
-        showConfig(*newConf); //works
+        showConfig(*newConf);
     }
     else if (strcmp(token, "remove") == 0)
     {
