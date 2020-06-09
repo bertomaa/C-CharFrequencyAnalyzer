@@ -297,7 +297,7 @@ void readAnalyzer(confAndStats *cs)
     }
     //printf("\n\nstat string: %s\n\n", statString);
     decodeMultiple(statString, &(cs->stats[lastStatsIndex]));
-    removeFromGCAndFree(statString);
+    //removeFromGCAndFree(statString);
     // for (i = 0; i < cs->conf->filesCount; i++)
     // {
     //     printf("In file %s was analyzed:\n", cs->conf->files[i]);
@@ -314,7 +314,6 @@ int main(int argc, char *argv[])
     confAndStats cs;
     allocWrapper(1, sizeof(config), (void **)&(cs.conf));
     allocWrapper(INITIAL_CONFIG_SIZE, sizeof(stats), (void **)&(cs.stats));
-    // TODO: terza marcia
     initConfig(cs.conf);
     printf("Waiting for Analyzer...\n");
     readAnalyzer(&cs);
@@ -352,7 +351,7 @@ int main(int argc, char *argv[])
             command = getLine();
             //printf("report cmd: %s\n", command);
             goOn = processCommand(command, &cs);
-            removeFromGCAndFree(command);
+            //removeFromGCAndFree(command);
         } while (goOn);
     }
 

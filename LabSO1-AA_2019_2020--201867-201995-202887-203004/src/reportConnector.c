@@ -32,11 +32,8 @@ void sendDataToReport(int fd, confAndEncodedString conf)
 
 void *tryToConnect(void *confPointer)
 {
-    //int e = unlink(analyzerToReportPipe);
-    //printf("error:%d\n", e);
-    //TODO: contrllare che e sia 0 altrimenti bloccare tutto, in casoil file non esista in rpecedenza non so cosa ritorni e, ma in quel casso deve andare
     confAndEncodedString conf = *((confAndEncodedString *)confPointer);
-    mkfifo(analyzerToReportPipe, 0666); //TODO: forse sti permessi vanno cambiati che naimoli può scriverci nella pipe
+    mkfifo(analyzerToReportPipe, 0666);
     int fd;
     fd = open(analyzerToReportPipe, O_WRONLY);
     isReportConnected = 1;
@@ -89,27 +86,4 @@ void launchReportConnector(config *conf, char *dataStr)
         pthread_join(checkConnectedId, (void**) &checkConnectedIdPointer);
         pthread_cancel(*((pthread_t*)checkConnectedIdPointer)) ? fatalErrorHandler("Impossible to cancel Thread. Exit.", 1): 0;
     }
-    // if (pid < 0)
-    // {
-    //     //TODO: handle error
-    // }
-    // else if (pid > 0)
-    // { //father
-
-    // char buffer[255];
-    // buffer[0] = '\0';
-    // while(1)
-    // {
-    //     sleep(1);
-    //     kill(pid, SIGUSR1);
-    //     read(stdin, buffer, 250);
-    //     if(strlen(buffer)){
-    //         exit(0);
-    //     }
-    // }
-    // }
-    // else
-    // { //child
-
-    // }
 }

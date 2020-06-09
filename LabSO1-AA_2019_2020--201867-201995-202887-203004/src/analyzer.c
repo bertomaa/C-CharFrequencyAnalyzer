@@ -72,7 +72,8 @@ int *createPipes(int size)
     int i;
     for (i = 0; i < size; i++)
     {
-        pipe(pipes + (i * 2));
+        if(pipe(pipes + (i * 2)) == -1)
+            printf("TOMAREVACCA\n");
     }
     return pipes;
 }
@@ -115,7 +116,7 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
         if (buffer[i] >= 0)
             ret.frequencies[(int)buffer[i]]++;
     }
-    removeFromGCAndFree(buffer);
+    //removeFromGCAndFree(buffer);
     return ret;
 }
 
@@ -146,8 +147,8 @@ int q(int mIndex, int filesCount, int m, char *const *files, int writePipe, int 
         buffer[0] = 0;
         splitString(buffer, &cmdOutput, ' ');
         fileLength = strtol(buffer, &endptr, 10);
-        removeFromGCAndFree(buffer);
-        removeFromGCAndFree(buffer2);
+        //removeFromGCAndFree(buffer);
+        //removeFromGCAndFree(buffer2);
         fileOffset = (fileLength / m) * mIndex;
         if (mIndex == m - 1)
             tmp = analyzeText(fd, fileOffset, fileLength - fileOffset, i);
@@ -201,9 +202,9 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
         //printf("p ha ricevuto: %s\n", stat);
         decodeMultiple(str, resultStats);
     }
-    removeFromGCAndFree(str);
+    //removeFromGCAndFree(str);
     char *resultString = encodeMultiple(resultStats, filesCount);
-    removeFromGCAndFree(resultStats);
+    //removeFromGCAndFree(resultStats);
     //printf("mandato al main:%s\n", resultString);
     write(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
     close(writePipe);

@@ -1,4 +1,4 @@
-find ./tests -type f | xargs grep -o -i parolaDaContare | wc -l
+find ./tantiTest -type f | xargs grep -o -i a | wc -l
 
 a è il carattere o parola da contare
 

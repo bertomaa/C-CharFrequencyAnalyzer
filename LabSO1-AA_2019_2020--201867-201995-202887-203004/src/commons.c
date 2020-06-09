@@ -136,6 +136,7 @@ void removeFromGCAndFree(void *p)
     {
         if (gc.garbage[i] == p)
         {
+            // printf("freeing %p\n", p);
             free(gc.garbage[i]);
             gc.garbage[i] = gc.garbage[gc.garbageCount - 1];
             gc.garbageCount--;
@@ -154,8 +155,8 @@ int getFilesCountInPath(char *path)
     sprintf(command, "find %s -type f | wc -l", path);
     cmdOut = getCommandOutput(command, 40);
     int ret =  strtol(cmdOut, &sizeptr, 10);
-    removeFromGCAndFree(command);
-    removeFromGCAndFree(cmdOut);
+    //removeFromGCAndFree(command);
+    //removeFromGCAndFree(cmdOut);
     return ret;
 }
 
@@ -166,6 +167,7 @@ void collectGarbage()
     for (i = gc.garbageCount - 1; i >= 0; i--)
     {
         // printf("%d: deleting %p\n", i, gc.garbage[i]);
+        // printf("collecting %p\n", gc.garbage[i]);
         free(gc.garbage[i]);
         // printf("collecting\n");
     }
@@ -225,7 +227,10 @@ char *getCommandOutput(const char *cmd, int bufferSizeInBytes)
         res = 1;
         size += strlen(cmdBuffer) + 1;
         if (size >= bufferSizeInBytes)
-            exit(1);
+        {
+            reallocWrapper((void**) &ret, bufferSizeInBytes * 2);
+            bufferSizeInBytes *= 2;
+        }
         strcat(ret, cmdBuffer);
     };
     return res ? ret : NULL;

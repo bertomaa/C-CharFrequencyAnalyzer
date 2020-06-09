@@ -19,16 +19,6 @@ void initConfig(config *conf)
     allocWrapper(INITIAL_CONFIG_SIZE, sizeof(char *), (void **)&(conf->files));
 }
 
-// void deallocConfig(config *c)
-// {
-//     int i;
-//     for (i = 0; i < c->filesCount; i++)
-//     {
-//         // free(c->files[i]);
-//     }
-//     // free(c->files);
-// }
-
 void removeFileFromConfigByIndex(config *c, int i)
 {
     if (c->filesCount == 0)
@@ -71,10 +61,9 @@ void removePathFromConfig(config *c, char *path)
 {
     char *buffer;
     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
-    //TODO: pupù
     char cmd[MAX_COMMAND_LEN];
     char *cmdOutput;
-    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
+    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput);
     addDoubleQuotes(buffer, path);
     sprintf(cmd, "find %s -type f", buffer);
     int filesCount = getFilesCountInPath(buffer);
@@ -86,18 +75,17 @@ void removePathFromConfig(config *c, char *path)
         removeFileFromConfigByName(c, buffer);
         buffer = splitString(buffer, &cmdOutput, '\n');
     }
-    removeFromGCAndFree(buffer);
-    removeFromGCAndFree(cmdOutput);
+    //removeFromGCAndFree(buffer);
+    //removeFromGCAndFree(cmdOutput);
 }
 
 void removePathFromConfAndStats(confAndStats *c, char *path)
 {
     char *buffer;
     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
-    //TODO: pupù
     char cmd[MAX_COMMAND_LEN];
     char *cmdOutput;
-    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput); //TODO: piglia e gestisici errore
+    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&cmdOutput);
     addDoubleQuotes(buffer, path);
     sprintf(cmd, "find %s -type f", buffer);
     int filesCount = getFilesCountInPath(buffer);
@@ -111,8 +99,8 @@ void removePathFromConfAndStats(confAndStats *c, char *path)
         removeFileFromConfigByIndex(c->conf, index);
         buffer = splitString(buffer, &cmdOutput, '\n');
     }
-    removeFromGCAndFree(buffer);
-    removeFromGCAndFree(cmdOutput);
+    //removeFromGCAndFree(buffer);
+    //removeFromGCAndFree(cmdOutput);
 }
 
 void joinConfigs(config *c1, config *c2)
@@ -128,7 +116,6 @@ void joinConfigs(config *c1, config *c2)
         if (c2->files[i] != NULL)
         {
             allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&(c1->files[c1->filesCount]));
-            //TODO: eccoci qua
             strcpy(c1->files[c1->filesCount], c2->files[i]);
             c1->filesCount++;
         }
@@ -144,7 +131,6 @@ void addFileToConfig(config *c, const char *file)
     }
     // printf("dim %d count %d\n", c->dim, c->filesCount);
 
-    //TODO: se il file ha spazi controllare lo escape
     int stringLen = strlen(file);
     if (stringLen >= MAX_PATH_LEN)
     {
@@ -157,7 +143,7 @@ void addFileToConfig(config *c, const char *file)
         reallocWrapper((void **)&(c->files), c->dim * sizeof(char *));
     }
 
-    allocWrapper(stringLen + 2, sizeof(char), (void **)&(c->files[c->filesCount])); //Non so perchè stringLen+2, forse poteva essere 1 ma non voglio rischiarmela
+    allocWrapper(stringLen + 2, sizeof(char), (void **)&(c->files[c->filesCount]));
 
     strcpy(c->files[c->filesCount], file);
     if (c->files[c->filesCount][stringLen - 1] == '/')
@@ -210,10 +196,10 @@ void deallocConfig(config *c)
     int i;
     for (i = 0; i < c->filesCount; i++)
     {
-        removeFromGCAndFree(c->files[i]);
+        //removeFromGCAndFree(c->files[i]);    
     }
-    removeFromGCAndFree(c->files);
-    removeFromGCAndFree(c);
+    //removeFromGCAndFree(c->files);
+    //removeFromGCAndFree(c);
 }
 
 config *checkDirectories(config *conf)
@@ -259,7 +245,7 @@ config *checkDirectories(config *conf)
             fprintf(stderr, "Path %s contains \" therefore it cannot be analyzed.\n", conf->files[i]);
         }
     }
-    deallocConfig(conf);
-    removeFromGCAndFree(fullBuffer);
+    //deallocConfig(conf);
+    //removeFromGCAndFree(fullBuffer);
     return res;
 }

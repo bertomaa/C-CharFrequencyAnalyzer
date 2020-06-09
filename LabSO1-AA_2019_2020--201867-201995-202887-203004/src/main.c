@@ -26,7 +26,7 @@ int isReadyToRun(config *conf)
 char *getBinPath(const char *arg0)
 {
     char *res;
-    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&res); //TODO: una piotta e diesci terza marcia
+    allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&res);
     strcpy(res, arg0);
     int i;
     for (i = strlen(res) - 2; i > 0 && res[i] != '/'; i--)
@@ -102,7 +102,7 @@ int run(config *conf)
 
 void addFiles(const char *arguments, config **conf)
 {
-    char *input; //TODO: definire meglio size da allocare
+    char *input;
     allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&input);
     char *buffer;
     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
@@ -133,7 +133,6 @@ void showHelp()
     printf("   add <file or direcotry> <file or direcotry> ...    - Add files (or directories) to be analyzed on the next run.\n");
     printf("   config                                             - Show the configuration of the next run\n");
     printf("   run                                                - Run analyzer and report\n");
-    printf("   analyzer-quit                                      - Quit analyzer if it is running.\n");
     printf("   r report <cmd>                                     - Used to issue commands to report, must be used after run.\n");
     printf("                                                        Use \"report help\" for report help\n");
     printf("   remove <file or direcotry> <file or direcotry> ... - Removes files (or directories) from the list to be analyzed\n");
@@ -230,10 +229,6 @@ int getAction(char *command, config **newConf, config **analyzedConf)
     {
         passToReport(command + 7);
     }
-    else if (strcmp(token, "analyzer-quit") == 0)
-    {
-        killAnalyzer();
-    }
     else if (strcmp(token, "r") == 0)
     {
         passToReport(command + 2);
@@ -285,7 +280,6 @@ int main(int argc, const char *argv[])
     if (argc > 1)
         if (checkArguments(argc, argv) != 0)
             fatalErrorHandler("", 1);
-    //TODO: check error
     int filesCount = argc - PRE_FILES_ARGS;
     if (argc >= 3)
     {

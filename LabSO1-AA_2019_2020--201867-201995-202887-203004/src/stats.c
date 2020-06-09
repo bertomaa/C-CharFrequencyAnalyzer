@@ -9,7 +9,6 @@
 #include "stats.h"
 #include "wrapper.h"
 
-
 void initStats(stats *stat, int _fileID)
 {
     stat->fileID = _fileID;
@@ -77,9 +76,8 @@ void decodeMultiple(const char *str, stats *array)
 
 char *encode(const stats stat)
 {
-    //TODO: fai la free da qualche parte, allocare col wrapper
-     char *buffer;// = (char *)calloc(MAX_PIPE_CHARACTERS, sizeof(char));
-    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void**)&buffer);
+    char *buffer;
+    allocWrapper(MAX_PIPE_CHARACTERS, sizeof(char), (void **)&buffer);
     int i, pointer;
     sprintf(buffer, "-%d_", stat.fileID);
     //printf("\nwrinting id: -%d_\n", stat.fileID);
@@ -102,26 +100,26 @@ char *encodeMultiple(stats *statsArray, int len)
 {
     char *res;
     int offset = 0, i;
-    //TODO: check error
     allocWrapper(MAX_PIPE_CHARACTERS * len, sizeof(char), (void **)&res);
     for (i = 0; i < len; i++)
     {
         char *str = encode(statsArray[i]);
         int stringLen = strlen(str);
         memcpy(res + offset, str, stringLen);
-        removeFromGCAndFree(str);
+        //removeFromGCAndFree(str);
         offset += stringLen;
     }
     return res;
 }
 
-void removeFileFromStatsArray(stats * s, int index, int size){
+void removeFileFromStatsArray(stats *s, int index, int size)
+{
     if (size == 0)
         return;
     if (size > 1)
     {
         //strcpy(c->files[i], c->files[c->filesCount - 1]);
-        s[index] = s[size-1];
+        s[index] = s[size - 1];
     }
 }
 
@@ -148,7 +146,7 @@ void printStats(const stats s)
 }
 
 // void writeStatsToFile(const stats s)
-// { 
+// {
 //     FILE* fd;
 //     int i;
 //     remove("stats.txt");
