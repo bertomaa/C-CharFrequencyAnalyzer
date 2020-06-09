@@ -1,4 +1,4 @@
-LabSO1-AA_2019_2020--201867-201995-202887-203004
+LabSO1-AA_2019_2020--203004_202887_201995_201867
 #Progetto per il laboratorio di sistemi operativi - AA 2019/2020
 
 Paolo Barzon    - paolo.barzon@studenti.unitn.it    - 203004
