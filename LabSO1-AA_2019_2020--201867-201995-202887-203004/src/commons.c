@@ -17,9 +17,9 @@ garbageCollector gc;
 void printProgressBar(int now, int tot)
 {
     int i = 0;
-    char *endPtr;
+    char *sizePtr;
     char *size = getCommandOutput("tput cols", 10);
-    int cols = (strtol(size, &endPtr, 10)) - 2;
+    int cols = (strtol(size, &sizePtr, 10)) - 2;
     printf("\r[");
     int progress = ((float)now / (float)tot) * cols;
     for (i = 0; i < progress; i++)
@@ -134,14 +134,14 @@ void removeFromGCAndFree(void *p)
 
 int getFilesCountInPath(char *path)
 {
-    char *endptr;
+    char *sizeptr;
     char *cmdOut;
     char *command;
     allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&command);
     allocWrapper(40, sizeof(char), (void **)&cmdOut);
     sprintf(command, "find %s -type f | wc -l", path);
     cmdOut = getCommandOutput(command, 40);
-    return strtol(cmdOut, &endptr, 10);
+    return strtol(cmdOut, &sizeptr, 10);
 }
 
 void collectGarbage()
@@ -284,5 +284,81 @@ int does1StringMatch2(char *s1, char *s2)
             break;
         }
     }
+    return res;
+}
+
+void reverse(pairIntInt arr[], int n)
+{
+    int i;
+    pairIntInt tmp;
+    for(i = 0; i < n/2; i++)
+    {
+        tmp = arr[n - i];
+        arr[n - i] = arr[i];
+        arr[i] = tmp;
+    }
+}
+
+void merge(pairIntInt arr[], int l, int m, int r)
+{
+    int i, j, k;
+    int n1 = m - l + 1;
+    int n2 = r - m;
+
+    pairIntInt L[n1], R[n2];
+
+    for (i = 0; i < n1; i++)
+        L[i] = arr[l + i];
+    for (j = 0; j < n2; j++)
+        R[j] = arr[m + 1 + j];
+
+    i = 0;
+    j = 0;
+    k = l;
+    while (i < n1 && j < n2)
+    {
+        if (L[i].second <= R[j].second)
+        {
+            arr[k] = L[i];
+            i++;
+        }
+        else
+        {
+            arr[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+    while (i < n1)
+    {
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
+    while (j < n2)
+    {
+        arr[k] = R[j];
+        j++;
+        k++;
+    }
+}
+
+void mergeSort(pairIntInt arr[], int l, int r)
+{
+    if (l < r)
+    {
+        int m = l + (r - l) / 2;
+        mergeSort(arr, l, m);
+        mergeSort(arr, m + 1, r);
+
+        merge(arr, l, m, r);
+    }
+}
+
+pairIntInt makePair(int f, int s)
+{
+    pairIntInt res;
+    res.first = f;
+    res.second = s;
     return res;
 }

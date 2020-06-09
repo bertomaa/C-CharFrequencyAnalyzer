@@ -12,6 +12,7 @@
 #include "config.h"
 #include "commons.h"
 #include "forkHandler.h"
+#include "print.h"
 
 char *analyzerToReportPipe = "/tmp/analyzerToReport.pipe";
 char *mainToReportPipe = "/tmp/mainToReport.pipe";
@@ -19,56 +20,134 @@ int FDanalyzer;
 
 void readAnalyzer(confAndStats *conf);
 
-// void printTable(int start, int finish, char *name, stats resultStats);
-
-void print(stats stat);
-
 void showHelp()
 {
     printf("Allowed actions:\n");
-    printf("show [-f --frequencies] [-e --group] <file1> [directory1] ...      - Shows the report of the specified files or directories.\n");
-    printf("showall [-f --frequencies] [-e --group]                            - Shows the report of all files analyzed.\n");
-    printf("help                                         - Show this help message\n");
-    printf("remove <file or directory 1> ...             - Removes files (or directories) from the list to be analyzed\n");
-    printf("read                                         - Read data from analyzer, this action is not required if report was created by main\n");
+    printf("show [-f --frequencies] [-g --group] [-a --ascendend] [-d --descendent] <file1> [directory1] ...       - Shows the report of the specified files or directories. Options must be passed first.\n");
+    printf("showall [-f --frequencies] [-g --group] [-a --ascendend] [-d --descendent]                             - Shows the report of all files analyzed. Options must be passed first.\n");
+    printf("help                                                                - Show this help message\n");
+    printf("remove <file or directory 1> ...                                    - Removes files (or directories) from the list to be analyzed\n");
+    printf("read                                                                - Read data from analyzer, this action is not required if report was created by main\n");
 }
 
 void show(char *files, confAndStats *cs)
 {
+    while(files[0] == ' ')
+        files = files + 1;
     int i;
     char *buffer;
     allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&buffer);
     buffer = splitStringWithQuotes(buffer, &files, ' ');
     int every = 1;
-    int 
-    int match = 0;
+    int frequencies = 0;
+    int order = 0;
+    //int match = 0;
+    int hasArgs = 0;
+    int printConf[7] = {1, 0, 0, 0, 0, 0, 0}; //0 true: una tabella con tutto, dal 1 in poi true se voglio vederli
+    stats tmpStat;
+        initStats(&tmpStat, -1);
     while (buffer != NULL)
     {
         int index = getFileIndexInConfig(cs->conf, buffer);
-        if (index != -1)
+        if (index != -1 && every == 1)
         {
             printf("File %s:\n", cs->conf->files[index]);
-            print(cs->stats[index]);
+            print(cs->stats[index], frequencies, order, printConf);
             buffer = splitStringWithQuotes(buffer, &files, ' ');
             continue;
         }
-        match = 0;
-        stats tmpStat;
-        initStats(&tmpStat, -1);
+        //match = 0;
         for (i = 0; i < cs->conf->filesCount; i++)
         {
-            if (i == 0 && strcmp("--group", buffer) == 0)
+            if (strcmp("--group", buffer) == 0 || strcmp("-g", buffer) == 0)
             {
                 every = 0;
                 break;
             }
+            if (strcmp("--frequencies", buffer) == 0 || strcmp("-f", buffer) == 0)
+            {
+                frequencies = 1;
+                break;
+            }
+            if (strcmp("--ascending", buffer) == 0 || strcmp("-a", buffer) == 0)
+            {
+                order = 1;
+                break;
+            }
+            if (strcmp("--descending", buffer) == 0 || strcmp("-d", buffer) == 0)
+            {
+                order = -1;
+                break;
+            }
+            if (strcmp("--numbers", buffer) == 0)
+            {
+                if (hasArgs == 0)
+                    printConf[0] = 0;
+                hasArgs = 1;
+                printConf[1] = 1;
+                break;
+            }
+            if (strcmp("--upper-case", buffer) == 0)
+            {
+                if (hasArgs == 0)
+                    printConf[0] = 0;
+                hasArgs = 1;
+                printConf[2] = 1;
+                break;
+            }
+            if (strcmp("--lower-case", buffer) == 0)
+            {
+                if (hasArgs == 0)
+                    printConf[0] = 0;
+                hasArgs = 1;
+                printConf[3] = 1;
+                break;
+            }
+            if (strcmp("--punctuation", buffer) == 0)
+            {
+                if (hasArgs == 0)
+                    printConf[0] = 0;
+                hasArgs = 1;
+                printConf[4] = 1;
+                break;
+            }
+            if (strcmp("--symbols", buffer) == 0)
+            {
+                if (hasArgs == 0)
+                    printConf[0] = 0;
+                hasArgs = 1;
+                printConf[5] = 1;
+                break;
+            }
+            if (strcmp("--others", buffer) == 0)
+            {
+                if (hasArgs == 0)
+                    printConf[0] = 0;
+                hasArgs = 1;
+                printConf[6] = 1;
+                break;
+            }
+            if (strcmp("--not-printable", buffer) == 0)
+            {
+                if (hasArgs == 0)
+                    printConf[0] = 0;
+                hasArgs = 1;
+                printConf[7] = 1;
+                break;
+            }
+            if (strcmp("--all", buffer) == 0)
+            {
+                hasArgs = 1;
+                printConf[0] = 1;
+                break;
+            }
             if (does1StringMatch2(buffer, cs->conf->files[i]))
             {
-                match = 1;
+                //match = 1;
                 if (every)
                 {
                     printf("File %s:\n", cs->conf->files[i]);
-                    print(cs->stats[i]);
+                    print(cs->stats[i], frequencies, order, printConf);
                     //printStats(cs->stats[i]);
                 }
                 else
@@ -77,15 +156,13 @@ void show(char *files, confAndStats *cs)
                 }
             }
         }
-        if (!every && match)
-        {
-            if (strcmp(buffer, "\"\"") == 0)
-                ;
-            printf("Path %s:\n", buffer);
-            print(tmpStat);
-            //printStats(tmpStat);
-        }
+        
         buffer = splitStringWithQuotes(buffer, &files, ' ');
+    }
+    if (!every)
+    {
+        print(tmpStat, frequencies, order, printConf);
+        //printStats(tmpStat);
     }
 }
 
@@ -278,199 +355,4 @@ int main(int argc, char *argv[])
     printf("FINE REPORT!\n");
     collectGarbage();
     return 0;
-}
-
-void printDivider(int cellInCurrentRow, int maxDigits, int layer, int toSwitch)
-{
-    int j, k;
-    switch (layer)
-    {
-    case 0:
-        printf("\n┌");
-        break;
-    case 1:
-        printf("\n├");
-        break;
-    case 2:
-        printf("\n└");
-        break;
-    }
-    for (j = 0; j < cellInCurrentRow; j++)
-    {
-        for (k = 0; k < maxDigits + 5; k++)
-        {
-            printf("─");
-        }
-        if (j != cellInCurrentRow - 1)
-        {
-            if(j >= toSwitch){
-                layer = 2;
-            }
-            switch (layer)
-            {
-            case 0:
-                printf("┬");
-                break;
-            case 1:
-                printf("┼");
-                break;
-            case 2:
-                printf("┴");
-                break;
-            }
-        }
-    }
-    if(toSwitch+1 == cellInCurrentRow)
-        layer = 2;
-    switch (layer)
-    {
-    case 0:
-        printf("┐");
-        break;
-    case 1:
-        printf("┤");
-        break;
-    case 2:
-        printf("┘");
-        break;
-    }
-    printf("\n");
-}
-
-void printSpaces(int n)
-{
-    int i;
-    for (i = 0; i < n; i++)
-        printf(" ");
-}
-
-void printTable(char *categoryName, int maxDigits, int RowLength, int *indexes, stats *stat, int cellCount, int totLen)
-{
-    int linesWritten = 0;
-    int cellInCurrentRow = 0;
-    int i = 0, j = 0;
-    int cellsInRow = RowLength / (maxDigits + 6) < cellCount ? RowLength / (maxDigits + 6) : cellCount;
-    printSpaces((RowLength / 2) - (strlen(categoryName) / 2));
-    printf("%s\n", categoryName);
-    printDivider(cellsInRow, maxDigits, 0, cellCount);
-    printf("│");
-    for (i = 0; i < totLen; i++)
-    {
-        if (indexes[i] == -1)
-            continue;
-        if ((cellInCurrentRow + 1) * (maxDigits + 6) > RowLength)
-        {
-            linesWritten++;
-            int remainder = cellCount - linesWritten * cellsInRow;
-            //printf("reminder: %d\n",remainder);
-            printDivider(cellInCurrentRow, maxDigits, 1, remainder);
-            printf("│");
-            cellInCurrentRow = 0;
-        }
-        printf(" %c: %d ", (char)indexes[i], stat->frequencies[indexes[i]]);
-        for (j = getDigits(stat->frequencies[indexes[i]]); j < maxDigits; j++)
-        {
-            printf(" ");
-        }
-        printf("│");
-        cellInCurrentRow++;
-    }
-    printDivider(cellInCurrentRow, maxDigits, 2, cellCount);
-    printf("\n");
-}
-
-int getMaxDigits(stats s)
-{
-    int max = 0, i = 0, digits;
-    for (i = 0; i < ASCII_CHARACTERS; i++)
-    {
-        digits = getDigits(s.frequencies[i]);
-        if (digits > max)
-        {
-            max = digits;
-        }
-    }
-    return max;
-}
-
-int removeZeroes(stats *s, int *indexes, int n)
-{
-    int count = 0;
-    int i;
-    for (i = 0; i < n; i++)
-    {
-        if (s->frequencies[indexes[i]] == 0)
-            indexes[i] = -1;
-        else
-            count++;
-    }
-    return count;
-}
-
-void print(stats stat)
-{
-    int i;
-    char *endPtr;
-    int maxDigits = getMaxDigits(stat);
-    char *size = getCommandOutput("tput cols", 40);
-    int cols = (strtol(size, &endPtr, 10)) - 2;
-
-    int nonPrintable[32];
-    for (i = 0; i < 32; i++)
-    {
-        if (i != 11 && i != 12)
-            nonPrintable[i] = i;
-        else
-            nonPrintable[i] = -1;
-    }
-    int symbols[22] = {35, 36, 37, 38, 42, 43, 44, 45, 47, 60, 61, 62, 64, 91, 92, 93, 94, 95, 123, 124, 125, 126};
-    int numbers[10];
-    for (i = 0; i < 10; i++)
-    {
-        numbers[i] = i + 48;
-    }
-    int uppercase[26];
-    for (i = 0; i < 26; i++)
-    {
-        uppercase[i] = i + 65;
-    }
-    int lowercase[26];
-    for (i = 0; i < 26; i++)
-    {
-        lowercase[i] = i + 97;
-    }
-    int punctuation[9] = {33, 34, 39, 40, 41, 58, 59, 63, 96};
-    int others[127];
-    for (i = 0; i < 127; i++)
-    {
-        others[i] = i + 128;
-    }
-
-    int nonPrintableLen = removeZeroes(&stat, nonPrintable, 32);
-    int symbolsLen = removeZeroes(&stat, symbols, 22);
-    int numbersLen = removeZeroes(&stat, numbers, 10);
-    int uppercaseLen = removeZeroes(&stat, uppercase, 26);
-    int lowercaseLen = removeZeroes(&stat, lowercase, 26);
-    int punctuationLen = removeZeroes(&stat, punctuation, 9);
-    int othersLen = removeZeroes(&stat, others, 127);
-
-    if (numbersLen > 0)
-        printTable("NUMBERS", maxDigits, cols, numbers, &stat, numbersLen, 10);
-    if (uppercaseLen > 0)
-        printTable("UPPERCASE", maxDigits, cols, uppercase, &stat, uppercaseLen, 26);
-    if (lowercaseLen > 0)
-        printTable("LOWERCASE", maxDigits, cols, lowercase, &stat, lowercaseLen, 26);
-    if (punctuationLen > 0)
-        printTable("PUNCTUATION", maxDigits, cols, punctuation, &stat, punctuationLen, 9);
-    if (symbolsLen > 0)
-        printTable("SYMBOLS", maxDigits, cols, symbols, &stat, symbolsLen, 22);
-    if (othersLen > 0)
-        printTable("OTHERS", maxDigits, cols, others, &stat, othersLen, 127);
-    int npSum = 0;
-    for (i = 0; i < 32; i++)
-    {
-        if (nonPrintable[i] >= 0)
-            npSum += stat.frequencies[nonPrintable[i]];
-    }
-    printf("\nThere are %d different non-printable characters, for a total of %d occurrencies.\n", nonPrintableLen, npSum);
 }

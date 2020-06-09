@@ -30,14 +30,17 @@ $(BINPATH)main: $(COMMONTARGETS) $(OBJPATH)main.o
 $(BINPATH)analyzer: $(COMMONTARGETS) $(OBJPATH)reportConnector.o $(OBJPATH)analyzer.o
 	$(CC) -o ./bin/analyzer $(OBJPATH)analyzer.o $(OBJ) $(OBJPATH)reportConnector.o -pthread $(CCFLAGS)
 
-$(BINPATH)report: $(COMMONTARGETS) $(OBJPATH)report.o
-	$(CC) -o ./bin/report $(OBJPATH)report.o $(OBJ) $(CCFLAGS)
+$(BINPATH)report: $(COMMONTARGETS) $(OBJPATH)report.o $(OBJPATH)print.o
+	$(CC) -o ./bin/report $(OBJPATH)report.o $(OBJ) $(OBJPATH)print.o $(CCFLAGS)
 
 $(OBJPATH)main.o: $(SRCPATH)main.c
 	$(CC) -c -o $(OBJPATH)main.o $(SRCPATH)main.c $(CCFLAGS)
 
 $(OBJPATH)report.o: $(SRCPATH)report.c
 	$(CC) -c -o $(OBJPATH)report.o $(SRCPATH)report.c $(CCFLAGS)
+
+$(OBJPATH)print.o: $(SRCPATH)print.c
+	$(CC) -c -o $(OBJPATH)print.o $(SRCPATH)print.c $(CCFLAGS)
 	
 $(OBJPATH)analyzer.o: $(SRCPATH)analyzer.c 
 	$(CC) -c -o $(OBJPATH)analyzer.o $(SRCPATH)analyzer.c $(CCFLAGS)

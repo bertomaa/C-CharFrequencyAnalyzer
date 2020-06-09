@@ -119,6 +119,7 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
         if (buffer[i] >= 0)
             ret.frequencies[(int)buffer[i]]++;
     }
+    //removeFromGCAndFree(buffer);
     return ret;
 }
 
@@ -149,6 +150,8 @@ int q(int mIndex, int filesCount, int m, char *const *files, int writePipe, int 
         buffer[0] = 0;
         splitString(buffer, &cmdOutput, ' ');
         fileLength = strtol(buffer, &endptr, 10);
+        //removeFromGCAndFree(buffer);
+        //removeFromGCAndFree(buffer2);
         fileOffset = (fileLength / m) * mIndex;
         if (mIndex == m - 1)
             tmp = analyzeText(fd, fileOffset, fileLength - fileOffset, i);
@@ -222,11 +225,11 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
     //printf("mandato al main:%s\n", resultString);
     write(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
     close(writePipe);
-    // if(writePipe == 7)
-    // {
-    //     // printf("SONO UN ASSASSINO!\n");
-    //     fatalErrorHandler("eeeee", 4);
-    // }
+    if(writePipe == 7)
+    {
+        // printf("SONO UN ASSASSINO!\n");
+        fatalErrorHandler("eeeee", 4);
+    }
     collectGarbage();
     // printf("p finished\n");
     return 0; //manco lo scrivo più

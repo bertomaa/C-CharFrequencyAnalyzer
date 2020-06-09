@@ -19,6 +19,12 @@ typedef struct garbageCollector
     void **garbage;
 } garbageCollector;
 
+typedef struct pairIntInt
+{
+    int first;
+    int second;
+} pairIntInt;
+
 extern int isCollectingGarbage;
 extern garbageCollector gc;
 
@@ -57,5 +63,14 @@ void fatalErrorHandler(char *message, int errorCode);
 char* splitStringWithQuotes(char *buffer, char **str, char delimiter);
 
 int getFilesCountInPath(char * path);
+
+void merge(pairIntInt arr[], int l, int m, int r);
+
+void mergeSort(pairIntInt arr[], int l, int r);
+
+void reverse(pairIntInt arr[], int n);
+
+pairIntInt makePair(int f, int s);
+
 
 #endif
