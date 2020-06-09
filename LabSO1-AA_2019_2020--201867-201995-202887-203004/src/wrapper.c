@@ -18,14 +18,20 @@ int openWrapper(const char *path, int *fd)
     return 0;
 }
 
-
 //memory allocation
 void allocWrapper(int num, int size, void **p)
 {
     *p = calloc(num, size);
+    int count = 20;
+    while (*p == NULL && count > 0)
+    {
+        sleep(1);
+        *p = calloc(num, size);
+        count--;
+    }
     if (*p == NULL)
     {
-        fatalErrorHandler("Cannot allocate memory", 1);
+        fatalErrorHandler("Cannot allocate memory, quit.", 1);
     }
     addToGC(*p);
 }
@@ -34,9 +40,16 @@ void reallocWrapper(void **pointer, int size)
 {
     removeFromGC(*pointer);
     *pointer = realloc(*pointer, size);
+    int count = 20;
+    while (*pointer == NULL && count > 0)
+    {
+        sleep(1);
+        *pointer = realloc(*pointer, size);
+        count--;
+    }
     if (*pointer == NULL)
     {
-        fatalErrorHandler("Cannot realloc memory", 1);
+        fatalErrorHandler("Cannot reallocate memory, quit.", 1);
     }
     addToGC(*pointer);
 }

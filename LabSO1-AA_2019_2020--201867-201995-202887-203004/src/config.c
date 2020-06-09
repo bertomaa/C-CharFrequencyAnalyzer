@@ -86,6 +86,8 @@ void removePathFromConfig(config *c, char *path)
         removeFileFromConfigByName(c, buffer);
         buffer = splitString(buffer, &cmdOutput, '\n');
     }
+    removeFromGCAndFree(buffer);
+    removeFromGCAndFree(cmdOutput);
 }
 
 void removePathFromConfAndStats(confAndStats *c, char *path)
@@ -109,6 +111,8 @@ void removePathFromConfAndStats(confAndStats *c, char *path)
         removeFileFromConfigByIndex(c->conf, index);
         buffer = splitString(buffer, &cmdOutput, '\n');
     }
+    removeFromGCAndFree(buffer);
+    removeFromGCAndFree(cmdOutput);
 }
 
 void joinConfigs(config *c1, config *c2)
@@ -256,5 +260,6 @@ config *checkDirectories(config *conf)
         }
     }
     deallocConfig(conf);
+    removeFromGCAndFree(fullBuffer);
     return res;
 }

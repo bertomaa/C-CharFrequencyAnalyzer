@@ -246,7 +246,7 @@ void print(stats stat, int frequencies, int order, int toPrint[])
 
     int nonPrintableLen = removeZeroes(&stat, nonPrintable, 32);
 
-    if (toPrint[7] || toPrint[0])
+    if (toPrint[7])
     {
         int npSum = 0;
         for (i = 0; i < 32; i++)
@@ -254,9 +254,12 @@ void print(stats stat, int frequencies, int order, int toPrint[])
             if (nonPrintable[i] >= 0)
                 npSum += stat.frequencies[nonPrintable[i]];
         }
-        if (frequencies)
-            printf("\nThere are %d different non-printable characters, for a total of %6.3f %%.\n", nonPrintableLen, (float)npSum * 100 / totalChars);
-        else
-            printf("\nThere are %d different non-printable characters, for a total of %d occurrencies.\n", nonPrintableLen, npSum);
+        if(npSum != 0)
+        {
+            if (frequencies)
+                printf("\nThere are %d different non-printable characters, for a total of %6.3f %%.\n", nonPrintableLen, (float)npSum * 100 / totalChars);
+            else
+                printf("\nThere are %d different non-printable characters, for a total of %d occurrencies.\n", nonPrintableLen, npSum);
+        }
     }
 }

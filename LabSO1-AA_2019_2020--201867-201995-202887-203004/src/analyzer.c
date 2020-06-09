@@ -67,7 +67,6 @@ int *distributeQuantity(int quantity, int toDistribute)
 
 int *createPipes(int size)
 {
-    //TODO: checks and free
     int *pipes;
     allocWrapper(size * 2, sizeof(int), (void **)&pipes);
     int i;
@@ -80,7 +79,6 @@ int *createPipes(int size)
 
 int writePipe(int *pipes, int index, const char *toWrite)
 {
-    //TODO: checks and free
     //printf("writing to pipe %d chars\n", (int)strlen(toWrite));
     write(pipes[getPipeIndex(index, WRITE)], toWrite, (int)strlen(toWrite) + 1);
     return 0; //error code
@@ -105,12 +103,10 @@ int readPipeAndAppend(int *pipes, int index, char *buf, int toRead)
 stats analyzeText(int fd, int offset, int bytesToRead, int id)
 {
     int i;
-    stats ret; //TODO: dovrebbe essere allocato dinamicamente se viene ritornato?
+    stats ret; 
     initStats(&ret, id);
     char *buffer;
     allocWrapper(bytesToRead + 1, sizeof(char), (void **)&buffer);
-    //TODO:check error
-
     lseek(fd, offset, SEEK_SET);
     ssize_t bytesRead = read(fd, buffer, bytesToRead);
     //printf("analyzing file: %d with offset %d reading %d\n", id, offset, bytesToRead);
@@ -119,7 +115,7 @@ stats analyzeText(int fd, int offset, int bytesToRead, int id)
         if (buffer[i] >= 0)
             ret.frequencies[(int)buffer[i]]++;
     }
-    //removeFromGCAndFree(buffer);
+    removeFromGCAndFree(buffer);
     return ret;
 }
 
@@ -150,8 +146,8 @@ int q(int mIndex, int filesCount, int m, char *const *files, int writePipe, int 
         buffer[0] = 0;
         splitString(buffer, &cmdOutput, ' ');
         fileLength = strtol(buffer, &endptr, 10);
-        //removeFromGCAndFree(buffer);
-        //removeFromGCAndFree(buffer2);
+        removeFromGCAndFree(buffer);
+        removeFromGCAndFree(buffer2);
         fileOffset = (fileLength / m) * mIndex;
         if (mIndex == m - 1)
             tmp = analyzeText(fd, fileOffset, fileLength - fileOffset, i);
@@ -162,8 +158,7 @@ int q(int mIndex, int filesCount, int m, char *const *files, int writePipe, int 
     }
     char *encoded = encodeMultiple(statsToSend, filesCount);
     //printf("sending from q%d: %s\n", mIndex, encoded);
-    //char *encoded = encodeMultiple(statsToSend, filesCount);                   //TODO: come sempre controllare che si sia chiusa munnezz
-    write(writePipe, encoded, strlen(encoded) + 1); //controlla sta cacata
+    write(writePipe, encoded, strlen(encoded) + 1);
     close(writePipe);
     collectGarbage();
     // printf("q finished\n");
@@ -204,32 +199,14 @@ int p(int m, int filesCount, char *const *files, int writePipe, int fileIndex)
     {
         readPipe(pipes, i, str, filesCount);
         //printf("p ha ricevuto: %s\n", stat);
-        /*
-            //testing
-            stats tmp;
-            initStats(&tmp, 7);
-            decode(stat, &tmp, (3));
-            //testing
-            */
-        decodeMultiple(str, resultStats); //TODO: check
-        // for (j = 0; j < filesCount; j++)
-        // {
-        //     printf("(p)In totale è stato letto nel file %d da q %d:\n", j, i);
-        //     printStats(resultStats[j]);
-        // }
-        //int *p = malloc(sizeof(int));
-        //*p = 3;
-        //int decodeError = decode(str, resultStats, p); //TODO: check
+        decodeMultiple(str, resultStats);
     }
+    removeFromGCAndFree(str);
     char *resultString = encodeMultiple(resultStats, filesCount);
+    removeFromGCAndFree(resultStats);
     //printf("mandato al main:%s\n", resultString);
     write(writePipe, resultString, strlen(resultString) + 1); // stessa munnezz
     close(writePipe);
-    if(writePipe == 7)
-    {
-        // printf("SONO UN ASSASSINO!\n");
-        fatalErrorHandler("eeeee", 4);
-    }
     collectGarbage();
     // printf("p finished\n");
     return 0; //manco lo scrivo più
@@ -243,25 +220,12 @@ char *getDataFromPs(const config conf, int *pipesToP)
         ; //father waits all children
     printf("Analyzed!\n");
     char *stat;
-    allocWrapper(MAX_PIPE_CHARACTERS * conf.filesCount, sizeof(char), (void **)&stat); //TODO:trova una stima migliore
-    stats *resultStats;
-    allocWrapper(conf.filesCount, sizeof(stats), (void **)&resultStats); //TODO:trova una stima migliore
-    for (i = 0; i < conf.filesCount; i++)
-    {
-        initStats(&resultStats[i], i);
-    }
+    allocWrapper(MAX_PIPE_CHARACTERS * conf.filesCount, sizeof(char), (void **)&stat);
     for (i = 0; i < conf.n && i < conf.filesCount; i++)
     {
         readPipeAndAppend(pipesToP, i, stat, conf.filesCount);
     }
     //printf("dal main analizer ricevo: \n%s\n", stat);
-    // decodeMultiple(stat, resultStats); //TODO:check error
-    // for (i = 0; i < conf.filesCount; i++)
-    // {
-    //     printf("In totale è stato letto nel file %s:\n", conf.files[i]);
-    //     printStats(resultStats[i]);
-    // }
-    // printf("FINE!\n");
     return stat;
 }
 

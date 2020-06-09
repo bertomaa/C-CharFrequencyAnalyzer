@@ -47,9 +47,16 @@ int initGC()
     gc.dim = 100;
     gc.garbageCount = 0;
     gc.garbage = (void **)calloc(gc.dim, sizeof(void *));
+    int count = 20;
+    while (gc.garbage == NULL && count > 0)
+    {
+        sleep(1);
+        gc.garbage = (void **)calloc(gc.dim, sizeof(void *));
+        count--;
+    }
     if (gc.garbage == NULL)
     {
-        fprintf(stderr, "Cannot allocate garbage collector in memory\n");
+        fprintf(stderr, "Cannot allocate garbage collector in memory. Quit.\n");
         return 1;
     }
     return 0;
@@ -61,7 +68,6 @@ char *getLine()
     int i = 0;
     char *line;
     allocWrapper(size, sizeof(char), (void **)&line);
-    //TODO: error
     char c = 7;
     while (c != '\n')
     {
@@ -70,7 +76,6 @@ char *getLine()
         {
             size += MAX_COMMAND_LEN;
             reallocWrapper((void **)&line, size * sizeof(char));
-            //TODO: error
         }
         line[i] = c;
         i++;
@@ -86,7 +91,6 @@ void addToGC(void *garbage)
     {
         if (gc.garbage[i] == garbage)
         {
-            printf("Sto aggiungento di nuovo lo stesso!");
             return;
         }
     }
@@ -94,9 +98,16 @@ void addToGC(void *garbage)
     {
         gc.dim += 100;
         gc.garbage = realloc(gc.garbage, gc.dim * sizeof(void *));
+        int count = 20;
+        while (gc.garbage == NULL && count > 0)
+        {
+            sleep(1);
+            gc.garbage = realloc(gc.garbage, gc.dim * sizeof(void *));
+            count--;
+        }
         if (gc.garbage == NULL)
         {
-            fatalErrorHandler("Cannot realloc memory", 1);
+            fatalErrorHandler("Cannot realloc memory for GC, Quit.", 1);
         }
     }
     gc.garbage[gc.garbageCount] = garbage;
@@ -115,6 +126,7 @@ void removeFromGC(void *p)
             return;
         }
     }
+    printf("not present in GC\n");
 }
 
 void removeFromGCAndFree(void *p)
@@ -141,7 +153,10 @@ int getFilesCountInPath(char *path)
     allocWrapper(40, sizeof(char), (void **)&cmdOut);
     sprintf(command, "find %s -type f | wc -l", path);
     cmdOut = getCommandOutput(command, 40);
-    return strtol(cmdOut, &sizeptr, 10);
+    int ret =  strtol(cmdOut, &sizeptr, 10);
+    removeFromGCAndFree(command);
+    removeFromGCAndFree(cmdOut);
+    return ret;
 }
 
 void collectGarbage()
@@ -195,7 +210,6 @@ char *removeDoubleQuotes(char *buffer, char *path)
 char *getCommandOutput(const char *cmd, int bufferSizeInBytes)
 {
     //printf("cmd: %s\n", cmd);
-    //TODO:dite che ce lo lascia usare?
     char cmdBuffer[MAX_COMMAND_LEN];
     char *ret;
     int size = 0;
@@ -203,15 +217,14 @@ char *getCommandOutput(const char *cmd, int bufferSizeInBytes)
     FILE *fp = popen(cmd, "r");
     if (fp == NULL)
     {
-        //TODO: gestisci errore
-        exit(1);
+        fatalErrorHandler("Error in executing bash command, quit.", 1);
     }
     int res = 0;
     while (fgets(cmdBuffer, bufferSizeInBytes, fp) != NULL)
     {
         res = 1;
         size += strlen(cmdBuffer) + 1;
-        if (size >= bufferSizeInBytes) //TODO: gestisci errore, stringa più lunga del massimo
+        if (size >= bufferSizeInBytes)
             exit(1);
         strcat(ret, cmdBuffer);
     };

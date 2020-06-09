@@ -1,5 +1,0 @@
-- scrivere meglio help(ad esempio --expanded su report)
-- cambia il garbage collector per avere miglior gestione della memoria
-- in cmdOutput ussare fork ed exec invece dio file d
-- comando da main per killare analyzer
-- sleep nell alloc wrapper se non ce allocazione disponibile

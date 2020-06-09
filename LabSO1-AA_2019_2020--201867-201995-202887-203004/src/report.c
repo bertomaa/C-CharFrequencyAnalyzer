@@ -22,17 +22,20 @@ void readAnalyzer(confAndStats *conf);
 
 void showHelp()
 {
-    printf("Allowed actions:\n");
-    printf("show [-f --frequencies] [-g --group] [-a --ascendend] [-d --descendent] <file1> [directory1] ...       - Shows the report of the specified files or directories. Options must be passed first.\n");
-    printf("showall [-f --frequencies] [-g --group] [-a --ascendend] [-d --descendent]                             - Shows the report of all files analyzed. Options must be passed first.\n");
-    printf("help                                                                - Show this help message\n");
-    printf("remove <file or directory 1> ...                                    - Removes files (or directories) from the list to be analyzed\n");
-    printf("read                                                                - Read data from analyzer, this action is not required if report was created by main\n");
+    printf("\nReport allowed actions:\n\n");
+    printf("   help                                 - Show this help message\n");
+    printf("   show:                                - Shows the report of the specified paths. Options must be passed first.\n       [-f --frequencies] \n       [-g --group] \n       [-a --ascendend] \n       [-d --descendent] \n       <file or direcotry> <file or direcotry> ...  \n\n");
+    printf("   showall:                             - Shows the report of all files analyzed. Options must be passed first.\n       [-f --frequencies] \n       [-g --group] \n       [-a --ascendend] \n       [-d --descendent] \n       \n\n");
+    printf("   remove <file or directory 1> ...     - Removes files (or directories) from the list\n");
+    printf("   read                                 - Read data from analyzer, not necessary if run by main\n");
+    printf("   files                                - shows all files currently ready to be shown\n");
+    printf("   q / quit / exit                      - Close the program\n");
 }
+
 
 void show(char *files, confAndStats *cs)
 {
-    while(files[0] == ' ')
+    while (files[0] == ' ')
         files = files + 1;
     int i;
     char *buffer;
@@ -45,7 +48,7 @@ void show(char *files, confAndStats *cs)
     int hasArgs = 0;
     int printConf[7] = {1, 0, 0, 0, 0, 0, 0}; //0 true: una tabella con tutto, dal 1 in poi true se voglio vederli
     stats tmpStat;
-        initStats(&tmpStat, -1);
+    initStats(&tmpStat, -1);
     while (buffer != NULL)
     {
         int index = getFileIndexInConfig(cs->conf, buffer);
@@ -156,7 +159,7 @@ void show(char *files, confAndStats *cs)
                 }
             }
         }
-        
+
         buffer = splitStringWithQuotes(buffer, &files, ' ');
     }
     if (!every)
@@ -294,6 +297,7 @@ void readAnalyzer(confAndStats *cs)
     }
     //printf("\n\nstat string: %s\n\n", statString);
     decodeMultiple(statString, &(cs->stats[lastStatsIndex]));
+    removeFromGCAndFree(statString);
     // for (i = 0; i < cs->conf->filesCount; i++)
     // {
     //     printf("In file %s was analyzed:\n", cs->conf->files[i]);
@@ -342,13 +346,13 @@ int main(int argc, char *argv[])
     }
     else
     {
-        allocWrapper(MAX_COMMAND_LEN, sizeof(char), (void **)&command);
         do
         {
             printf("->");
             command = getLine();
             //printf("report cmd: %s\n", command);
             goOn = processCommand(command, &cs);
+            removeFromGCAndFree(command);
         } while (goOn);
     }
 

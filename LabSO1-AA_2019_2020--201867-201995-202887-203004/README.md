@@ -22,9 +22,9 @@ Tramite make è possibile compilare il progetto attraverso il comando `make` o `
   - `tput` per avere la largezza attuale del terminale;
 - Inizialmente abbiamo usato lseek inserendo il cursore alla fine del file per avere la sua dimensione ma ci siamo accorti che con particolari file `.png` non funzionava correttamente.
 - Per eseguire comandi bash abbiamo usato la funzione popen che opera su `FILE*`. Questo perchè non abbiamo trovato un modo migliore che non richiedesse di scrivere su File System.
-- Se da main si richiede di analizzare un file più volte questo viene sempre nuovamente analizzato, ma se si richiede a report di visualizzarlo più volte vengono mostrati i dati più aggiornati senza una nuova analisi.
+- Se da main si richiede di analizzare un file una seconda volta questo viene automaticamente rianalizzato, ma se si richiede a report di visualizzarlo più volte vengono mostrati i dati più aggiornati senza una nuova analisi.
 
 ###Limiti e problemi esistenti
 - N ed M non possono essere cambiati durante l'esecuzione di analyzer ma tramite main possono essere impostati a piacere tra le singole esecuzioni di analyzer.
 - Il nome di un file da analizzare non può contenere le doppie virgolette `"`, ma è possibile lavorare con path che contengono spazi inserendoli in queste ultime.
-- GC
+- Il GC viene ripulito al termine del processo, alcune allocazioni di grande dimensione o evidentemente non utili in futuro vengono manualmente rimosse per risparmiare memoria.

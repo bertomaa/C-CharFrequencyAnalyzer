@@ -59,7 +59,7 @@ int createChild()
     //printf("%s, parentPid: %d, sonPid: %d ,childrenCount:%d \n", desc, getpid(), pid, childrenCount);
     children[childrenCount] = pid;
     childrenCount++;
-    return 1;
+    return pid;
 }
 
 void killMeAndAllChildren(int exitCode)

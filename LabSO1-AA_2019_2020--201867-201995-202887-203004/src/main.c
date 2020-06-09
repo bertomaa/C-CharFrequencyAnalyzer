@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include "wrapper.h"
 #include "stats.h"
 #include "config.h"
@@ -11,6 +12,7 @@ char *mainToReportPipe = "/tmp/mainToReport.pipe";
 char *path;
 int fdToReport = 0;
 int isReportRunning = 0;
+int analyzerPid = -1;
 
 void showHelp();
 
@@ -20,7 +22,6 @@ int isReadyToRun(config *conf)
         return 1;
     return 0;
 }
-
 
 char *getBinPath(const char *arg0)
 {
@@ -65,8 +66,8 @@ int run(config *conf)
         printf("Cannot run, set n, m and at least 1 file.\n");
         return 0;
     }
-
-    if (createChild() == 0)
+    analyzerPid = createChild();
+    if (analyzerPid == 0)
     { //figlio
         char *analyzerPath;
         allocWrapper(MAX_PATH_LEN, sizeof(char), (void **)&analyzerPath);
@@ -74,6 +75,7 @@ int run(config *conf)
         strcat(analyzerPath, "analyzer");
         char **args = exportAsArguments(conf, analyzerPath);
         execv(analyzerPath, args);
+        analyzerPid = -1;
         exit(0);
     }
     //padre
@@ -115,17 +117,28 @@ void addFiles(const char *arguments, config **conf)
     *conf = checkDirectories(*conf);
 }
 
+void killAnalyzer()
+{
+    if (analyzerPid != -1)
+    {
+        kill(analyzerPid, SIGTERM);
+    }
+}
+
 void showHelp()
 {
-    printf("Allowed actions:\n");
-    printf("set <n> <m>                 - Set values of n (number of p processes) and m (number of q processes) to pass to analyzer.\n");
-    printf("add <file1> <file2> ...     - Add files (or directories) to be analyzed.\n");
-    printf("config                      - Show the current configuration, with the added files\n");
-    printf("run                         - Run analyzer and report\n");
-    printf("report/r <cmd>              - Used to issue commands to report, must be used after run. Use \"report/r help\" for report help\n");
-    printf("remove <file1> <file2> ...  - Removes files (or directories) from the list to be analyzed\n");
-    printf("exit/quit/q                 - Close the program\n");
-    printf("\nWARNING: if path contains files' (directories) name with spaces, please add double quotes to the entire path\n");
+    printf("\nMain allowed actions:\n\n");
+    printf("   set <n> <m>                                        - Set values of n (number of p processes) \n");                                                        
+    printf("                                                        and m (number of q processes) to run analyzer.\n");
+    printf("   add <file or direcotry> <file or direcotry> ...    - Add files (or directories) to be analyzed on the next run.\n");
+    printf("   config                                             - Show the configuration of the next run\n");
+    printf("   run                                                - Run analyzer and report\n");
+    printf("   analyzer-quit                                      - Quit analyzer if it is running.\n");
+    printf("   r report <cmd>                                     - Used to issue commands to report, must be used after run.\n");
+    printf("                                                        Use \"report help\" for report help\n");
+    printf("   remove <file or direcotry> <file or direcotry> ... - Removes files (or directories) from the list to be analyzed\n");
+    printf("   q / quit / exit                                    - Close the program\n");
+    printf("\n   WARNING: if path contains files (directories) names with spaces, please add double quotes to the entire path\n");
     printf("\n");
 }
 
@@ -217,6 +230,10 @@ int getAction(char *command, config **newConf, config **analyzedConf)
     {
         passToReport(command + 7);
     }
+    else if (strcmp(token, "analyzer-quit") == 0)
+    {
+        killAnalyzer();
+    }
     else if (strcmp(token, "r") == 0)
     {
         passToReport(command + 2);
@@ -258,6 +275,7 @@ int main(int argc, const char *argv[])
 {
     initGC();
     initProcess();
+    int i = 0;
     path = getBinPath(argv[0]);
     char *endptr;
     config initConf;
@@ -267,7 +285,6 @@ int main(int argc, const char *argv[])
     if (argc > 1)
         if (checkArguments(argc, argv) != 0)
             fatalErrorHandler("", 1);
-    int i;
     //TODO: check error
     int filesCount = argc - PRE_FILES_ARGS;
     if (argc >= 3)
@@ -294,6 +311,6 @@ int main(int argc, const char *argv[])
         char *command = getLine();
         action = getAction(command, &newFilesConf, &analyzedFilesConf);
     } while (action);
-    collectGarbage();
+    fatalErrorHandler("Quit.", 0);
     return 0;
 }

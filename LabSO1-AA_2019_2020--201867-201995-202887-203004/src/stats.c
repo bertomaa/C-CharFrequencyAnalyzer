@@ -109,6 +109,7 @@ char *encodeMultiple(stats *statsArray, int len)
         char *str = encode(statsArray[i]);
         int stringLen = strlen(str);
         memcpy(res + offset, str, stringLen);
+        removeFromGCAndFree(str);
         offset += stringLen;
     }
     return res;
