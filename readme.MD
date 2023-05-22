@@ -1,5 +1,7 @@
 # Character Frequency Statistics in C
 
+*This project was developed for the course "Operating Systems" during my BMs in the University of Trento.*
+
 This repository contains a system developed in C that calculates and manages the statistics of character frequency within text files, distinguishing letters, digits, spaces, punctuation, and other characters. It's capable of creating "clusters" for advanced analytics such as differentiating between uppercase and lowercase characters.
 
 ## System Overview
